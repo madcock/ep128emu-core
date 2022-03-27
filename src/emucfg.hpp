@@ -143,6 +143,9 @@ namespace Ep128Emu {
     // --------
     int           keyboard[128][2];
     bool          keyboardMapChanged;
+    const std::string joypadButtons[16] = {"a","b","x","y","l","r","l2","r2","l3","r3","up","down","left","right","start","select"};
+    std::string   joypad[16];
+    std::string   contentFileName;
     // --------
     JoystickInput::JoystickConfiguration  joystick;
     bool          joystickSettingsChanged;

@@ -608,6 +608,7 @@ namespace Ep128Emu {
     tapeSoundFileFilterMinFreq = filterMinFreq_;
     tapeSoundFileFilterMaxFreq = filterMaxFreq_;
     if (tape) {
+#ifndef EXCLUDE_SOUND_LIBS
       if (typeid(*tape) == typeid(Tape_SoundFile)) {
         Tape_SoundFile& tape_ = *(dynamic_cast<Tape_SoundFile *>(tape));
         tape_.setParameters(tapeSoundFileChannel,
@@ -615,6 +616,7 @@ namespace Ep128Emu {
                             tapeSoundFileFilterMinFreq,
                             tapeSoundFileFilterMaxFreq);
       }
+#endif // EXCLUDE_SOUND_LIBS
     }
   }
 
@@ -830,6 +832,7 @@ namespace Ep128Emu {
       return;
     tape = openTapeFile(fileName.c_str(), 0,
                         defaultTapeSampleRate, bitsPerSample);
+#ifndef EXCLUDE_SOUND_LIBS
     if (typeid(*tape) == typeid(Tape_SoundFile)) {
       Tape_SoundFile& tape_ = *(dynamic_cast<Tape_SoundFile *>(tape));
       tape_.setParameters(tapeSoundFileChannel,
@@ -837,6 +840,7 @@ namespace Ep128Emu {
                           tapeSoundFileFilterMinFreq,
                           tapeSoundFileFilterMaxFreq);
     }
+#endif // EXCLUDE_SOUND_LIBS
     if (tapeRecordOn)
       tape->record();
     else if (tapePlaybackOn)

@@ -22,13 +22,16 @@
 #include "soundio.hpp"
 #include "vm.hpp"
 
+#ifndef EXCLUDE_SOUND_LIBS
 #include <sndfile.h>
 #include <portaudio.h>
+#endif // EXCLUDE_SOUND_LIBS
 #ifdef ENABLE_MIDI_PORT
 #  include <portmidi.h>
 #  include <porttime.h>
 #endif
 #include <vector>
+#ifndef EXCLUDE_SOUND_LIBS
 
 #ifdef ENABLE_SOUND_DEBUG
 
@@ -59,12 +62,15 @@ static inline bool isPortAudioError(const char *msg, PaError paError)
 }
 
 #endif
+#endif // EXCLUDE_SOUND_LIBS
 
 namespace Ep128Emu {
 
   AudioOutput::AudioOutput()
     : outputFileName(""),
+#ifndef EXCLUDE_SOUND_LIBS
       soundFile((SNDFILE *) 0),
+#endif // EXCLUDE_SOUND_LIBS
       deviceNumber(-1),
       sampleRate(0.0f),
       totalLatency(0.0f),
@@ -77,10 +83,12 @@ namespace Ep128Emu {
   {
     // NOTE: the destructor of a derived class is responsible for closing
     // the audio device if it is open
+#ifndef EXCLUDE_SOUND_LIBS
     if (soundFile) {
       sf_close(soundFile);
       soundFile = (SNDFILE *) 0;
     }
+#endif // EXCLUDE_SOUND_LIBS
   }
 
   void AudioOutput::setParameters(int deviceNumber_, float sampleRate_,
@@ -116,6 +124,7 @@ namespace Ep128Emu {
     nPeriodsSW = nPeriodsSW_;
     if (sampleRate_ != sampleRate) {
       sampleRate = sampleRate_;
+#ifndef EXCLUDE_SOUND_LIBS
       if (soundFile != (SNDFILE *) 0) {
         sf_close(soundFile);
         soundFile = (SNDFILE *) 0;
@@ -133,6 +142,7 @@ namespace Ep128Emu {
           throw Exception("error opening output sound file");
         }
       }
+#endif // EXCLUDE_SOUND_LIBS
     }
     deviceNumber = deviceNumber_;
     sampleRate = sampleRate_;
@@ -149,6 +159,7 @@ namespace Ep128Emu {
 
   void AudioOutput::setOutputFile(const std::string& fileName)
   {
+#ifndef EXCLUDE_SOUND_LIBS
     if (fileName == outputFileName)
       return;
     outputFileName = "";
@@ -168,12 +179,14 @@ namespace Ep128Emu {
         throw Exception("error opening output sound file");
       outputFileName = fileName;
     }
+#endif // EXCLUDE_SOUND_LIBS
   }
 
   void AudioOutput::sendAudioData(const int16_t *buf, size_t nFrames)
   {
     // NOTE: AudioOutput::sendAudioData() should be called by derived classes
     // so that the sound file can be written
+#ifndef EXCLUDE_SOUND_LIBS
     if (soundFile) {
       // need to cast away const qualification to work around compile
       // error with old versions of libsndfile
@@ -187,6 +200,7 @@ namespace Ep128Emu {
         throw Exception("error writing sound file -- is the disk full ?");
       }
     }
+#endif // EXCLUDE_SOUND_LIBS
   }
 
   void AudioOutput::closeDevice()
@@ -208,6 +222,7 @@ namespace Ep128Emu {
 
   // --------------------------------------------------------------------------
 
+#ifndef EXCLUDE_SOUND_LIBS
   AudioOutput_PortAudio::AudioOutput_PortAudio()
     : AudioOutput(),
       paInitialized(false),
@@ -585,6 +600,119 @@ namespace Ep128Emu {
       throw Exception("error opening audio device");
     }
     Pa_StartStream(paStream);
+  }
+#endif // EXCLUDE_SOUND_LIBS
+  // --------------------------------------------------------------------------
+#define LIBRETRO_PERIOD_SIZE 16
+  AudioOutput_libretro::AudioOutput_libretro()
+    : AudioOutput(),
+      writeBufIndex(0),
+      readBufIndex(0),
+      readSubBufIndex(0)
+  {
+    // initialize buffers
+    int nPeriodsSW_ = 44100;
+    int periodSize = LIBRETRO_PERIOD_SIZE;
+    buffers.resize(size_t(nPeriodsSW_));
+    for (int i = 0; i < nPeriodsSW_; i++)
+    {
+      buffers[i].audioData.resize(size_t(periodSize) << 1);
+      for (int j = 0; j < (periodSize << 1); j++)
+        buffers[i].audioData[j] = 0;
+    }
+  }
+
+  AudioOutput_libretro::~AudioOutput_libretro()
+  {
+    writeBufIndex = 0;
+    readBufIndex = 0;
+    readSubBufIndex = 0;
+    buffers.clear();
+  }
+
+  void AudioOutput_libretro::sendAudioData(const int16_t *buf, size_t nFrames)
+  {
+    for (size_t i = 0; i < nFrames; i++)
+    {
+      Buffer& buf_ = buffers[writeBufIndex];
+      buf_.audioData[buf_.writePos++] = buf[(i << 1) + 0];
+      buf_.audioData[buf_.writePos++] = buf[(i << 1) + 1];
+      if (buf_.writePos >= buf_.audioData.size())
+      {
+        buf_.writePos = 0;
+        //buf_.lrLock.notify();
+        forwardMutex.lock();
+        if (++writeBufIndex >= buffers.size())
+          writeBufIndex = 0;
+        forwardMutex.unlock();
+      }
+    }
+    // call base class to write sound file
+    AudioOutput::sendAudioData(buf, nFrames);
+  }
+
+  void AudioOutput_libretro::forwardAudioData(int16_t *buf_out, size_t* nFrames, int expectedFrames)
+  {
+    //printf("Trying forwardAudioData: %d %d\n",readBufIndex,writeBufIndex);
+
+    int currOutputIndex = -1;
+    int expectedLatencyFrames = 2000;
+    size_t ringBufferSize = buffers.size();
+    int partialFrames_pre = LIBRETRO_PERIOD_SIZE - readSubBufIndex;
+
+    forwardMutex.lock();
+    size_t writeBufIndex_ = writeBufIndex;
+    int partialFrames_post = buffers[writeBufIndex_].writePos;
+    forwardMutex.unlock();
+
+    signed int availableBuffers = 0;
+    if(readBufIndex<writeBufIndex_)
+    {
+      availableBuffers = writeBufIndex_ - readBufIndex - 1;
+    }
+    else if (readBufIndex > writeBufIndex_)
+    {
+      availableBuffers = writeBufIndex_ + (ringBufferSize - readBufIndex) -1;
+    }
+    else
+    {
+      availableBuffers = 0;
+      // if no full buffer available, discard the partial frame as well
+      partialFrames_post = 0;
+      partialFrames_pre = 0;
+    }
+    // do not care about partial frames in the buffer being written
+    int availableFrames = partialFrames_pre + availableBuffers * LIBRETRO_PERIOD_SIZE + partialFrames_post;
+
+    signed int framesToSend = 0;
+    // slowly try to pull frames towards the expected amount
+    framesToSend = expectedFrames + (availableFrames - expectedFrames - expectedLatencyFrames)/10;
+    if (framesToSend > availableFrames) framesToSend = availableFrames;
+    //printf("Trying forwardAudioData: rd %d wr %d av %d exp %d fts %d\n",readBufIndex,writeBufIndex_, availableFrames, expectedFrames, framesToSend);
+
+    for (signed int i=0; i<framesToSend; i++)
+    {
+      Buffer& buf_ = buffers[readBufIndex];
+      currOutputIndex++;
+      buf_out[(currOutputIndex << 1) + 0] = buf_.audioData[(readSubBufIndex << 1) + 0];
+      buf_out[(currOutputIndex << 1) + 1] = buf_.audioData[(readSubBufIndex << 1) + 1];
+      readSubBufIndex++;
+      if (readSubBufIndex>=LIBRETRO_PERIOD_SIZE)
+      {
+        readSubBufIndex = 0;
+        readBufIndex++;
+        if (readBufIndex >= ringBufferSize) readBufIndex = 0;
+      }
+    }
+
+    //printf("Returned frames: %d\n",currOutputIndex);
+    nFrames[0]=currOutputIndex+1;
+  }
+
+  void AudioOutput_libretro::closeDevice()
+  {
+    // call base class to reset internal state
+    AudioOutput::closeDevice();
   }
 
   // --------------------------------------------------------------------------

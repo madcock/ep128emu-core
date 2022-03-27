@@ -278,6 +278,19 @@ namespace Ep128Emu {
                                     keyboardMapChanged, -1.0, 65535.0);
       }
     }
+    char  jtmpBuf[24];
+    char  *js = &(jtmpBuf[0]);
+    for (int i = 0; i < 16; i++) {
+      std::sprintf(js, "joypad.%s",joypadButtons[i].c_str());
+      //printf("Defining %s\n",js);
+      defineConfigurationVariable(*this, std::string(js),
+                                  joypad[i], std::string(""),
+                                  keyboardMapChanged);
+    }
+    defineConfigurationVariable(*this, std::string("contentfilename"),
+                                  contentFileName, std::string(""),
+                                  keyboardMapChanged);
+
     // ----------------
     joystickSettingsChanged = true;
     joystick.registerConfigurationVariables(*this);
