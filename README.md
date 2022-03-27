@@ -53,11 +53,11 @@ For the emulation features, see the [original README](README).
 * A system with retroarch installed. Currently Linux x86_64 and arm builds are
 available.
 * ROM files for the systems to be emulated.
-  * Enterprise: ""exos21.rom"", ""basic21.rom"", ""epfileio.rom"", ""exdos13.rom""
-  * TVC: ""tvc22_sys.rom"", ""tvc22_ext.rom"", ""tvcfileio.rom"", ""tvc_dos12d.rom""
-  * CPC: ""cpc6128.rom"", ""cpc_amsdos.rom""
-  * ZX: ""zx128.rom""
-* Put the files to ""ep128emu/roms"" inside retroarch system directory. Example: ""~/.config/retroarch/system/ep128emu/roms/""
+  * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
+  * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
+  * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
+  * ZX: `zx128.rom`
+* Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
 
 ### Running the core
 ```shell
