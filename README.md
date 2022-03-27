@@ -25,9 +25,9 @@ Libretro features supported:
   * TVC: internal joystick
   * CPC: external joystick
   * ZX: Kempston
-  * Fire is ""X"" button, ""L""-""R""-""L2""-""R3"" buttons are 0-1-2-3 (several games use these in menu)
+  * Fire is **X** button, **L**-**R**-**L2**"-**R2** buttons are 0-1-2-3 (several games use these in menu)
   * Keyboard input is enabled, be aware that retroarch uses several hotkeys by default
-  * Use ""A"" button to display current layout
+  * Use **A** button to display current layout
 * Default d-pad input mappings for further players
   * Enterprise: external 1 (also mapped to numpad), external 2
   * TVC: external 1 (also mapped to numpad), external 2
