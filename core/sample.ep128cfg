@@ -1,0 +1,36 @@
+# ep128emu-core content specific config file.
+# Should be next to the content and have the same name as the content file itself
+# Example: exolon.com -> exolon.ep128cfg, sorcery.tap -> sorcery.ep128cfg
+
+# Joypad configuration. Example:
+# joypad.x "1"
+# This maps retropad button X to key 1 on emulated keyboard.
+# Following values can be used (lowercase):
+# a-z 0-9 f1-f8
+# \-^;:[],/.@
+# esc, enter, space, tab
+# lshift, rshift, ctrl, alt
+# lock, stop, erase, del, ins
+# left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
+# joy1l, joy1r, joy1u, joy1d, joy1f, joy1f2, joy1f3 (external 1 joystick)
+# joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
+# Usually fire 1 is used, except on CPC where it is fire 2
+joypad.a ""
+joypad.b ""
+joypad.x ""
+joypad.y ""
+joypad.l ""
+joypad.r ""
+joypad.l2 ""
+joypad.r2 ""
+joypad.l3 ""
+joypad.r3 ""
+joypad.start ""
+joypad.select ""
+joypad.up ""
+joypad.down ""
+joypad.left ""
+joypad.right ""
+
+# Content file name. Use in case of disk images to automatically load a program.
+contentfilename ""

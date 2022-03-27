@@ -1,0 +1,63 @@
+CORE_DIR = .
+
+INCFLAGS := \
+	-I$(CORE_DIR) \
+	-I$(CORE_DIR)/core \
+	-I$(CORE_DIR)/z80 \
+	-I$(CORE_DIR)/src
+
+SOURCES_CPP := \
+	$(CORE_DIR)/z80/z80.cpp \
+	$(CORE_DIR)/z80/z80funcs2.cpp \
+	$(CORE_DIR)/src/ep128vm.cpp \
+	$(CORE_DIR)/src/memory.cpp \
+	$(CORE_DIR)/src/ioports.cpp \
+	$(CORE_DIR)/src/wd177x.cpp \
+	$(CORE_DIR)/src/ide.cpp \
+	$(CORE_DIR)/src/ep_fdd.cpp \
+	$(CORE_DIR)/src/dave.cpp \
+	$(CORE_DIR)/src/nick.cpp \
+	$(CORE_DIR)/src/fileio.cpp \
+	$(CORE_DIR)/src/videorec.cpp \
+	$(CORE_DIR)/src/vm.cpp \
+	$(CORE_DIR)/src/vmthread.cpp \
+	$(CORE_DIR)/src/display.cpp \
+	$(CORE_DIR)/src/debuglib.cpp \
+	$(CORE_DIR)/src/epmemcfg.cpp \
+	$(CORE_DIR)/src/snapshot.cpp \
+	$(CORE_DIR)/src/bplist.cpp \
+	$(CORE_DIR)/src/system.cpp \
+	$(CORE_DIR)/src/compress.cpp \
+	$(CORE_DIR)/src/comprlib.cpp \
+	$(CORE_DIR)/src/decompm2.cpp \
+	$(CORE_DIR)/src/snd_conv.cpp \
+	$(CORE_DIR)/src/tape.cpp \
+	$(CORE_DIR)/src/emucfg.cpp \
+	$(CORE_DIR)/src/cfg_db.cpp \
+	$(CORE_DIR)/src/joystick.cpp \
+	$(CORE_DIR)/src/soundio.cpp \
+	$(CORE_DIR)/src/libretrodisp.cpp \
+	$(CORE_DIR)/src/zx128vm.cpp \
+	$(CORE_DIR)/src/ula.cpp \
+	$(CORE_DIR)/src/zxioport.cpp \
+	$(CORE_DIR)/src/zxmemory.cpp \
+	$(CORE_DIR)/src/ay3_8912.cpp \
+	$(CORE_DIR)/src/zx_snap.cpp \
+	$(CORE_DIR)/src/cpc464vm.cpp \
+	$(CORE_DIR)/src/cpcdisk.cpp \
+	$(CORE_DIR)/src/cpcio.cpp \
+	$(CORE_DIR)/src/cpcmem.cpp \
+	$(CORE_DIR)/src/cpc_snap.cpp \
+	$(CORE_DIR)/src/cpcvideo.cpp \
+	$(CORE_DIR)/src/crtc6845.cpp \
+	$(CORE_DIR)/src/fdc765.cpp \
+	$(CORE_DIR)/src/tvc64vm.cpp \
+	$(CORE_DIR)/src/tvcmem.cpp \
+	$(CORE_DIR)/src/tvc_snap.cpp \
+	$(CORE_DIR)/src/tvcvideo.cpp \
+	$(CORE_DIR)/src/sdext.cpp \
+	$(CORE_DIR)/core/main.cpp \
+	$(CORE_DIR)/core/core.cpp \
+
+SOURCES_C := \
+	$(CORE_DIR)/src/dotconf.c
