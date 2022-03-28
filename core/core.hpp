@@ -64,6 +64,7 @@ public:
   int currHeight;
   int fullHeight;
   int halfHeight;
+  int defaultHalfHeight;
   int lineOffset;
   int machineType;
   int machineDetailedType;

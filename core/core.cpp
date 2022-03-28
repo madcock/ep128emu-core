@@ -15,6 +15,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
     currWidth(EP128EMU_LIBRETRO_SCREEN_WIDTH),
     fullHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT),
     halfHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT/2),
+    defaultHalfHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT/2),
     lineOffset(0),
     machineType(MACHINE_EP),
     machineDetailedType(machineDetailedType_),
@@ -73,6 +74,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   {
     fullHeight -= 40;
     halfHeight -= 20;
+    defaultHalfHeight = halfHeight;
     currHeight = useHalfFrame ? halfHeight : fullHeight;
     // lineOffset is irrespective of half frame or not
     lineOffset = currWidth*20;
@@ -475,6 +477,7 @@ void LibretroCore::initialize_keyboard_map(void)
     inputJoyMap[0x7c][2] = RETRO_DEVICE_ID_JOYPAD_X; // fire
   }
   inputJoyMap[0xff][0] = RETRO_DEVICE_ID_JOYPAD_A; // special: info button
+  inputJoyMap[0xfe][0] = RETRO_DEVICE_ID_JOYPAD_R3; // special: fit to content
   inputJoyMap[0x3e][0] = RETRO_DEVICE_ID_JOYPAD_Y; // enter
   inputJoyMap[0x2c][0] = RETRO_DEVICE_ID_JOYPAD_L; // 0
   inputJoyMap[0x19][0] = RETRO_DEVICE_ID_JOYPAD_R; // 1
@@ -517,6 +520,7 @@ void LibretroCore::update_keyboard(bool down, unsigned keycode, uint32_t charact
     vmThread->setKeyboardState(convertedKeycode,down);
   }
 }
+
 void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb)
 {
   int i;
@@ -532,16 +536,74 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
         currInputState = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, inputJoyMap[i][port]);
         if (currInputState && !inputStateMap[i][port])
         {
-          if(i<128) {
-          vmThread->setKeyboardState(i,true);
-          } else {
-          if(i == 0xFF)
+          if(i<128)
           {
-            struct retro_message message;
-            message.msg = infoMessage.c_str();
-            message.frames = 50 * 4;
-            environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &message);
+            vmThread->setKeyboardState(i,true);
           }
+          else
+          {
+            if(i == 0xFF)
+            {
+              struct retro_message message;
+              std::string longMsg = "Wait for end of startup sequence... ";
+              if (startSequenceIndex < startSequence.length())
+              {
+                longMsg += infoMessage;
+                message.msg = longMsg.c_str();
+              }
+              else
+              {
+                message.msg = infoMessage.c_str();
+              }
+              message.frames = 50 * 4;
+              environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &message);
+            }
+            if(i == 0xFE && isHalfFrame)
+            {
+              //printf("button pressed halfframe: %d ",isHalfFrame?1:0);
+              if (halfHeight != defaultHalfHeight || lineOffset > 0)
+              {
+                lineOffset = 0;
+                halfHeight = defaultHalfHeight;
+                //printf("restore to %d \n",halfHeight);
+              }
+              else
+              {
+                int keepBorders = 6;
+                int firstNonzeroLine = w->firstNonzeroLine - keepBorders > 0 ? w->firstNonzeroLine -keepBorders : 0;
+                int lastNonzeroLine = w->lastNonzeroLine + keepBorders < EP128EMU_LIBRETRO_SCREEN_HEIGHT ? w->lastNonzeroLine + keepBorders : EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+                int detectedHeight = (lastNonzeroLine - firstNonzeroLine) / 2 + 1;
+
+                int detectedEmptyRangeBottom = EP128EMU_LIBRETRO_SCREEN_HEIGHT - lastNonzeroLine;
+                int proposedLineOffset = currWidth * ((firstNonzeroLine)/2);
+                if (detectedHeight <= 150)
+                {
+                  if (firstNonzeroLine < detectedEmptyRangeBottom )
+                  {
+                    if (firstNonzeroLine < 150)
+                    {
+                      detectedHeight = (EP128EMU_LIBRETRO_SCREEN_HEIGHT - 2*firstNonzeroLine)/2+1;
+                    }
+                  }
+                  else
+                  {
+                    if (detectedEmptyRangeBottom  < 150)
+                    {
+                      detectedHeight = (EP128EMU_LIBRETRO_SCREEN_HEIGHT - 2*detectedEmptyRangeBottom)/2+1;
+                      proposedLineOffset = currWidth * (detectedEmptyRangeBottom/2);
+                    }
+                  }
+                }
+                printf("detected %d \n",detectedHeight);
+                if (detectedHeight > 150 && detectedHeight < defaultHalfHeight-50)
+                {
+                  halfHeight = detectedHeight+1;
+                  lineOffset = proposedLineOffset;
+                }
+
+              }
+            }
+
           }
         }
         else if (inputStateMap[i][port] && !currInputState)
@@ -605,7 +667,7 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
     change_resolution(currWidth, fullHeight, environ_cb);
     resolutionChanged = true;
   }
-  else if (useHalfFrame && !isHalfFrame && w->interlacedFrameCount == 0)
+  else if (useHalfFrame && ((!isHalfFrame && w->interlacedFrameCount == 0) || (currHeight != halfHeight)))
   {
     isHalfFrame = true;
     change_resolution(currWidth, halfHeight, environ_cb);
@@ -643,7 +705,9 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
 {
 
   float aspect = 4.0f / 3.0f;
-  if(!showOverscan) aspect = 4.0f / (3.0f / (float) (isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)height : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height));
+  //if(!showOverscan)
+  aspect = 4.0f / (3.0f / (float) (isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)height : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height));
+  //aspect = 4.0f / (3.0f / (float) (EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height));
   retro_game_geometry g =
   {
     .base_width   = (unsigned int) width,

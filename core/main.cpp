@@ -23,6 +23,10 @@ gfx:
 sw fb interlaced módba kapcsoláskor behal
 opengl support?
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
+overscant le kellene tiltani / megnézni mit csinál sw fb esetén mert vszg. nem oké
+a height detect hasonlóan
+keepBorder paraméterből
+width detection / crop?
 
 input:
 joystick kezelés -- 2 user? -- tesztelni kellene
@@ -244,7 +248,9 @@ static retro_input_state_t input_state_cb;
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
   float aspect = 4.0f / 3.0f;
-  if(!core->showOverscan) aspect = 4.0f / (3.0f / (float) (core->isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)core->currHeight : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)core->currHeight));
+  //if(!core->showOverscan)
+  aspect = 4.0f / (3.0f / (float) (core->isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)core->currHeight : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)core->currHeight));
+  //aspect = 4.0f / (3.0f / (float) (EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)core->currHeight));
   info->timing = (struct retro_system_timing)
   {
     .fps = 50.0,

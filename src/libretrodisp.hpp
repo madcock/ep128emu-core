@@ -135,7 +135,7 @@ namespace Ep128Emu {
     }
     void deleteMessage(Message *m);
     void queueMessage(Message *m);
-    static void decodeLine(unsigned char *outBuf,
+    void decodeLine(unsigned char *outBuf,
                            const unsigned char *inBuf, size_t nBytes);
     void frameDone();
     void run();
@@ -149,8 +149,6 @@ namespace Ep128Emu {
     int           curLine;
     int           vsyncCnt;
     int           framesPending;
-    int           firstNonzeroLine;
-    int           lastNonzeroLine;
     bool          skippingFrame;
     bool          useHalfFrame;
     bool          framesPendingFlag;
@@ -183,6 +181,7 @@ namespace Ep128Emu {
     uint32_t *frame_bufReady;
     uint32_t *frame_bufSpare;
     uint32_t *frame_bufLastReleased;
+    uint32_t borderColor;
 #else
     uint16_t *frame_buf1;
     uint16_t *frame_buf2;
@@ -191,10 +190,13 @@ namespace Ep128Emu {
     uint16_t *frame_bufReady;
     uint16_t *frame_bufSpare;
     uint16_t *frame_bufLastReleased;
+    uint16_t borderColor;
 #endif
     uint32_t frameSize;
     uint32_t interlacedFrameCount;
     uint32_t frameCount;
+    int           firstNonzeroLine;
+    int           lastNonzeroLine;
     LibretroDisplay(int xx, int yy, int ww, int hh,
                                const char *lbl, bool useHalfFrame_);
     virtual ~LibretroDisplay();

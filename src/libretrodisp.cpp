@@ -274,8 +274,6 @@ void LibretroDisplay::drawLine(const uint8_t *buf, size_t nBytes)
     vsyncCnt++;
     frameDone();
     frameCount++;
-    firstNonzeroLine = 0;
-    lastNonzeroLine = EP128EMU_VSYNC_MAX_LINES;
   }
 }
 
@@ -550,7 +548,12 @@ void LibretroDisplay::limitFrameRate(bool isEnabled)
 
 void LibretroDisplay::draw(void * fb)
 {
+  firstNonzeroLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+  int firstNonborderLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+  lastNonzeroLine = 0;
+  int lastNonborderLine = 0;
 
+  borderColor = 0;
   for (int yc = 0; yc < EP128EMU_LIBRETRO_SCREEN_HEIGHT; yc++)
   {
     if (!interlacedFrameCount && (yc & 1))
@@ -562,6 +565,8 @@ void LibretroDisplay::draw(void * fb)
       // decode video data
       const unsigned char *bufp = (unsigned char *) 0;
       size_t  nBytes = 0;
+      bool nonzero = false;
+      bool nonborder = false;
       lineBuffers[yc]->getLineData(bufp, nBytes);
       decodeLine(lineBuf,bufp,nBytes);
 
@@ -581,13 +586,25 @@ void LibretroDisplay::draw(void * fb)
         unsigned char r = (unsigned char) (rF > 0.0f ? (rF < 255.5f ? rF : 255.5f) : 0.0f);
         unsigned char g = (unsigned char) (gF > 0.0f ? (gF < 255.5f ? gF : 255.5f) : 0.0f);
         unsigned char b = (unsigned char) (bF > 0.0f ? (bF < 255.5f ? bF : 255.5f) : 0.0f);
-
 #ifdef EP128EMU_USE_XRGB8888
         // conversion to RGB_X888
         uint32_t pixel32 = (uint32_t) (r << 16 | g << 8 | b << 0);
+        if (!nonzero && pixel32>0) {
+          nonzero=true;
+          if(borderColor == 0) borderColor = pixel32;
+        }
+        if (!nonborder && borderColor>0 && pixel32 != borderColor && pixel32 > 0) {nonborder=true;}
 #else
         // conversion to RGB_565
         uint16_t pixel16 = (uint16_t) ((r&0xF8) << 8 | (g&0xFC) <<  3 | (b&0xF8) >> 3);
+        if (!nonzero && pixel16>0) {
+          nonzero=true;
+          if (borderColor == 0) borderColor = pixel16;
+          }
+        if (!nonborder && borderColor>0 && pixel16 != borderColor && pixel16 > 0) {
+           //printf("nonborder: at %d %d value %d instead of %d \n",yc,i,pixel16,borderColor);
+           nonborder=true;}
+
 #endif // EP128EMU_USE_XRGB8888
         if (interlacedFrameCount)
         {
@@ -623,9 +640,22 @@ void LibretroDisplay::draw(void * fb)
           }
         }
       }
+      if(nonzero) {
+        if(yc > lastNonzeroLine) lastNonzeroLine = yc;
+        if(yc < firstNonzeroLine) firstNonzeroLine = yc;
+      }
+      if(nonborder) {
+        if(yc > lastNonborderLine) lastNonborderLine = yc;
+        if(yc < firstNonborderLine) firstNonborderLine = yc;
+      }
+
     }
 
   }
+  //printf("nonzero: %d %d %d %d %d\n",firstNonzeroLine,lastNonzeroLine, firstNonborderLine, lastNonborderLine, borderColor);
+  if (firstNonzeroLine == 0 ) firstNonzeroLine = firstNonborderLine;
+  // screen end can vary, see Beach Head
+  if (lastNonzeroLine > EP128EMU_LIBRETRO_SCREEN_HEIGHT-3 || lastNonzeroLine > lastNonborderLine + 20) lastNonzeroLine = lastNonborderLine;
 #ifdef EP128EMU_USE_XRGB8888
 //  uint32_t* swapPtr = frame_bufReady;
 #else
@@ -633,6 +663,7 @@ void LibretroDisplay::draw(void * fb)
 #endif
   frame_bufReady = frame_bufActive;
 //    frame_bufActive = swapPtr;
+
 }
 
 }       // namespace Ep128Emu
