@@ -5,6 +5,65 @@
 namespace Ep128Emu
 {
 
+// --------------------------------------------------------------------------
+
+LibretroDisplay::Colormap::Colormap()
+{
+  palette16 = new uint16_t[256];
+  palette32 = new uint32_t[256];
+  DisplayParameters dp;
+  setParams(dp);
+}
+
+LibretroDisplay::Colormap::~Colormap()
+{
+  delete[] palette16;
+  delete[] palette32;
+}
+
+void LibretroDisplay::Colormap::setParams(const DisplayParameters& dp)
+{
+  float   rTbl[256];
+  float   gTbl[256];
+  float   bTbl[256];
+  for (size_t i = 0; i < 256; i++)
+  {
+    float   r = float(uint8_t(i)) / 255.0f;
+    float   g = float(uint8_t(i)) / 255.0f;
+    float   b = float(uint8_t(i)) / 255.0f;
+    if (dp.indexToRGBFunc)
+      dp.indexToRGBFunc(uint8_t(i), r, g, b);
+    rTbl[i] = r;
+    gTbl[i] = g;
+    bTbl[i] = b;
+  }
+  for (size_t i = 0; i < 256; i++)
+  {
+    palette16[i] = pixelConvRGB565(rTbl[i], gTbl[i], bTbl[i]);
+    palette32[i] = pixelConvXRGB8888(rTbl[i], gTbl[i], bTbl[i]);
+  }
+}
+
+uint32_t LibretroDisplay::Colormap::pixelConvXRGB8888(double r, double g, double b)
+{
+  unsigned int  ri, gi, bi;
+  ri = (r > 0.0 ? (r < 1.0 ? (unsigned int) (r * 255.0 + 0.5) : 255U) : 0U);
+  gi = (g > 0.0 ? (g < 1.0 ? (unsigned int) (g * 255.0 + 0.5) : 255U) : 0U);
+  bi = (b > 0.0 ? (b < 1.0 ? (unsigned int) (b * 255.0 + 0.5) : 255U) : 0U);
+  return ((uint32_t(ri) << 16) + (uint32_t(gi) << 8) + uint32_t(bi));
+}
+
+uint16_t LibretroDisplay::Colormap::pixelConvRGB565(double r, double g, double b)
+{
+  unsigned int  ri, gi, bi;
+  ri = (r > 0.0 ? (r < 1.0 ? (unsigned int) (r * 255.0 + 0.5) : 255U) : 0U);
+  gi = (g > 0.0 ? (g < 1.0 ? (unsigned int) (g * 255.0 + 0.5) : 255U) : 0U);
+  bi = (b > 0.0 ? (b < 1.0 ? (unsigned int) (b * 255.0 + 0.5) : 255U) : 0U);
+  return (((uint16_t(ri) & 0xF8) << 8) + ((uint16_t(gi) & 0xFC) << 3) + ((uint16_t(bi) >> 3) & 0xF8));
+}
+
+
+
 void LibretroDisplay::decodeLine(unsigned char *outBuf,
                                  const unsigned char *inBuf, size_t nBytes)
 {
@@ -18,13 +77,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[15] = outBuf[14] =
-        outBuf[13] = outBuf[12] =
-        outBuf[11] = outBuf[10] =
-        outBuf[ 9] = outBuf[ 8] =
-        outBuf[ 7] = outBuf[ 6] =
-        outBuf[ 5] = outBuf[ 4] =
-        outBuf[ 3] = outBuf[ 2] =
-        outBuf[ 1] = outBuf[ 0] = 0x00;
+                       outBuf[13] = outBuf[12] =
+                                      outBuf[11] = outBuf[10] =
+                                            outBuf[ 9] = outBuf[ 8] =
+                                                outBuf[ 7] = outBuf[ 6] =
+                                                    outBuf[ 5] = outBuf[ 4] =
+                                                        outBuf[ 3] = outBuf[ 2] =
+                                                            outBuf[ 1] = outBuf[ 0] = 0x00;
         outBuf = outBuf + 16;
         bufp = bufp + 1;
         if (outBuf >= endp)
@@ -36,13 +95,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[15] = outBuf[14] =
-        outBuf[13] = outBuf[12] =
-        outBuf[11] = outBuf[10] =
-        outBuf[ 9] = outBuf[ 8] =
-        outBuf[ 7] = outBuf[ 6] =
-        outBuf[ 5] = outBuf[ 4] =
-        outBuf[ 3] = outBuf[ 2] =
-        outBuf[ 1] = outBuf[ 0] = bufp[1];
+                       outBuf[13] = outBuf[12] =
+                                      outBuf[11] = outBuf[10] =
+                                            outBuf[ 9] = outBuf[ 8] =
+                                                outBuf[ 7] = outBuf[ 6] =
+                                                    outBuf[ 5] = outBuf[ 4] =
+                                                        outBuf[ 3] = outBuf[ 2] =
+                                                            outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf = outBuf + 16;
         bufp = bufp + 2;
         if (outBuf >= endp)
@@ -54,13 +113,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[ 7] = outBuf[ 6] =
-        outBuf[ 5] = outBuf[ 4] =
-        outBuf[ 3] = outBuf[ 2] =
-        outBuf[ 1] = outBuf[ 0] = bufp[1];
+                       outBuf[ 5] = outBuf[ 4] =
+                                      outBuf[ 3] = outBuf[ 2] =
+                                            outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf[15] = outBuf[14] =
-        outBuf[13] = outBuf[12] =
-        outBuf[11] = outBuf[10] =
-        outBuf[ 9] = outBuf[ 8] = bufp[2];
+                       outBuf[13] = outBuf[12] =
+                                      outBuf[11] = outBuf[10] =
+                                            outBuf[ 9] = outBuf[ 8] = bufp[2];
         outBuf = outBuf + 16;
         bufp = bufp + 3;
         if (outBuf >= endp)
@@ -93,13 +152,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[ 3] = outBuf[ 2] =
-        outBuf[ 1] = outBuf[ 0] = bufp[1];
+                       outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf[ 7] = outBuf[ 6] =
-        outBuf[ 5] = outBuf[ 4] = bufp[2];
+                       outBuf[ 5] = outBuf[ 4] = bufp[2];
         outBuf[11] = outBuf[10] =
-        outBuf[ 9] = outBuf[ 8] = bufp[3];
+                       outBuf[ 9] = outBuf[ 8] = bufp[3];
         outBuf[15] = outBuf[14] =
-        outBuf[13] = outBuf[12] = bufp[4];
+                       outBuf[13] = outBuf[12] = bufp[4];
         outBuf = outBuf + 16;
         bufp = bufp + 5;
         if (outBuf >= endp)
@@ -235,6 +294,8 @@ void LibretroDisplay::setDisplayParameters(const DisplayParameters& dp)
 {
   // No other display parameters are supported.
   displayParameters.indexToRGBFunc = dp.indexToRGBFunc;
+  colormap.setParams(dp);
+
 }
 
 const VideoDisplay::DisplayParameters&
@@ -299,7 +360,8 @@ void LibretroDisplay::vsyncStateChange(bool newState, unsigned int currentSlot_)
 
 LibretroDisplay::LibretroDisplay(int xx, int yy, int ww, int hh,
                                  const char *lbl, bool useHalfFrame_)
-  :     messageQueue((Message *) 0),
+  :     colormap(),
+        messageQueue((Message *) 0),
         lastMessage((Message *) 0),
         freeMessageStack((Message *) 0),
         messageQueueMutex(),
@@ -322,13 +384,19 @@ LibretroDisplay::LibretroDisplay(int xx, int yy, int ww, int hh,
         lastLineNum(-2),
 #ifdef EP128EMU_USE_XRGB8888
         frame_buf1((uint32_t *) 0),
-        frame_buf2((uint32_t *) 0),
+//        frame_buf2((uint32_t *) 0),
 #else
         frame_buf1((uint16_t *) 0),
-        frame_buf2((uint16_t *) 0),
+//        frame_buf2((uint16_t *) 0),
 #endif // EP128EMU_USE_XRGB8888
         interlacedFrameCount(0),
-        frameCount(0)
+        frameCount(0),
+        contentTopEdge(0),
+        contentLeftEdge(0),
+        contentBottomEdge(EP128EMU_LIBRETRO_SCREEN_HEIGHT-1),
+        contentRightEdge(EP128EMU_LIBRETRO_SCREEN_WIDTH-1),
+        scanBorders(false),
+        bordersScanned(false)
 {
   try
   {
@@ -354,7 +422,7 @@ LibretroDisplay::LibretroDisplay(int xx, int yy, int ww, int hh,
       delete[] linesChanged;
     throw;
   }
-
+  resetViewport();
 
 #ifdef EP128EMU_USE_XRGB8888
   frameSize = ww * hh * sizeof(uint32_t);
@@ -383,6 +451,38 @@ void LibretroDisplay::wakeDisplay(bool syncRequired)
   }
 }
 
+void LibretroDisplay::resetViewport() {
+    setViewport(0,0,EP128EMU_LIBRETRO_SCREEN_WIDTH-1,EP128EMU_LIBRETRO_SCREEN_HEIGHT-1);
+}
+
+bool LibretroDisplay::setViewport(int x1, int y1, int x2, int y2) {
+    if (x1>=0 && x1<x2) {
+    } else return false;
+    if (y1>=0 && y1<y2) {
+    } else return false;
+    if (x2<EP128EMU_LIBRETRO_SCREEN_WIDTH) {
+    } else return false;
+    if (y2<EP128EMU_LIBRETRO_SCREEN_HEIGHT) {
+    } else return false;
+
+    viewPortX1=x1;
+    viewPortY1=y1;
+    viewPortX2 = x2;
+    viewPortY2 = y2;
+    printf("setViewport: %d %d - %d %d\n",x1,y1,x2,y2);
+    return true;
+}
+
+bool LibretroDisplay::isViewportDefault() {
+    if(
+    viewPortX1 == 0 &&
+    viewPortY1 == 0 &&
+    viewPortX2 == EP128EMU_LIBRETRO_SCREEN_WIDTH-1 &&
+    viewPortY2 == EP128EMU_LIBRETRO_SCREEN_HEIGHT-1
+    ) return true;
+    else return false;
+}
+
 void LibretroDisplay::run()
 {
   bool frameDone;
@@ -396,7 +496,8 @@ void LibretroDisplay::run()
       frameDone = checkEvents();
       if (frameDone)
       {
-        draw(frame_bufActive);
+        draw(frame_bufActive, scanBorders);
+        scanBorders = false;
       }
     }
     while (frameDone);
@@ -504,10 +605,10 @@ LibretroDisplay::~LibretroDisplay()
   this->join();
 
   free(frame_buf1);
-  free(frame_buf2);
+//  free(frame_buf2);
   free(frame_buf3);
   frame_buf1 = NULL;
-  frame_buf2 = NULL;
+//  frame_buf2 = NULL;
   frame_buf3 = NULL;
   frame_bufActive = NULL;
   frame_bufReady = NULL;
@@ -546,20 +647,26 @@ void LibretroDisplay::limitFrameRate(bool isEnabled)
   (void) isEnabled;
 }
 
-void LibretroDisplay::draw(void * fb)
+void LibretroDisplay::draw(void * fb, bool scanForBorder)
 {
-  firstNonzeroLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+  int borderColor = 0;
+  int firstNonzeroLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+  int firstNonzeroCol = EP128EMU_LIBRETRO_SCREEN_WIDTH;
   int firstNonborderLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-  lastNonzeroLine = 0;
+  int firstNonborderCol = EP128EMU_LIBRETRO_SCREEN_WIDTH;
+  int lastNonzeroLine = 0;
+  int lastNonzeroCol = 0;
   int lastNonborderLine = 0;
+  int lastNonborderCol = 0;
 
-  borderColor = 0;
+  // render to own framebuf always if there's a chance of resolution change
+  if ((scanForBorder || bordersScanned) && !interlacedFrameCount) {
+    frame_bufActive = frame_buf1;
+  }
   for (int yc = 0; yc < EP128EMU_LIBRETRO_SCREEN_HEIGHT; yc++)
   {
-    if (!interlacedFrameCount && (yc & 1))
-    {
-      continue;
-    }
+    if (!interlacedFrameCount && (yc & 1)) continue;
+    if (yc < viewPortY1 || yc > viewPortY2) continue;
     if (lineBuffers[yc])
     {
       // decode video data
@@ -572,96 +679,125 @@ void LibretroDisplay::draw(void * fb)
 
       for(int i=0; i<EP128EMU_LIBRETRO_SCREEN_WIDTH; i++)
       {
+        if (i<viewPortX1 || i>viewPortX2) continue;
         unsigned char pixelValue = lineBuf[i];
 
-        float rF=0.0;
-        float gF=0.0;
-        float bF=0.0;
-
-        if (displayParameters.indexToRGBFunc)
-          displayParameters.indexToRGBFunc(uint8_t(pixelValue), rF, gF, bF);
-        rF = rF * 255.0f + 0.5f;
-        gF = gF * 255.0f + 0.5f;
-        bF = bF * 255.0f + 0.5f;
-        unsigned char r = (unsigned char) (rF > 0.0f ? (rF < 255.5f ? rF : 255.5f) : 0.0f);
-        unsigned char g = (unsigned char) (gF > 0.0f ? (gF < 255.5f ? gF : 255.5f) : 0.0f);
-        unsigned char b = (unsigned char) (bF > 0.0f ? (bF < 255.5f ? bF : 255.5f) : 0.0f);
 #ifdef EP128EMU_USE_XRGB8888
-        // conversion to RGB_X888
-        uint32_t pixel32 = (uint32_t) (r << 16 | g << 8 | b << 0);
-        if (!nonzero && pixel32>0) {
-          nonzero=true;
-          if(borderColor == 0) borderColor = pixel32;
-        }
-        if (!nonborder && borderColor>0 && pixel32 != borderColor && pixel32 > 0) {nonborder=true;}
+        uint32_t pixelResult = colormap(pixelValue);
 #else
-        // conversion to RGB_565
-        uint16_t pixel16 = (uint16_t) ((r&0xF8) << 8 | (g&0xFC) <<  3 | (b&0xF8) >> 3);
-        if (!nonzero && pixel16>0) {
-          nonzero=true;
-          if (borderColor == 0) borderColor = pixel16;
-          }
-        if (!nonborder && borderColor>0 && pixel16 != borderColor && pixel16 > 0) {
-           //printf("nonborder: at %d %d value %d instead of %d \n",yc,i,pixel16,borderColor);
-           nonborder=true;}
-
+        uint16_t pixelResult = colormap(pixelValue);
 #endif // EP128EMU_USE_XRGB8888
+
+        if (scanForBorder && pixelResult > 0)
+        {
+          if (!nonzero)
+          {
+            nonzero=true;
+            if(i<firstNonzeroCol)firstNonzeroCol = i;
+            if (yc<5 && borderColor == 0) borderColor = pixelResult;
+          }
+          if (!nonborder && borderColor>0 && pixelResult != borderColor)
+          {
+            //printf("nonborder: at %d %d value %d instead of %d \n",yc,i,pixel16,borderColor);
+            nonborder=true;
+            if (i<firstNonborderCol)firstNonborderCol = i;
+          }
+          if (i>lastNonzeroCol)
+          {
+            lastNonzeroCol = i;
+          }
+          if (i>lastNonborderCol && pixelResult != borderColor)
+          {
+            lastNonborderCol = i;
+          }
+        }
+        int currWidth = viewPortX2 - viewPortX1 + 1;
+        int currLine = yc - viewPortY1;
+        int currPos = i - viewPortX1;
         if (interlacedFrameCount)
         {
-#ifdef EP128EMU_USE_XRGB8888
-          frame_bufActive[yc * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel32;
-#else
-          frame_bufActive[yc * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel16;
-#endif // EP128EMU_USE_XRGB8888
-          if (yc < EP128EMU_LIBRETRO_SCREEN_HEIGHT-1)
-            frame_bufActive[(yc+1) * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = frame_bufReady[(yc+1) * EP128EMU_LIBRETRO_SCREEN_WIDTH + i];
+          frame_bufActive[currLine * currWidth + currPos] = pixelResult;
+          frame_bufSpare[currLine * currWidth + currPos] = pixelResult;
+          if (yc < viewPortY2-1)
+            frame_bufActive[(currLine+1) * currWidth + currPos] = frame_bufSpare[(currLine+1) * currWidth + currPos];
         }
         else
         {
           if (useHalfFrame)
           {
             // use different addressing to achieve packed frame even in this case
-#ifdef EP128EMU_USE_XRGB8888
-            frame_bufActive[yc/2 * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel32;
-#else
-            frame_bufActive[yc/2 * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel16;
-#endif // EP128EMU_USE_XRGB8888
+            frame_bufActive[currLine/2 * currWidth + currPos] = pixelResult;
+            //if (scanForBorder) printf("px: %d %d %d\n",currWidth,currLine,currPos);
           }
           else
           {
             // doublescan
-#ifdef EP128EMU_USE_XRGB8888
-            frame_bufActive[(yc)   * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel32;
-            frame_bufActive[(yc+1) * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel32;
-#else
-            frame_bufActive[(yc)   * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel16;
-            frame_bufActive[(yc+1) * EP128EMU_LIBRETRO_SCREEN_WIDTH + i] = pixel16;
-#endif // EP128EMU_USE_XRGB8888
+            frame_bufActive[currLine * currWidth + currPos] = pixelResult;
+            frame_bufActive[(currLine+1) * currWidth + currPos] = pixelResult;
           }
         }
       }
-      if(nonzero) {
-        if(yc > lastNonzeroLine) lastNonzeroLine = yc;
+      if(scanForBorder && nonzero)
+      {
         if(yc < firstNonzeroLine) firstNonzeroLine = yc;
+        if(yc > lastNonzeroLine) lastNonzeroLine = yc;
       }
-      if(nonborder) {
-        if(yc > lastNonborderLine) lastNonborderLine = yc;
+      // known problem: if there is border, then bottom edge will not be the obvious screen edge of black and border
+      // but the last row where any other content is present
+      if(scanForBorder && nonborder)
+      {
         if(yc < firstNonborderLine) firstNonborderLine = yc;
+        if(yc > lastNonborderLine) lastNonborderLine = yc;
       }
-
     }
-
   }
-  //printf("nonzero: %d %d %d %d %d\n",firstNonzeroLine,lastNonzeroLine, firstNonborderLine, lastNonborderLine, borderColor);
-  if (firstNonzeroLine == 0 ) firstNonzeroLine = firstNonborderLine;
-  // screen end can vary, see Beach Head
-  if (lastNonzeroLine > EP128EMU_LIBRETRO_SCREEN_HEIGHT-3 || lastNonzeroLine > lastNonborderLine + 20) lastNonzeroLine = lastNonborderLine;
+  if (scanForBorder)
+  {
+    //printf("nonzero: H %d %d / %d %d W %d %d / %d %d / %d\n",firstNonzeroLine,lastNonzeroLine, firstNonborderLine, lastNonborderLine,
+    //firstNonzeroCol,lastNonzeroCol,firstNonborderCol,lastNonborderCol, borderColor);
+    if (borderColor > 0) {
+      contentTopEdge = firstNonborderLine;
+      contentBottomEdge = lastNonborderLine;
+      contentLeftEdge = firstNonborderCol;
+      contentRightEdge = lastNonborderCol;
+    } else {
+      contentTopEdge = firstNonzeroLine;
+      contentBottomEdge = lastNonzeroLine;
+      contentLeftEdge = firstNonzeroCol;
+      contentRightEdge = lastNonzeroCol;
+    }
+/*    if (firstNonzeroLine == 0) {
+    contentTopEdge = firstNonborderLine;
+    } else {contentTopEdge = firstNonzeroLine;}
+
+    if (firstNonzeroCol == 0 ) {
+    contentLeftEdge = firstNonborderCol;
+    } else { contentLeftEdge = firstNonzeroCol;}
+
+
+    // screen end can vary, see Beach Head
+    if (lastNonzeroLine > EP128EMU_LIBRETRO_SCREEN_HEIGHT-3 || lastNonzeroLine > lastNonborderLine + 20) {
+    contentBottomEdge = lastNonborderLine;
+    } else {contentBottomEdge = lastNonzeroLine;}
+    if (lastNonzeroCol > EP128EMU_LIBRETRO_SCREEN_WIDTH-2 ) {
+    contentRightEdge = lastNonborderCol;
+    } else {
+    contentRightEdge = lastNonzeroCol;}*/
+    bordersScanned = true;
+  }
+/*  else
+  {
+    lastNonzeroLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT-1;
+    lastNonzeroCol = EP128EMU_LIBRETRO_SCREEN_WIDTH-1;
+    firstNonzeroLine = 0;
+    firstNonzeroCol = 0;
+  }*/
 #ifdef EP128EMU_USE_XRGB8888
 //  uint32_t* swapPtr = frame_bufReady;
 #else
 //  uint16_t* swapPtr = frame_bufReady;
 #endif
-  frame_bufReady = frame_bufActive;
+//  frame_bufReady = frame_bufActive;
 //    frame_bufActive = swapPtr;
 
 }

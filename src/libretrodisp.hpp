@@ -28,6 +28,31 @@
 namespace Ep128Emu {
 
   class LibretroDisplay : public VideoDisplay, private Thread {
+   private:
+    class Colormap {
+     private:
+      uint16_t  *palette16;
+      uint32_t  *palette32;
+      static uint16_t pixelConvRGB565(double r, double g, double b);
+      static uint32_t pixelConvXRGB8888(double r, double g, double b);
+     public:
+      Colormap();
+      ~Colormap();
+      void setParams(const DisplayParameters& dp);
+#ifdef EP128EMU_USE_XRGB8888
+      inline uint32_t operator()(uint8_t c) const
+      {
+        return palette32[c];
+      }
+#else
+      inline uint16_t operator()(uint8_t c) const
+      {
+        return palette16[c];
+      }
+#endif // EP128EMU_USE_XRGB8888
+    };
+    Colormap      colormap;
+
    protected:
     class Message {
      public:
@@ -135,7 +160,7 @@ namespace Ep128Emu {
     }
     void deleteMessage(Message *m);
     void queueMessage(Message *m);
-    void decodeLine(unsigned char *outBuf,
+    static void decodeLine(unsigned char *outBuf,
                            const unsigned char *inBuf, size_t nBytes);
     void frameDone();
     void run();
@@ -171,32 +196,38 @@ namespace Ep128Emu {
     bool          redrawFlag;
     bool          prvFrameWasOdd;
     int           lastLineNum;
-        bool          *linesChanged;
+    bool          *linesChanged;
    public:
 #ifdef EP128EMU_USE_XRGB8888
     uint32_t *frame_buf1;
-    uint32_t *frame_buf2;
+//    uint32_t *frame_buf2;
     uint32_t *frame_buf3;
     uint32_t *frame_bufActive;
     uint32_t *frame_bufReady;
     uint32_t *frame_bufSpare;
     uint32_t *frame_bufLastReleased;
-    uint32_t borderColor;
 #else
     uint16_t *frame_buf1;
-    uint16_t *frame_buf2;
+//    uint16_t *frame_buf2;
     uint16_t *frame_buf3;
     uint16_t *frame_bufActive;
     uint16_t *frame_bufReady;
     uint16_t *frame_bufSpare;
     uint16_t *frame_bufLastReleased;
-    uint16_t borderColor;
 #endif
     uint32_t frameSize;
     uint32_t interlacedFrameCount;
     uint32_t frameCount;
-    int           firstNonzeroLine;
-    int           lastNonzeroLine;
+    int           contentTopEdge;
+    int           contentLeftEdge;
+    int           contentBottomEdge;
+    int           contentRightEdge;
+    int viewPortX1;
+    int viewPortY1;
+    int viewPortX2;
+    int viewPortY2;
+    volatile bool scanBorders;
+    bool bordersScanned;
     LibretroDisplay(int xx, int yy, int ww, int hh,
                                const char *lbl, bool useHalfFrame_);
     virtual ~LibretroDisplay();
@@ -242,8 +273,11 @@ namespace Ep128Emu {
      * maximum of 50.
      */
     virtual void limitFrameRate(bool isEnabled);
-    virtual void draw(void* fb);
+    virtual void draw(void* fb, bool scanForBorder);
     void wakeDisplay(bool syncRequired);
+    void resetViewport(void);
+    bool setViewport(int x1, int y1, int x2, int y2);
+    bool isViewportDefault(void);
 
   };
 

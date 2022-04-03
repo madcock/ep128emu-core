@@ -4,9 +4,9 @@ namespace Ep128Emu
 {
 
 LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
-                           const char* startSequence_, const char* cfgFile)
-  : useHalfFrame(true),
-    isHalfFrame(true),
+                           const char* startSequence_, const char* cfgFile, bool useHalfFrame_)
+  : useHalfFrame(useHalfFrame_),
+    isHalfFrame(useHalfFrame_),
     showOverscan(showOverscan_),
     canSkipFrames(canSkipFrames_),
     joypadConfigChanged(false),
@@ -16,7 +16,8 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
     fullHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT),
     halfHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT/2),
     defaultHalfHeight(EP128EMU_LIBRETRO_SCREEN_HEIGHT/2),
-    lineOffset(0),
+    defaultWidth(EP128EMU_LIBRETRO_SCREEN_WIDTH),
+    borderSize(0),
     machineType(MACHINE_EP),
     machineDetailedType(machineDetailedType_),
     totalTime(0),
@@ -76,8 +77,6 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
     halfHeight -= 20;
     defaultHalfHeight = halfHeight;
     currHeight = useHalfFrame ? halfHeight : fullHeight;
-    // lineOffset is irrespective of half frame or not
-    lineOffset = currWidth*20;
   }
   std::string romBasePath(romDirectory_);
   romBasePath.append("/ep128emu/roms/");
@@ -250,9 +249,7 @@ LibretroCore::~LibretroCore()
     delete config;
   if (audioOutput)
     delete audioOutput;
-
 }
-
 
 void LibretroCore::initialize_keyboard_map(void)
 {
@@ -326,8 +323,8 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_k]         = 0x32;
   libretro_to_ep128emu_kbmap[RETROK_SEMICOLON] = 0x33;
   libretro_to_ep128emu_kbmap[RETROK_l]         = 0x34;
-  libretro_to_ep128emu_kbmap[RETROK_COLON]     = 0x35; // ? how is it mapped in the frontend?
-  libretro_to_ep128emu_kbmap[RETROK_QUOTE]     = 0x35; // probably there is no "colon" key on the keyboard
+  libretro_to_ep128emu_kbmap[RETROK_COLON]     = 0x35; // :
+  libretro_to_ep128emu_kbmap[RETROK_QUOTE]     = 0x35; // probably there is no : key on the keyboard
   libretro_to_ep128emu_kbmap[RETROK_RIGHTBRACKET] = 0x36;
   //libretro_to_ep128emu_kbmap[???]            = 0x37;
   libretro_to_ep128emu_kbmap[RETROK_F10]       = 0x38; // STOP
@@ -336,7 +333,7 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_RIGHT]     = 0x3A;
   libretro_to_ep128emu_kbmap[RETROK_UP]        = 0x3B;
   libretro_to_ep128emu_kbmap[RETROK_F9]        = 0x3C; // HOLD
-  libretro_to_ep128emu_kbmap[RETROK_SCROLLOCK] = 0x3C; // HOLD
+  libretro_to_ep128emu_kbmap[RETROK_SCROLLOCK] = 0x3C; // HOLD - conflicts with "game focus" default
   libretro_to_ep128emu_kbmap[RETROK_LEFT]      = 0x3D;
   libretro_to_ep128emu_kbmap[RETROK_RETURN]    = 0x3E;
   libretro_to_ep128emu_kbmap[RETROK_LALT]      = 0x3F;
@@ -353,8 +350,8 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_i]         = 0x48;
   //libretro_to_ep128emu_kbmap[???]            = 0x49;
   libretro_to_ep128emu_kbmap[RETROK_o]         = 0x4A;
-  libretro_to_ep128emu_kbmap[RETROK_AT]        = 0x4B; // ? how is it mapped in the frontend?
-  libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE] = 0x4B; // probably there is no "at" key on the keyboard
+  libretro_to_ep128emu_kbmap[RETROK_AT]        = 0x4B; // @
+  libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE] = 0x4B; // probably there is no @ key on the keyboard
   libretro_to_ep128emu_kbmap[RETROK_p]         = 0x4C;
   libretro_to_ep128emu_kbmap[RETROK_LEFTBRACKET] = 0x4D;
   //libretro_to_ep128emu_kbmap[???]            = 0x4E;
@@ -384,11 +381,10 @@ void LibretroCore::initialize_keyboard_map(void)
     */
     libretro_to_ep128emu_kbmap[RETROK_ESCAPE]     = 0x38; // move Esc back to Esc
     libretro_to_ep128emu_kbmap[RETROK_F9]         = 0x4B; // use F9 for 0
-    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x4B;
+    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x4B; // or the key left of 1
     libretro_to_ep128emu_kbmap[RETROK_AT]         = -1;   // there can be only 2 mappings
     libretro_to_ep128emu_kbmap[RETROK_F10]        = 0x1F; // use F10 for í
-    libretro_to_ep128emu_kbmap[RETROK_OEM_102]    = 0x1F; // use extra 102. key for í
-
+    libretro_to_ep128emu_kbmap[RETROK_OEM_102]    = 0x1F; // or the extra 102. key
   }
   else if (machineType == MACHINE_CPC)
   {
@@ -400,7 +396,6 @@ void LibretroCore::initialize_keyboard_map(void)
     // Clear is Delete
     // Delete is Erase
   }
-
 
   for(int i=0; i<RETROK_LAST; i++)
   {
@@ -439,7 +434,7 @@ void LibretroCore::initialize_keyboard_map(void)
     inputJoyMap[0x72][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
     inputJoyMap[0x71][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
     inputJoyMap[0x70][0] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_A; // fire
     // The 'left' Sinclair joystick maps the joystick directions and the fire button to the 1 (left), 2 (right), 3 (down), 4 (up) and 5 (fire) keys
     inputJoyMap[0x1b][1] = RETRO_DEVICE_ID_JOYPAD_UP;
     inputJoyMap[0x1d][1] = RETRO_DEVICE_ID_JOYPAD_DOWN;
@@ -453,11 +448,15 @@ void LibretroCore::initialize_keyboard_map(void)
     inputJoyMap[0x18][2] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
     inputJoyMap[0x2c][2] = RETRO_DEVICE_ID_JOYPAD_X; // fire
     // A cursor joystick interfaces maps to keys 5 (left), 6 (down), 7 (up), 8 (right) and 0 (fire). (Protek and AGF)
-    // todo - it is not supported now
+    inputJoyMap[0x18][3] = RETRO_DEVICE_ID_JOYPAD_UP;
+    inputJoyMap[0x1a][3] = RETRO_DEVICE_ID_JOYPAD_DOWN;
+    inputJoyMap[0x1c][3] = RETRO_DEVICE_ID_JOYPAD_LEFT;
+    inputJoyMap[0x28][3] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
+    inputJoyMap[0x2c][3] = RETRO_DEVICE_ID_JOYPAD_X; // fire
   }
   else
   {
-    // internal joystick: controller 0
+    // EP or TVC: internal joystick: controller 0
     inputJoyMap[0x3b][0] = RETRO_DEVICE_ID_JOYPAD_UP;
     inputJoyMap[0x39][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
     inputJoyMap[0x3d][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
@@ -558,52 +557,10 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
               message.frames = 50 * 4;
               environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &message);
             }
-            if(i == 0xFE && isHalfFrame)
+            if(i == 0xFE)
             {
-              //printf("button pressed halfframe: %d ",isHalfFrame?1:0);
-              if (halfHeight != defaultHalfHeight || lineOffset > 0)
-              {
-                lineOffset = 0;
-                halfHeight = defaultHalfHeight;
-                //printf("restore to %d \n",halfHeight);
-              }
-              else
-              {
-                int keepBorders = 6;
-                int firstNonzeroLine = w->firstNonzeroLine - keepBorders > 0 ? w->firstNonzeroLine -keepBorders : 0;
-                int lastNonzeroLine = w->lastNonzeroLine + keepBorders < EP128EMU_LIBRETRO_SCREEN_HEIGHT ? w->lastNonzeroLine + keepBorders : EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-                int detectedHeight = (lastNonzeroLine - firstNonzeroLine) / 2 + 1;
-
-                int detectedEmptyRangeBottom = EP128EMU_LIBRETRO_SCREEN_HEIGHT - lastNonzeroLine;
-                int proposedLineOffset = currWidth * ((firstNonzeroLine)/2);
-                if (detectedHeight <= 150)
-                {
-                  if (firstNonzeroLine < detectedEmptyRangeBottom )
-                  {
-                    if (firstNonzeroLine < 150)
-                    {
-                      detectedHeight = (EP128EMU_LIBRETRO_SCREEN_HEIGHT - 2*firstNonzeroLine)/2+1;
-                    }
-                  }
-                  else
-                  {
-                    if (detectedEmptyRangeBottom  < 150)
-                    {
-                      detectedHeight = (EP128EMU_LIBRETRO_SCREEN_HEIGHT - 2*detectedEmptyRangeBottom)/2+1;
-                      proposedLineOffset = currWidth * (detectedEmptyRangeBottom/2);
-                    }
-                  }
-                }
-                printf("detected %d \n",detectedHeight);
-                if (detectedHeight > 150 && detectedHeight < defaultHalfHeight-50)
-                {
-                  halfHeight = detectedHeight+1;
-                  lineOffset = proposedLineOffset;
-                }
-
-              }
+              w->scanBorders = true;
             }
-
           }
         }
         else if (inputStateMap[i][port] && !currInputState)
@@ -659,20 +616,47 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
 }
 void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t environ_cb)
 {
-  bool resolutionChanged = false;
-  unsigned stride  = EP128EMU_LIBRETRO_SCREEN_WIDTH;
   if (useHalfFrame && isHalfFrame && w->interlacedFrameCount > 0)
   {
     isHalfFrame = false;
-    change_resolution(currWidth, fullHeight, environ_cb);
-    resolutionChanged = true;
+    change_resolution(defaultWidth, fullHeight, environ_cb);
+    w->resetViewport();
   }
-  else if (useHalfFrame && ((!isHalfFrame && w->interlacedFrameCount == 0) || (currHeight != halfHeight)))
+  else if (useHalfFrame && (!isHalfFrame && w->interlacedFrameCount == 0))
   {
     isHalfFrame = true;
-    change_resolution(currWidth, halfHeight, environ_cb);
-    resolutionChanged = true;
+    change_resolution(defaultWidth, defaultHalfHeight, environ_cb);
+    w->resetViewport();
   }
+  else if (useHalfFrame && isHalfFrame && w->bordersScanned)
+  {
+    w->bordersScanned = false;
+    if(!w->isViewportDefault())
+    {
+      change_resolution(defaultWidth, defaultHalfHeight, environ_cb);
+      w->resetViewport();
+    }
+    else
+    {
+      int proposedY1 = w->contentTopEdge - borderSize > 0 ? w->contentTopEdge - borderSize : 0;
+      int proposedY2 = w->contentBottomEdge + borderSize < EP128EMU_LIBRETRO_SCREEN_HEIGHT ? w->contentBottomEdge + borderSize : EP128EMU_LIBRETRO_SCREEN_HEIGHT-1;
+      int detectedHeight = proposedY2 - proposedY1 + 2;
+      //int detectedEmptyRangeBottom = EP128EMU_LIBRETRO_SCREEN_HEIGHT - 1 - proposedY2;
+
+      int proposedX1 = w->contentLeftEdge - borderSize > 0 ? w->contentLeftEdge - borderSize : 0;
+      int proposedX2 = w->contentRightEdge + borderSize < EP128EMU_LIBRETRO_SCREEN_WIDTH ? w->contentRightEdge + borderSize : EP128EMU_LIBRETRO_SCREEN_WIDTH-1;
+      int detectedWidth = proposedX2 - proposedX1 + 1;
+      // todo: if the detected height is small, adjust it to be centered
+
+      if (detectedHeight >= 150 && detectedWidth >= 200)
+      {
+        w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
+        change_resolution(detectedWidth, detectedHeight/2, environ_cb);
+      }
+    }
+  }
+  unsigned stride  = currWidth;
+
   if (canSkipFrames && prevFrameCount == w->frameCount)
   {
     //printf("frame dupe %d \n",prevFrameCount);
@@ -681,23 +665,13 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
   else
   {
     prevFrameCount = w->frameCount;
-    if (!resolutionChanged)
     {
 #ifdef EP128EMU_USE_XRGB8888
-      video_cb(w->frame_bufReady+lineOffset, currWidth, currHeight, stride << 2);
+      video_cb(w->frame_bufActive, currWidth, currHeight, stride << 2);
 #else
-      video_cb(w->frame_bufReady+lineOffset, currWidth, currHeight, stride << 1);
+      video_cb(w->frame_bufActive, currWidth, currHeight, stride << 1);
 #endif
     }
-    else
-    {
-#ifdef EP128EMU_USE_XRGB8888
-      video_cb(w->frame_bufSpare+lineOffset, currWidth, currHeight, stride << 2);
-#else
-      video_cb(w->frame_bufSpare+lineOffset, currWidth, currHeight, stride << 1);
-#endif
-    }
-    //w->frame_bufLastReleased = w->frame_bufReady;
   }
 }
 
@@ -705,9 +679,11 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
 {
 
   float aspect = 4.0f / 3.0f;
-  //if(!showOverscan)
-  aspect = 4.0f / (3.0f / (float) (isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)height : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height));
-  //aspect = 4.0f / (3.0f / (float) (EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height));
+  // For some reason, aspect is wrong if based purely on pixel basis - if half height is used, it needs to be taken into account
+  aspect = 4.0f / (3.0f /
+                   (float) (isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)height : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height) *
+                   (float) (EP128EMU_LIBRETRO_SCREEN_WIDTH/(float)width)
+                  );
   retro_game_geometry g =
   {
     .base_width   = (unsigned int) width,
@@ -719,7 +695,6 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
   environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &g);
   currWidth = width;
   currHeight = height;
-  //printf("Set half resolution done\n");
 }
 
 void LibretroCore::start(void)
@@ -732,49 +707,34 @@ void LibretroCore::start(void)
 
 void LibretroCore::run_for(retro_usec_t frameTime, float waitPeriod, void * fb)
 {
-  retro_usec_t halfFrame = 0;//frameTime > 10000 ? 5000 : frameTime > 1000 ? 1000 : 0;
-//  bool frameDone = false;
   //Ep128Emu::VMThread::VMThreadStatus  vmThreadStatus(*vmThread);
-  //printf("frame: %d usec, start %f ",frameTime, vmThread->speedTimer.getRealTime());
   totalTime += frameTime;
-  //vmThread->unlock();
-  vmThread->allowRunFor(frameTime-halfFrame);
   if(fb)
   {
 #ifdef EP128EMU_USE_XRGB8888
     w->frame_bufActive = (uint32_t*)fb;
-  }
-  else
-  {
-    w->frame_bufActive = (uint32_t*) w->frame_bufSpare;
 #else
     w->frame_bufActive = (uint16_t*)fb;
+#endif // EP128EMU_USE_XRGB8888
   }
   else
   {
-    w->frame_bufActive = (uint16_t*) w->frame_bufSpare;
+#ifdef EP128EMU_USE_XRGB8888
+    w->frame_bufActive = (uint32_t*) w->frame_buf1;
+#else
+    w->frame_bufActive = (uint16_t*) w->frame_buf1;
 #endif // EP128EMU_USE_XRGB8888
-
   }
+  vmThread->allowRunFor(frameTime);
+
   do
   {
     w->wakeDisplay(false);
-    /*    frameDone = w->checkEvents() || frameDone;
-        if (frameDone) {
-        w->draw();
-        frameDone = false;
-        }*/
     if (vmThread->isReady()) break;
     if (waitPeriod > 0)
       Timer::wait(waitPeriod);
   }
   while(true);
-  //w->wakeDisplay(false);
-  //vmThread->waitUntilReady();
-
-  //printf(" end %f \n",vmThread->speedTimer.getRealTime());
-  //vmThread->lock(0x7FFFFFFF);
-  //vmThread->allowRunFor(halfFrame);
 }
 
 void LibretroCore::sync_display(void)
@@ -788,6 +748,4 @@ void LibretroCore::errorCallback(void *userData, const char *msg)
   std::fprintf(stderr, "WARNING: %s\n", msg);
 }
 
-
 }       // namespace Ep128Emu
-

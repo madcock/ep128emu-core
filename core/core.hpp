@@ -51,8 +51,8 @@ private:
 
 public:
   uint16_t audioBuffer[EP128EMU_SAMPLE_RATE*1000*2];
-  int inputJoyMap[512][4];
-  bool inputStateMap[512][4];
+  int inputJoyMap[256][4];
+  bool inputStateMap[256][4];
   bool useHalfFrame;
   bool isHalfFrame;
   bool showOverscan;
@@ -65,7 +65,8 @@ public:
   int fullHeight;
   int halfHeight;
   int defaultHalfHeight;
-  int lineOffset;
+  int defaultWidth;
+  int borderSize;
   int machineType;
   int machineDetailedType;
   retro_usec_t totalTime;
@@ -81,7 +82,7 @@ public:
   // ----------------
 
   LibretroCore(int machineDetailedType, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
-  const char* startSequence_, const char* cfgFile);
+  const char* startSequence_, const char* cfgFile, bool useHalfFrame);
   virtual ~LibretroCore();
 
 

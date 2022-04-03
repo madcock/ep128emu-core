@@ -5,31 +5,25 @@ core_enable?
 sconstruct integráció?
 log callback-ek
 
-
-vm futás csak a frame idejéig opcionálisra kellene
-audio kaphatná ezeket konfigból, ahogy a többi (latency??)
-valami a signed-unsigned környékén eltéved, ha nem konstansból megy a 16
-sound.hwPeriods	16
-sound.sampleRate	44100
-sound.swPeriods	16
-
 néhány tvc program sem megy? de mondjuk eredeti tvcemu-n sem
 
 teljesítmény, natív ep128emu az ~2500%
-  -- pc-n unlockolva ~150, kicsit segít a sw fb, wait 1-gyel 120
-  -- rpi-n 30-40 alacsony felbontáson (rossz asp. ratio)
+  -- rgb integer konverzió után wait 1-gyel 250, wait 0-val 300+
+  -- rpi-n 30-40 alacsony felbontáson (rossz asp. ratio), újratesztelni -- 45
+
+  rpi-n segfault content loadkor
 
 gfx:
 sw fb interlaced módba kapcsoláskor behal
 opengl support?
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
+sw fb + interlace = crash
 overscant le kellene tiltani / megnézni mit csinál sw fb esetén mert vszg. nem oké
 a height detect hasonlóan
-keepBorder paraméterből
-width detection / crop?
 
 input:
-joystick kezelés -- 2 user? -- tesztelni kellene
+konfigurálható default kiosztás (core option)
+joystick kezelés 2/3 user -- tesztelni kellene
 4/6 joystick support
 egér
 
@@ -38,10 +32,16 @@ zx 48 load?
 kicsomagolt dir (com, bas, prg?) filenamecallback
 dtf support?
 
-warningok
-ne main.cpp legyen
 demo record/play-jel mi legyen
 windows build, arm build, stb
+
+vm futás csak a frame idejéig opcionálisra kellene
+audio kaphatná ezeket konfigból, ahogy a többi (latency??)
+valami a signed-unsigned környékén eltéved, ha nem konstansból megy a 16
+sound.hwPeriods	16
+sound.sampleRate	44100
+sound.swPeriods	16
+
 */
 
 
@@ -82,6 +82,8 @@ retro_usec_t curr_frame_time = 0;
 retro_usec_t prev_frame_time = 0;
 float waitPeriod = 0.001;
 bool useSwFb = false;
+bool useHalfFrame = false;
+int borderSize = 0;
 bool soundHq = true;
 
 bool canSkipFrames = false;
@@ -91,10 +93,16 @@ Ep128Emu::VMThread              *vmThread    = (Ep128Emu::VMThread *) 0;
 Ep128Emu::EmulatorConfiguration *config      = (Ep128Emu::EmulatorConfiguration *) 0;
 Ep128Emu::LibretroCore          *core        = (Ep128Emu::LibretroCore *) 0;
 
+static retro_video_refresh_t video_cb;
+static retro_audio_sample_t audio_cb;
+static retro_audio_sample_batch_t audio_batch_cb;
+static retro_input_poll_t input_poll_cb;
+static retro_input_state_t input_state_cb;
+
 bool does_file_exist(const char *fileName)
 {
-    std::ifstream infile(fileName);
-    return infile.good();
+  std::ifstream infile(fileName);
+  return infile.good();
 }
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
@@ -136,8 +144,58 @@ void set_frame_time_cb(retro_usec_t usec)
 static void update_keyboard_cb(bool down, unsigned keycode,
                                uint32_t character, uint16_t key_modifiers)
 {
-  if(keycode != RETROK_UNKNOWN)
+  if(keycode != RETROK_UNKNOWN && core)
     core->update_keyboard(down,keycode,character,key_modifiers);
+}
+
+static void check_variables(void)
+{
+
+  struct retro_variable var =
+  {
+    .key = "ep128emu_wait",
+  };
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    waitPeriod = 0.001f * std::atoi(var.value);
+  }
+
+  var.key = "ep128emu_swfb";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    useSwFb = std::atoi(var.value) == 1 ? true : false;
+  }
+
+  var.key = "ep128emu_sdhq";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    bool soundHq_;
+    soundHq_ = std::atoi(var.value) == 1 ? true : false;
+    if (soundHq != soundHq_)
+    {
+      soundHq = soundHq_;
+      if(core)
+      {
+        core->config->sound.highQuality = soundHq;
+        core->config->soundSettingsChanged = true;
+        core->config->applySettings();
+      }
+    }
+  }
+
+  var.key = "ep128emu_useh";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    useHalfFrame = std::atoi(var.value) == 1 ? true : false;
+  }
+
+  var.key = "ep128emu_brds";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    borderSize = std::atoi(var.value);
+    if(core)
+      core->borderSize = borderSize*2;
+  }
 }
 
 void retro_init(void)
@@ -208,42 +266,32 @@ void retro_init(void)
   // safe mode
   canSkipFrames = false;
   //showOverscan = true;
-
-  core = new Ep128Emu::LibretroCore(Ep128Emu::EP128_DISK, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","");
+  check_variables();
+  core = new Ep128Emu::LibretroCore(Ep128Emu::EP128_DISK, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
-  //if (core->useHalfFrame) core->change_resolution(EP128EMU_LIBRETRO_SCREEN_WIDTH, EP128EMU_LIBRETRO_SCREEN_HEIGHT/2, environ_cb);
   vmThread = core->vmThread;
+  check_variables();
   core->start();
-  /*vmThread->lock(0x7FFFFFFF);
-  vmThread->unlock();
-  vmThread->pause(false);*/
-
-
 }
-
 
 void retro_deinit(void)
 {
   if (core)
+  {
     delete core;
+    core = (Ep128Emu::LibretroCore *) 0;
+  }
 }
 
 void retro_get_system_info(struct retro_system_info *info)
 {
-
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.7";
+  info->library_version  = "v0.8";
   info->need_fullpath    = true;
   info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|.";
 }
-
-static retro_video_refresh_t video_cb;
-static retro_audio_sample_t audio_cb;
-static retro_audio_sample_batch_t audio_batch_cb;
-static retro_input_poll_t input_poll_cb;
-static retro_input_state_t input_state_cb;
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
@@ -284,8 +332,10 @@ void retro_set_environment(retro_environment_t cb)
   static const struct retro_variable vars[] =
   {
     { "ep128emu_wait", "Main thread wait (ms); 0|1|5|10" },
-    { "ep128emu_swfb", "Use accelerated SW framebuffer; 0|1" },
     { "ep128emu_sdhq", "High sound quality; 1|0" },
+    { "ep128emu_swfb", "Use accelerated SW framebuffer; 0|1" },
+    { "ep128emu_useh", "Enable resolution changes (requires restart); 1|0" },
+    { "ep128emu_brds", "Border lines to keep when zooming in; 0|2|4|8|10|20" },
     { NULL, NULL },
   };
 
@@ -334,40 +384,6 @@ static void render(void)
   core->render(video_cb, environ_cb);
 }
 
-static void check_variables(void)
-{
-
-  struct retro_variable var =
-  {
-    .key = "ep128emu_wait",
-  };
-
-  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-  {
-    waitPeriod = 0.001f * std::atoi(var.value);
-  }
-
-  var.key = "ep128emu_swfb";
-  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-  {
-    useSwFb = std::atoi(var.value) == 1 ? true : false;
-  }
-
-  var.key = "ep128emu_sdhq";
-  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-  {
-    bool soundHq_;
-    soundHq_ = std::atoi(var.value) == 1 ? true : false;
-    if (soundHq != soundHq_) {
-      soundHq = soundHq_;
-      core->config->sound.highQuality = soundHq;
-      core->config->soundSettingsChanged = true;
-      core->config->applySettings();
-  }
-  }
-
-
-}
 /*
 static void audio_callback(void)
 {
@@ -384,7 +400,6 @@ static void audio_callback_batch(void)
   //printf("sending frames: %d frame_time: %d\n",nFrames,curr_frame_time);
   audio_batch_cb((int16_t*)audioBuffer, nFrames);
 }
-
 
 void retro_run(void)
 {
@@ -409,21 +424,15 @@ void retro_run(void)
       buf = fb.data;
     }
   }
-  //retro_usec_t halfFrame = 0;//curr_frame_time > 10000 ? 5000 : curr_frame_time > 1000 ? 1000 : 0;
   update_input();
   core->run_for(curr_frame_time,waitPeriod,buf);
   audio_callback_batch();
   core->sync_display();
   render();
-  //vmThread->allowRunFor(halfFrame);
-  //core->w->wakeDisplay(false);
-  //core->sync_display();
-  //vmThread->waitUntilReady();
 }
 
 bool header_match(const char* buf1, const unsigned char* buf2, size_t length)
 {
-
   for (size_t i = 0; i < length; i++)
   {
     if ((unsigned char)buf1[i] != buf2[i])
@@ -432,7 +441,6 @@ bool header_match(const char* buf1, const unsigned char* buf2, size_t length)
     }
   }
   return true;
-
 }
 
 bool retro_load_game(const struct retro_game_info *info)
@@ -456,9 +464,11 @@ bool retro_load_game(const struct retro_game_info *info)
   check_variables();
   if(info != nullptr)
   {
-
-    if (core) delete core;
-
+    if (core)
+    {
+      delete core;
+      core = (Ep128Emu::LibretroCore *) 0;
+    }
     log_cb(RETRO_LOG_INFO, "Loading game: %s \n",info->path);
     std::string filename(info->path);
     std::string contentExt;
@@ -479,16 +489,16 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       contentExt=""; // No extension found
     }
-
     Ep128Emu::splitPath(filename,contentPath,contentFile);
 
-
-    if(does_file_exist(configFile.c_str())) {
+    if(does_file_exist(configFile.c_str()))
+    {
       log_cb(RETRO_LOG_INFO, "Emulation configuration file: %s \n",configFile.c_str());
-    } else {
-    configFile = "";
     }
-
+    else
+    {
+      configFile = "";
+    }
 
     std::string diskExt = "img";
     std::string tapeExt = "tap";
@@ -598,8 +608,11 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     try
     {
-      core = new Ep128Emu::LibretroCore(detectedMachineDetailedType, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str());
+      log_cb(RETRO_LOG_INFO, "Creating core\n");
+      check_variables();
+      core = new Ep128Emu::LibretroCore(detectedMachineDetailedType, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame);
       config = core->config;
+      check_variables();
       if (diskContent)
       {
         config->floppy.a.imageFile = info->path;
@@ -619,7 +632,6 @@ bool retro_load_game(const struct retro_game_info *info)
         config->vm.enableFileIO=true;
         config->vmConfigurationChanged = true;
       }
-
       config->applySettings();
 
       if (tapeContent)
@@ -634,8 +646,6 @@ bool retro_load_game(const struct retro_game_info *info)
           core->vm->tapePlay();
         }
       }
-
-
     }
     catch (...)
     {
@@ -643,9 +653,9 @@ bool retro_load_game(const struct retro_game_info *info)
       throw;
     }
 
-
     config->setErrorCallback(&cfgErrorFunc, (void *) 0);
     vmThread = core->vmThread;
+    log_cb(RETRO_LOG_INFO, "Starting core\n");
     core->start();
   }
 
@@ -666,11 +676,6 @@ void retro_unload_game(void)
     throw;
   }
 
-}
-
-unsigned retro_get_region(void)
-{
-  return RETRO_REGION_PAL;
 }
 
 bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num)
@@ -749,7 +754,6 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
   (void)code;
 }
 
-
 unsigned retro_api_version(void)
 {
   return RETRO_API_VERSION;
@@ -760,3 +764,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
   log_cb(RETRO_LOG_INFO, "Plugging device %u into port %u.\n", device, port);
 }
 
+unsigned retro_get_region(void)
+{
+  return RETRO_REGION_PAL;
+}
