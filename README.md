@@ -19,7 +19,6 @@ Libretro features supported:
   * Spectrum tape images: `tzx`
   * Spectrum direct files: `tap`
 * Save/load state, rewind
-* Crop overscan
 * Default d-pad input mapping for player 1:
   * Enterprise: internal joystick
   * TVC: internal joystick
@@ -32,17 +31,21 @@ Libretro features supported:
   * Enterprise: external 1 (also mapped to numpad), external 2
   * TVC: external 1 (also mapped to numpad), external 2
   * CPC: external 2
-  * ZX: Sinclair 1, Sinclair 2
+  * ZX: Sinclair 1, Sinclair 2, Protek
 * Configurable core options:
   * wait period (set to 0 if there are performance problems, set higher to reduce CPU load)
   * use software framebuffer (experimental, may crash)
   * use high quality sound (disable if there are performance problems)
+  * enable resolution changes
+  * amount of border to keep when zooming in
 
 Features added by ep128emu-core
 * Content autostart except for disk images
 * Customizable input mapping for player 1
   * See [sample.ep128cfg](core/sample.ep128cfg) to see how retropad buttons can be assigned for a specific game.
   * Autostart file name can also be specified to enable autostart for disk.
+* Fit to content
+  * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
 
 For the emulation features, see the [original README](README).
 
