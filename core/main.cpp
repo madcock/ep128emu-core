@@ -1,8 +1,7 @@
 /* TODO
 
 build for windows, mac
-normális makefile
-rom-ok hiánya exception logba
+tosec rom file-ok?
 magyar nyelvű leírás is
 
 move sound class to own file
@@ -306,7 +305,7 @@ void retro_get_system_info(struct retro_system_info *info)
   info->library_name     = "ep128emu";
   info->library_version  = "v0.85";
   info->need_fullpath    = true;
-  info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|.";
+  info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|dtf|.";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -491,6 +490,7 @@ bool retro_load_game(const struct retro_game_info *info)
     std::string contentExt;
     std::string contentPath;
     std::string contentFile;
+    std::string contentBasename;
     std::string configFile;
     std::string configFileExt(".ep128cfg");
 
@@ -507,6 +507,8 @@ bool retro_load_game(const struct retro_game_info *info)
       contentExt=""; // No extension found
     }
     Ep128Emu::splitPath(filename,contentPath,contentFile);
+    contentBasename = contentFile;
+    Ep128Emu::stringToLowerCase(contentBasename);
 
     if(Ep128Emu::does_file_exist(configFile.c_str()))
     {
@@ -519,6 +521,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     std::string diskExt = "img";
     std::string tapeExt = "tap";
+    std::string fileExtDtf = "dtf";
     std::string fileExtTvc = "cas";
     std::string diskExtTvc = "dsk";
     //std::string tapeExtZx = "tzx";
@@ -538,7 +541,7 @@ bool retro_load_game(const struct retro_game_info *info)
     };
     std::fclose(imageFile);
 
-    static const char *cpcDskFileHeader = "MV - CPCEMU Disk-File";
+    static const char *cpcDskFileHeader = "MV - CPCEMU";
     static const char *cpcExtFileHeader = "EXTENDED CPC DSK File";
     static const char *ep128emuTapFileHeader = "\x02\x75\xcd\x72\x1c\x44\x51\x26";
     static const char *epteFileMagic = "ENTERPRISE 128K TAPE FILE       ";
@@ -555,7 +558,7 @@ bool retro_load_game(const struct retro_game_info *info)
     int detectedMachineDetailedType = Ep128Emu::VM_CONFIG_UNKNOWN;
 
     // start with longer magic strings - less chance of mis-detection
-    if(header_match(cpcDskFileHeader,tmpBuf,21) or header_match(cpcExtFileHeader,tmpBuf,21))
+    if(header_match(cpcDskFileHeader,tmpBuf,11) or header_match(cpcExtFileHeader,tmpBuf,21))
     {
       detectedMachineDetailedType = Ep128Emu::CPC_DISK;
       diskContent=true;
@@ -615,6 +618,11 @@ bool retro_load_game(const struct retro_game_info *info)
       fileContent=true;
       startupSequence ="\r";
     }
+    else if (contentExt == fileExtDtf) {
+      detectedMachineDetailedType = Ep128Emu::EP128_FILE_DTF;
+      fileContent=true;
+      startupSequence =" \xff\xff\xff\xff\xff:dl ";
+    }
     // last resort: EP file, first 2 bytes
     else if (header_match(epComFileHeader,tmpBuf,2) || header_match(epBasFileHeader,tmpBuf,2))
     {
@@ -652,6 +660,9 @@ bool retro_load_game(const struct retro_game_info *info)
         config->fileioSettingsChanged = true;
         config->vm.enableFileIO=true;
         config->vmConfigurationChanged = true;
+        if( detectedMachineDetailedType == Ep128Emu::EP128_FILE_DTF ) {
+          core->startSequence += contentBasename+"\r";
+        }
       }
       config->applySettings();
 

@@ -9,6 +9,7 @@
 #include "libretro.h"
 #include "libretro-funcs.hpp"
 #include "libretrodisp.hpp"
+#include "libretrosnd.hpp"
 
 namespace Ep128Emu
 {
@@ -18,9 +19,11 @@ enum LibretroCore_VM_config
   EP128_DISK,
   EP128_TAPE,
   EP128_FILE,
+  EP128_FILE_DTF,
   EP64_DISK,
   EP64_TAPE,
   EP64_FILE,
+  EP64_FILE_DTF,
   TVC64_FILE,
   TVC64_DISK,
   CPC_TAPE,

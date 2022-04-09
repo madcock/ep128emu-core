@@ -36,7 +36,6 @@ SOURCES_CPP := \
 	$(CORE_DIR)/src/cfg_db.cpp \
 	$(CORE_DIR)/src/joystick.cpp \
 	$(CORE_DIR)/src/soundio.cpp \
-	$(CORE_DIR)/src/libretrodisp.cpp \
 	$(CORE_DIR)/src/zx128vm.cpp \
 	$(CORE_DIR)/src/ula.cpp \
 	$(CORE_DIR)/src/zxioport.cpp \
@@ -58,6 +57,8 @@ SOURCES_CPP := \
 	$(CORE_DIR)/src/sdext.cpp \
 	$(CORE_DIR)/core/main.cpp \
 	$(CORE_DIR)/core/core.cpp \
+	$(CORE_DIR)/core/libretrodisp.cpp \
+	$(CORE_DIR)/core/libretrosnd.cpp \
 
 SOURCES_C := \
 	$(CORE_DIR)/src/dotconf.c

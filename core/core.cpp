@@ -43,7 +43,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     machineType = MACHINE_ZX;
     log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
   }
-  if(machineDetailedType == VM_CONFIG_UNKNOWN) {
+  if(machineDetailedType == VM_CONFIG_UNKNOWN)
+  {
     log_cb(RETRO_LOG_ERROR, "VM_CONFIG_UNKNOWN passed!\n");
     throw Ep128Emu::Exception("Machine configuration not recognized!");
   }
@@ -91,36 +92,44 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   std::string configBaseFile(romDirectory_);
   configBaseFile.append("/ep128emu/config/");
   startSequence = startSequence_;
-  infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 ";
 
-  config->memory.configFile = "";
   if(machineType == MACHINE_EP)
   {
     configBaseFile = configBaseFile + "enterprise.ep128cfg";
-    bootframes[machineDetailedType] = 40*10;
     config->memory.ram.size=128;
-    if (enhancedRom) {
-    config->memory.rom[0x00].file=romBasePath+"exos24uk.rom";
-    config->memory.rom[0x00].offset=0;
-    config->memory.rom[0x01].file=romBasePath+"exos24uk.rom";
-    config->memory.rom[0x01].offset=16384;
-    config->memory.rom[0x02].file=romBasePath+"exos24uk.rom";
-    config->memory.rom[0x02].offset=32768;
-    config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
-    config->memory.rom[0x03].offset=49152;
-    } else {
-    config->memory.rom[0x00].file=romBasePath+"exos21.rom";
-    config->memory.rom[0x00].offset=0;
-    config->memory.rom[0x01].file=romBasePath+"exos21.rom";
-    config->memory.rom[0x01].offset=16384;
+    if (enhancedRom)
+    {
+      bootframes[machineDetailedType] = 20*10;
+      config->memory.rom[0x00].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x00].offset=0;
+      config->memory.rom[0x01].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x01].offset=16384;
+      config->memory.rom[0x02].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x02].offset=32768;
+      config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x03].offset=49152;
+    }
+    else
+    {
+      bootframes[machineDetailedType] = 40*10;
+      config->memory.rom[0x00].file=romBasePath+"exos21.rom";
+      config->memory.rom[0x00].offset=0;
+      config->memory.rom[0x01].file=romBasePath+"exos21.rom";
+      config->memory.rom[0x01].offset=16384;
     }
     config->memory.rom[0x04].file=romBasePath+"basic21.rom";
     config->memory.rom[0x04].offset=0;
 
-    if(machineDetailedType == EP128_FILE)
+    if(machineDetailedType == EP128_FILE || machineDetailedType == EP128_FILE_DTF)
     {
       config->memory.rom[0x10].file=romBasePath+"epfileio.rom";
       config->memory.rom[0x10].offset=0;
+      if(machineDetailedType == EP128_FILE_DTF) {
+      config->memory.rom[0x40].file=romBasePath+"zt19uk.rom";
+      config->memory.rom[0x40].offset=0;
+      config->memory.rom[0x41].file=romBasePath+"zt19uk.rom";
+      config->memory.rom[0x41].offset=16384;
+      }
     }
     if(machineDetailedType == EP128_DISK || machineDetailedType == EP128_FILE)
     {
@@ -195,7 +204,14 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x00].offset=0;
     }
   }
-
+  for(int i=0;i<68;i++) {
+    if(config->memory.rom[i].file.length()>0) {
+      if(!Ep128Emu::does_file_exist(config->memory.rom[i].file.c_str())) {
+        log_cb(RETRO_LOG_ERROR, "ROM file not found: %s\n",config->memory.rom[i].file.c_str());
+        throw Ep128Emu::Exception("ROM file not found!");
+      }
+    }
+  }
   config->memoryConfigurationChanged = true;
 
   if(machineType == MACHINE_EP)
@@ -247,7 +263,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   // Order of settings:
   // hardcoded defaults (above)
   // system-wide defaults per machine type (this one)
-  if(Ep128Emu::does_file_exist(configBaseFile.c_str())) {
+  if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
+  {
     log_cb(RETRO_LOG_INFO, "Loading system wide configuration file: %s\n",configBaseFile.c_str());
     config->loadState(configBaseFile.c_str(),false);
   }
@@ -451,15 +468,15 @@ void LibretroCore::initialize_keyboard_map(void)
     inputJoyMap[0x72][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
     inputJoyMap[0x71][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
     inputJoyMap[0x70][0] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x75][0] = RETRO_DEVICE_ID_JOYPAD_X; // fire 2 default
-    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_B; // fire 1
+    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_X; // fire 1
+    inputJoyMap[0x75][0] = RETRO_DEVICE_ID_JOYPAD_B; // fire 2
     // external joystick 2: controller 2
     inputJoyMap[0x7b][1] = RETRO_DEVICE_ID_JOYPAD_UP;
     inputJoyMap[0x7a][1] = RETRO_DEVICE_ID_JOYPAD_DOWN;
     inputJoyMap[0x79][1] = RETRO_DEVICE_ID_JOYPAD_LEFT;
     inputJoyMap[0x78][1] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x7d][1] = RETRO_DEVICE_ID_JOYPAD_X; // fire 2 default
-    inputJoyMap[0x7c][1] = RETRO_DEVICE_ID_JOYPAD_B; // fire 1
+    inputJoyMap[0x7c][1] = RETRO_DEVICE_ID_JOYPAD_X; // fire 1
+    inputJoyMap[0x7d][1] = RETRO_DEVICE_ID_JOYPAD_B; // fire 2
   }
   else if (machineType == MACHINE_ZX)
   {
@@ -516,6 +533,7 @@ void LibretroCore::initialize_keyboard_map(void)
   inputJoyMap[0x19][0] = RETRO_DEVICE_ID_JOYPAD_R; // 1
   inputJoyMap[0x1e][0] = RETRO_DEVICE_ID_JOYPAD_L2; // 2
   inputJoyMap[0x1d][0] = RETRO_DEVICE_ID_JOYPAD_R2; // 3
+  infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 R3->zoom ";
 
   std::string buttonprefix("EPKEY_");
   std::string button;
@@ -530,14 +548,12 @@ void LibretroCore::initialize_keyboard_map(void)
     {
       button = buttonprefix + config->joypad[i];
       joypadButton = joypadPrefix + config->joypadButtons[i];
-      //printf("processing %s -> %s \n",joypadButton.c_str(),button.c_str());
       iter_epkey = epkey_reverse.find(button);
       iter_joypad = retro_joypad_reverse.find(joypadButton);
       if (iter_epkey != epkey_reverse.end() && iter_joypad != retro_joypad_reverse.end())
       {
         inputJoyMap[((*iter_epkey).second)][0] = (*iter_joypad).second;
         infoMessage = infoMessage + config->joypadButtons[i] + "->" + config->joypad[i] + " ";
-        //printf("assigning %d -> %d \n",(*iter_joypad).second, (*iter_epkey).second );
       }
     }
   }
@@ -545,9 +561,7 @@ void LibretroCore::initialize_keyboard_map(void)
 
 void LibretroCore::update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
 {
-  //printf("incoming keycode: %d ",keycode);
   uint32_t convertedKeycode = config->convertKeyCode(keycode);
-  //printf("converted: %d \n",convertedKeycode);
   if (convertedKeycode >= 0)
   {
     vmThread->setKeyboardState(convertedKeycode,down);
@@ -606,7 +620,6 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       }
     }
   }
-  //printf("frame %d startseq %d \n",w->frameCount,startSequenceIndex);
   if (startSequenceIndex < startSequence.length())
   {
     if (w->frameCount == (bootframes[machineDetailedType] + startSequenceIndex*20))
