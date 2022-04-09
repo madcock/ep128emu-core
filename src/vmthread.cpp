@@ -423,20 +423,6 @@ namespace Ep128Emu {
     mutex_.unlock();
   }
 
-/*  void VMThread::waitUntilReady(void)
-  {
-    do
-    {
-      //mutex_.lock();
-      volatile size_t tmpRuntime = allowedRuntime;
-      //mutex_.unlock();
-      if (tmpRuntime > 2000)
-        Timer::wait(0.0001);
-      else break;
-    }
-    while(true);
-  }*/
-
   bool VMThread::isReady(void)
   {
     if (allowedRuntime > 2000)

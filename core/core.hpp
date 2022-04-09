@@ -46,6 +46,7 @@ enum LibretroCore_VM_type
 class LibretroCore
 {
 private:
+  retro_log_printf_t log_cb;
   int libretro_to_ep128emu_kbmap[RETROK_LAST];
   unsigned int bootframes[64];
 
@@ -81,8 +82,8 @@ public:
 
   // ----------------
 
-  LibretroCore(int machineDetailedType, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
-  const char* startSequence_, const char* cfgFile, bool useHalfFrame);
+  LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
+  const char* startSequence_, const char* cfgFile, bool useHalfFrame, bool enhancedRom);
   virtual ~LibretroCore();
 
 

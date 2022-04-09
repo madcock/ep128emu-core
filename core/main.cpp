@@ -1,21 +1,17 @@
 /* TODO
 
-compiler switch hogy ne kelljen belenyúlni az eredeti src-be sokat
-core_enable?
-sconstruct integráció?
-log callback-ek
+build for windows, mac
+normális makefile
+rom-ok hiánya exception logba
+magyar nyelvű leírás is
 
-néhány tvc program sem megy? de mondjuk eredeti tvcemu-n sem
+move sound class to own file
 
-teljesítmény, natív ep128emu az ~2500%
-  -- rgb integer konverzió után wait 1-gyel 250, wait 0-val 300+
-  -- rpi-n 30-40 alacsony felbontáson (rossz asp. ratio), újratesztelni -- 45
 
   rpi-n segfault content loadkor
 
 gfx:
 sw fb interlaced módba kapcsoláskor behal
-opengl support?
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
 overscant le kellene tiltani / megnézni mit csinál sw fb esetén mert vszg. nem oké
@@ -29,13 +25,17 @@ egér
 
 content:
 zx 48 load?
-kicsomagolt dir (com, bas, prg?) filenamecallback
-dtf support?
+support for content in zip?
+support for dtf?
+m3u support (cpc 3 guerra)
 
 demo record/play-jel mi legyen
-windows build, arm build, stb
 
-vm futás csak a frame idejéig opcionálisra kellene
+néhány tvc program sem megy? de mondjuk eredeti tvcemu-n sem -- megy minden, kivéve unicum?
+
+
+opengl display support
+
 audio kaphatná ezeket konfigból, ahogy a többi (latency??)
 valami a signed-unsigned környékén eltéved, ha nem konstansból megy a 16
 sound.hwPeriods	16
@@ -52,7 +52,6 @@ sound.swPeriods	16
 #include <string.h>
 #include <math.h>
 #include <algorithm>
-#include <fstream>
 
 #include "ep128vm.hpp"
 #include "vmthread.hpp"
@@ -83,11 +82,14 @@ retro_usec_t prev_frame_time = 0;
 float waitPeriod = 0.001;
 bool useSwFb = false;
 bool useHalfFrame = false;
+bool enableDiskControl = false;
+bool needsDiskControl = false;
 int borderSize = 0;
 bool soundHq = true;
 
 bool canSkipFrames = false;
 bool showOverscan = false;
+bool enhancedRom = false;
 
 Ep128Emu::VMThread              *vmThread    = (Ep128Emu::VMThread *) 0;
 Ep128Emu::EmulatorConfiguration *config      = (Ep128Emu::EmulatorConfiguration *) 0;
@@ -98,12 +100,6 @@ static retro_audio_sample_t audio_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
-
-bool does_file_exist(const char *fileName)
-{
-  std::ifstream infile(fileName);
-  return infile.good();
-}
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -196,6 +192,17 @@ static void check_variables(void)
     if(core)
       core->borderSize = borderSize*2;
   }
+
+  var.key = "ep128emu_romv";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    if(var.value[0] == 'E') { enhancedRom = true;}
+    else { enhancedRom = false;}
+    if(core) {
+      //
+  }
+}
+
 }
 
 void retro_init(void)
@@ -207,6 +214,15 @@ void retro_init(void)
     log_cb = log.log;
   else
     log_cb = fallback_log;
+
+  // actually it is the advanced disk control...
+  unsigned dci;
+  if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci))
+    enableDiskControl = true;
+  else
+    enableDiskControl = false;
+
+
 
   const char *system_dir = NULL;
   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
@@ -267,7 +283,7 @@ void retro_init(void)
   canSkipFrames = false;
   //showOverscan = true;
   check_variables();
-  core = new Ep128Emu::LibretroCore(Ep128Emu::EP128_DISK, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame);
+  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
@@ -288,7 +304,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.8";
+  info->library_version  = "v0.85";
   info->need_fullpath    = true;
   info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|.";
 }
@@ -336,6 +352,7 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_swfb", "Use accelerated SW framebuffer; 0|1" },
     { "ep128emu_useh", "Enable resolution changes (requires restart); 1|0" },
     { "ep128emu_brds", "Border lines to keep when zooming in; 0|2|4|8|10|20" },
+    { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
     { NULL, NULL },
   };
 
@@ -491,7 +508,7 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     Ep128Emu::splitPath(filename,contentPath,contentFile);
 
-    if(does_file_exist(configFile.c_str()))
+    if(Ep128Emu::does_file_exist(configFile.c_str()))
     {
       log_cb(RETRO_LOG_INFO, "Emulation configuration file: %s \n",configFile.c_str());
     }
@@ -521,8 +538,8 @@ bool retro_load_game(const struct retro_game_info *info)
     };
     std::fclose(imageFile);
 
-    static const char *cpcDskFileHeader = "MV - CPCEMU Disk-File\r\nDisk-Info\r\n";
-    static const char *cpcExtFileHeader = "EXTENDED CPC DSK File\r\nDisk-Info\r\n";
+    static const char *cpcDskFileHeader = "MV - CPCEMU Disk-File";
+    static const char *cpcExtFileHeader = "EXTENDED CPC DSK File";
     static const char *ep128emuTapFileHeader = "\x02\x75\xcd\x72\x1c\x44\x51\x26";
     static const char *epteFileMagic = "ENTERPRISE 128K TAPE FILE       ";
     static const char *tzxFileMagic = "ZXTape!\032\001";
@@ -538,7 +555,7 @@ bool retro_load_game(const struct retro_game_info *info)
     int detectedMachineDetailedType = Ep128Emu::VM_CONFIG_UNKNOWN;
 
     // start with longer magic strings - less chance of mis-detection
-    if(header_match(cpcDskFileHeader,tmpBuf,34) or header_match(cpcExtFileHeader,tmpBuf,34))
+    if(header_match(cpcDskFileHeader,tmpBuf,21) or header_match(cpcExtFileHeader,tmpBuf,21))
     {
       detectedMachineDetailedType = Ep128Emu::CPC_DISK;
       diskContent=true;
@@ -587,6 +604,10 @@ bool retro_load_game(const struct retro_game_info *info)
         detectedMachineDetailedType = Ep128Emu::EP128_DISK;
         diskContent=true;
       }
+      else {
+        log_cb(RETRO_LOG_ERROR, "Content format not recognized!\n");
+        return false;
+      }
     }
     else if (contentExt == fileExtZx)
     {
@@ -610,7 +631,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       log_cb(RETRO_LOG_INFO, "Creating core\n");
       check_variables();
-      core = new Ep128Emu::LibretroCore(detectedMachineDetailedType, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame);
+      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
       config = core->config;
       check_variables();
       if (diskContent)

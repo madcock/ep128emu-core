@@ -3,9 +3,10 @@
 namespace Ep128Emu
 {
 
-LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
-                           const char* startSequence_, const char* cfgFile, bool useHalfFrame_)
-  : useHalfFrame(useHalfFrame_),
+LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
+                           const char* startSequence_, const char* cfgFile, bool useHalfFrame_, bool enhancedRom)
+  : log_cb(log_cb_),
+    useHalfFrame(useHalfFrame_),
     isHalfFrame(useHalfFrame_),
     showOverscan(showOverscan_),
     canSkipFrames(canSkipFrames_),
@@ -27,10 +28,12 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   if(machineDetailedType == TVC64_DISK || machineDetailedType == TVC64_FILE)
   {
     machineType = MACHINE_TVC;
+    log_cb(RETRO_LOG_INFO, "Emulated machine: TVC\n");
   }
   else if(machineDetailedType == CPC_DISK || machineDetailedType == CPC_TAPE)
   {
     machineType = MACHINE_CPC;
+    log_cb(RETRO_LOG_INFO, "Emulated machine: CPC\n");
   }
   else if(machineDetailedType == ZX16_TAPE || machineDetailedType == ZX16_FILE ||
           machineDetailedType == ZX48_TAPE || machineDetailedType == ZX48_FILE ||
@@ -38,6 +41,11 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
          )
   {
     machineType = MACHINE_ZX;
+    log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
+  }
+  if(machineDetailedType == VM_CONFIG_UNKNOWN) {
+    log_cb(RETRO_LOG_ERROR, "VM_CONFIG_UNKNOWN passed!\n");
+    throw Ep128Emu::Exception("Machine configuration not recognized!");
   }
 
   audioOutput = new Ep128Emu::AudioOutput_libretro();
@@ -80,22 +88,35 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   }
   std::string romBasePath(romDirectory_);
   romBasePath.append("/ep128emu/roms/");
-  std::string contentBasePath(romDirectory_);
-  contentBasePath.append("/ep128emu/content/");
+  std::string configBaseFile(romDirectory_);
+  configBaseFile.append("/ep128emu/config/");
   startSequence = startSequence_;
-  infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 L3->3 ";
+  infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 ";
 
   config->memory.configFile = "";
   if(machineType == MACHINE_EP)
   {
+    configBaseFile = configBaseFile + "enterprise.ep128cfg";
     bootframes[machineDetailedType] = 40*10;
     config->memory.ram.size=128;
+    if (enhancedRom) {
+    config->memory.rom[0x00].file=romBasePath+"exos24uk.rom";
+    config->memory.rom[0x00].offset=0;
+    config->memory.rom[0x01].file=romBasePath+"exos24uk.rom";
+    config->memory.rom[0x01].offset=16384;
+    config->memory.rom[0x02].file=romBasePath+"exos24uk.rom";
+    config->memory.rom[0x02].offset=32768;
+    config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
+    config->memory.rom[0x03].offset=49152;
+    } else {
     config->memory.rom[0x00].file=romBasePath+"exos21.rom";
     config->memory.rom[0x00].offset=0;
     config->memory.rom[0x01].file=romBasePath+"exos21.rom";
     config->memory.rom[0x01].offset=16384;
+    }
     config->memory.rom[0x04].file=romBasePath+"basic21.rom";
     config->memory.rom[0x04].offset=0;
+
     if(machineDetailedType == EP128_FILE)
     {
       config->memory.rom[0x10].file=romBasePath+"epfileio.rom";
@@ -111,6 +132,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   }
   else if(machineType == MACHINE_TVC)
   {
+    configBaseFile = configBaseFile + "tvc.ep128cfg";
     bootframes[machineDetailedType] = 50*10;
     config->memory.ram.size=128;
     config->memory.rom[0x00].file=romBasePath+"tvc22_sys.rom";
@@ -130,6 +152,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   }
   else if(machineType == MACHINE_CPC)
   {
+    configBaseFile = configBaseFile + "cpc.ep128cfg";
     bootframes[machineDetailedType] = 20*10;
     config->memory.ram.size=128;
     config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
@@ -144,6 +167,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   }
   else if(machineType == MACHINE_ZX)
   {
+    configBaseFile = configBaseFile + "zx.ep128cfg";
     bootframes[machineDetailedType] = 20*10;
     if(machineDetailedType == ZX16_TAPE || machineDetailedType == ZX16_FILE)
     {
@@ -220,8 +244,17 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
   config->sound.highQuality = true;
   config->soundSettingsChanged = true;
 
+  // Order of settings:
+  // hardcoded defaults (above)
+  // system-wide defaults per machine type (this one)
+  if(Ep128Emu::does_file_exist(configBaseFile.c_str())) {
+    log_cb(RETRO_LOG_INFO, "Loading system wide configuration file: %s\n",configBaseFile.c_str());
+    config->loadState(configBaseFile.c_str(),false);
+  }
+  // and content-specific defaults
   if (cfgFile[0])
   {
+    log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",configBaseFile.c_str());
     config->loadState(cfgFile,false);
   }
   initialize_keyboard_map();
@@ -232,6 +265,7 @@ LibretroCore::LibretroCore(int machineDetailedType_, bool showOverscan_, bool ca
 
   //config->display.enabled = false;
   //config->displaySettingsChanged = true;
+  log_cb(RETRO_LOG_INFO, "Applying settings\n");
   config->applySettings();
 
   vmThread = new Ep128Emu::VMThread(*vm);
@@ -616,12 +650,14 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
 }
 void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t environ_cb)
 {
+  // Transition from half frame (normal video mode) to interlaced
   if (useHalfFrame && isHalfFrame && w->interlacedFrameCount > 0)
   {
     isHalfFrame = false;
     change_resolution(defaultWidth, fullHeight, environ_cb);
     w->resetViewport();
   }
+  // Transition from interlaced back to half frame
   else if (useHalfFrame && (!isHalfFrame && w->interlacedFrameCount == 0))
   {
     isHalfFrame = true;
@@ -631,6 +667,7 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
   else if (useHalfFrame && isHalfFrame && w->bordersScanned)
   {
     w->bordersScanned = false;
+    // Transition from zoomed-in view back to default
     if(!w->isViewportDefault())
     {
       change_resolution(defaultWidth, defaultHalfHeight, environ_cb);
@@ -641,7 +678,6 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
       int proposedY1 = w->contentTopEdge - borderSize > 0 ? w->contentTopEdge - borderSize : 0;
       int proposedY2 = w->contentBottomEdge + borderSize < EP128EMU_LIBRETRO_SCREEN_HEIGHT ? w->contentBottomEdge + borderSize : EP128EMU_LIBRETRO_SCREEN_HEIGHT-1;
       int detectedHeight = proposedY2 - proposedY1 + 2;
-      //int detectedEmptyRangeBottom = EP128EMU_LIBRETRO_SCREEN_HEIGHT - 1 - proposedY2;
 
       int proposedX1 = w->contentLeftEdge - borderSize > 0 ? w->contentLeftEdge - borderSize : 0;
       int proposedX2 = w->contentRightEdge + borderSize < EP128EMU_LIBRETRO_SCREEN_WIDTH ? w->contentRightEdge + borderSize : EP128EMU_LIBRETRO_SCREEN_WIDTH-1;
@@ -651,6 +687,7 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
       if (detectedHeight >= 150 && detectedWidth >= 200)
       {
         w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
+        log_cb(RETRO_LOG_INFO, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
         change_resolution(detectedWidth, detectedHeight/2, environ_cb);
       }
     }
@@ -692,6 +729,7 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
     .max_height   = EP128EMU_LIBRETRO_SCREEN_HEIGHT,
     .aspect_ratio = aspect,
   };
+  log_cb(RETRO_LOG_INFO, "Changing resolution: %d x %d\n",width,height);
   environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &g);
   currWidth = width;
   currHeight = height;
