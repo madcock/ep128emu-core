@@ -67,6 +67,16 @@ else ifneq (,$(findstring armv,$(platform)))
 	PLATFORM_DEFINES += -marm
 	PLATFORM_DEFINES += -mtune=generic-armv7-a -mhard-float
 
+# OS X
+else ifeq ($(platform), osx)
+	TARGET := $(TARGET_NAME)_libretro.dylib
+	fpic := -fPIC
+	SHARED := -dynamiclib
+
+	CFLAGS  += $(ARCHFLAGS)
+	CXXFLAGS  += $(ARCHFLAGS)
+	LDFLAGS += $(ARCHFLAGS)
+
 # cross Windows
 else ifeq ($(platform), wincross64)
 	TARGET := $(TARGET_NAME)_libretro.dll
@@ -77,7 +87,6 @@ else ifeq ($(platform), wincross64)
 	LDFLAGS += -static-libgcc -static-libstdc++
 	EXTRA_LDF := -lwinmm -Wl,--export-all-symbols
 endif
-
 
 ifeq ($(STATIC_LINKING), 1)
     EXT := a
