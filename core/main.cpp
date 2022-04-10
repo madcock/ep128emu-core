@@ -1,16 +1,13 @@
 /* TODO
 
 build for windows, mac
-tosec rom file-ok?
+cpc1628 rom második fele tosec-ből?
 magyar nyelvű leírás is
-
-move sound class to own file
-
-
-  rpi-n segfault content loadkor
+zx 48 load?
+licensing
+rpi-n segfault content loadkor
 
 gfx:
-sw fb interlaced módba kapcsoláskor behal
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
 overscant le kellene tiltani / megnézni mit csinál sw fb esetén mert vszg. nem oké
@@ -20,20 +17,14 @@ input:
 konfigurálható default kiosztás (core option)
 joystick kezelés 2/3 user -- tesztelni kellene
 4/6 joystick support
-egér
 
-content:
-zx 48 load?
-support for content in zip?
-support for dtf?
 m3u support (cpc 3 guerra)
 
-demo record/play-jel mi legyen
-
-néhány tvc program sem megy? de mondjuk eredeti tvcemu-n sem -- megy minden, kivéve unicum?
-
-
+low prio:
 opengl display support
+demo record/play
+support for content in zip
+egér
 
 audio kaphatná ezeket konfigból, ahogy a többi (latency??)
 valami a signed-unsigned környékén eltéved, ha nem konstansból megy a 16
@@ -551,6 +542,11 @@ bool retro_load_game(const struct retro_game_info *info)
     static const char *epDskFileHeader2 = "\xeb\x4c\x90";
     static const char *epComFileHeader = "\x00\x05";
     static const char *epBasFileHeader = "\x00\x04";
+    // Startup sequence may contain:
+    // - chars on the keyboard (a-z, 0-9, few symbols like :
+    // - 0xff as wait character
+    // - 0xfe as "
+    // - 0xfd as F1 (START)
     const char* startupSequence = "";
     bool tapeContent = false;
     bool diskContent = false;
@@ -584,7 +580,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       detectedMachineDetailedType = Ep128Emu::EP128_TAPE;
       tapeContent=true;
-      startupSequence =" \xffstart\r";
+      startupSequence =" \xff\xfd";
     }
     else if (contentExt == fileExtTvc && header_match(zeroBytes,&(tmpBuf[5]),nBytes-6))
     {
@@ -628,7 +624,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       detectedMachineDetailedType = Ep128Emu::EP128_FILE;
       fileContent=true;
-      startupSequence =" \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff start\r";
+      startupSequence =" \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfd";
     }
     else
     {

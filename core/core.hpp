@@ -46,6 +46,26 @@ enum LibretroCore_VM_type
   MACHINE_UNKNOWN = INT_MAX
 };
 
+const std::map<std::string, std::string> rom_names_ep128emu_tosec = {
+
+{"basic21.rom" , "BASIC Interpreter v2.1 (1985)(Intelligent Software).bin"},
+{"exos20.rom"  , "Expandible OS v2.0 (1984)(Intelligent Software).bin"},
+{"exos21.rom"  , "Expandible OS v2.1 (1985)(Intelligent Software).bin"},
+{"exos23.rom"  , "Expandible OS v2.3 (1987)(Intelligent Software).bin"},
+{"exdos13.rom" , "Disk Controller v1.3 (1985)(Intelligent Software).bin"}, // binary does not fully match
+{"zt19uk.rom"  , "ZozoTools v1.8 (19xx)(Zoltan Nemeth).bin"}, // version does not match
+{"zx48.rom"    , "ZX Spectrum 48K - 1 (1982)(Sinclair Research).rom"},
+{"zx128.rom"   , "ZX Spectrum 128K (1986)(Sinclair Research)(128K)[aka Derby].rom"},
+{"cpc_amsdos.rom", "Amstrad CPC 664 Amsdos (1985)(Amstrad)[AMSDOS.ROM].rom"},
+{"cpc464.rom"  ,"Amstrad CPC 464 OS (19xx)(Amstrad)(da)[h][CPC464DK.ROM].rom"}, // binary does not fully match
+//{"cpc464.rom"  ,"Amstrad CPC 464 OS (1985)(Amstrad)[OS.ROM].rom"}, // only first half
+//{"cpc664.rom"  ,"Amstrad CPC 664 OS (1985)(Amstrad)[OS.ROM].rom"}, // only first half
+//{"cpc6128.rom" ,"Amstrad CPC 6128 OS (1985)(Amstrad)[OS.ROM].rom"}, // only first half
+
+};
+
+
+
 class LibretroCore
 {
 private:

@@ -124,11 +124,12 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     {
       config->memory.rom[0x10].file=romBasePath+"epfileio.rom";
       config->memory.rom[0x10].offset=0;
-      if(machineDetailedType == EP128_FILE_DTF) {
-      config->memory.rom[0x40].file=romBasePath+"zt19uk.rom";
-      config->memory.rom[0x40].offset=0;
-      config->memory.rom[0x41].file=romBasePath+"zt19uk.rom";
-      config->memory.rom[0x41].offset=16384;
+      if(machineDetailedType == EP128_FILE_DTF)
+      {
+        config->memory.rom[0x40].file=romBasePath+"zt19uk.rom";
+        config->memory.rom[0x40].offset=0;
+        config->memory.rom[0x41].file=romBasePath+"zt19uk.rom";
+        config->memory.rom[0x41].offset=16384;
       }
     }
     if(machineDetailedType == EP128_DISK || machineDetailedType == EP128_FILE)
@@ -164,10 +165,15 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     configBaseFile = configBaseFile + "cpc.ep128cfg";
     bootframes[machineDetailedType] = 20*10;
     config->memory.ram.size=128;
-    config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
-    config->memory.rom[0x00].offset=16384;
     config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
     config->memory.rom[0x10].offset=0;
+    // alternative rom for 6128 does not contain the second half
+    if(Ep128Emu::does_file_exist(config->memory.rom[0x10].file.c_str()))
+    {
+      config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
+      config->memory.rom[0x00].offset=16384;
+    }
+
     if(machineDetailedType == CPC_DISK)
     {
       config->memory.rom[0x07].file=romBasePath+"cpc_amsdos.rom";
@@ -204,11 +210,43 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x00].offset=0;
     }
   }
-  for(int i=0;i<68;i++) {
-    if(config->memory.rom[i].file.length()>0) {
-      if(!Ep128Emu::does_file_exist(config->memory.rom[i].file.c_str())) {
-        log_cb(RETRO_LOG_ERROR, "ROM file not found: %s\n",config->memory.rom[i].file.c_str());
-        throw Ep128Emu::Exception("ROM file not found!");
+  for(int i=0; i<68; i++)
+  {
+    if(config->memory.rom[i].file.length()>0)
+    {
+      if(!Ep128Emu::does_file_exist(config->memory.rom[i].file.c_str()))
+      {
+        std::map< std::string, std::string >::const_iterator  iter_altrom;
+        std::string romShortName;
+        std::string replacementFullName;
+        size_t idx = config->memory.rom[i].file.rfind('/');
+        if(idx != std::string::npos)
+        {
+          romShortName = config->memory.rom[i].file.substr(idx+1);
+        }
+
+        iter_altrom = rom_names_ep128emu_tosec.find(romShortName);
+        if (iter_altrom != rom_names_ep128emu_tosec.end())
+        {
+          replacementFullName = (*iter_altrom).second.c_str();
+          replacementFullName = romBasePath + replacementFullName;
+          if(!Ep128Emu::does_file_exist(replacementFullName.c_str()))
+          {
+            log_cb(RETRO_LOG_ERROR, "ROM file or alternative not found: %s / %s\n",config->memory.rom[i].file.c_str(),replacementFullName.c_str());
+            throw Ep128Emu::Exception("ROM file not found!");
+          }
+          else
+          {
+            log_cb(RETRO_LOG_DEBUG, "ROM file alternative found: %s / %s\n",config->memory.rom[i].file.c_str(),replacementFullName.c_str());
+            config->memory.rom[i].file = replacementFullName;
+          }
+        }
+        else
+        {
+          log_cb(RETRO_LOG_ERROR, "ROM file not found, no alternative: %s\n",config->memory.rom[i].file.c_str());
+          throw Ep128Emu::Exception("ROM file not found!");
+        }
+
       }
     }
   }
@@ -629,6 +667,10 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
         update_keyboard(true,RETROK_LSHIFT,0,0);
         update_keyboard(true,RETROK_2,0,0);
       }
+      else if((unsigned char)startSequence.at(startSequenceIndex) == 253)
+      {
+        update_keyboard(true,RETROK_F1,0,0);
+      }
       else
       {
         update_keyboard(true,startSequence.at(startSequenceIndex),0,0);
@@ -644,6 +686,10 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       {
         update_keyboard(false,RETROK_LSHIFT,0,0);
         update_keyboard(false,RETROK_2,0,0);
+      }
+      else if((unsigned char)startSequence.at(startSequenceIndex-1) == 253)
+      {
+        update_keyboard(false,RETROK_F1,0,0);
       }
       else
       {

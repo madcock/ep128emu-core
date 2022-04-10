@@ -14,6 +14,8 @@ ifeq ($(platform),)
 		platform = osx
 	else ifneq ($(findstring win,$(shell uname -a)),)
 		platform = win
+	else ifneq ($(findstring armv,$(shell uname -a)),)
+		platform = armv
 	endif
 endif
 
@@ -43,6 +45,7 @@ ifneq (,$(findstring unix,$(platform)))
 	CC = gcc
 	CC_AS = gcc
 	CXX = g++
+	PLATFORM_DEFINES += -mtune=generic
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
@@ -62,16 +65,7 @@ else ifneq (,$(findstring armv,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a9
 	endif
 	PLATFORM_DEFINES += -marm
-	ifneq (,$(findstring neon,$(platform)))
-		PLATFORM_DEFINES += -mfpu=neon
-		HAVE_NEON = 1
-	endif
-	ifneq (,$(findstring softfloat,$(platform)))
-		PLATFORM_DEFINES += -mfloat-abi=softfp
-	else ifneq (,$(findstring hardfloat,$(platform)))
-		PLATFORM_DEFINES += -mfloat-abi=hard
-	endif
-	PLATFORM_DEFINES += -DARM
+	PLATFORM_DEFINES += -mtune=generic-armv7-a -mhard-float
 
 # cross Windows
 else ifeq ($(platform), wincross64)
@@ -86,7 +80,7 @@ endif
 
 
 ifeq ($(STATIC_LINKING), 1)
-EXT := a
+    EXT := a
 endif
 
 LIBM		= -lm -lpthread
@@ -94,26 +88,22 @@ CC_AS ?= $(CC)
 
 LDFLAGS := -Wl,--as-needed
 LDFLAGS += $(LIBM)
-LDFLAGS += -s
-
-
 
 ifeq ($(DEBUG), 1)
 	CFLAGS += -O0 -g
 	CXXFLAGS += -O0 -g
 else
-	#CFLAGS += -O3
-    CFLAGS += -O3 -mtune=generic -fno-inline-functions -fomit-frame-pointer -ffast-math
-	CXXFLAGS += -O3
+    CFLAGS += -O3 -fno-inline-functions -fomit-frame-pointer -ffast-math
+	CXXFLAGS += -O3 -fno-inline-functions -fomit-frame-pointer -ffast-math
+    LDFLAGS += -s
 endif
-
 
 DEFINES := $(PLATFORM_DEFINES) -DEXCLUDE_SOUND_LIBS -DEP128EMU_LIBRETRO_CORE
 
-# CFLAGS += -march=native -mtune=generic-armv7-a
-# CFLAGS += -DEP128EMU_USE_XRGB8888
+# DEFINES += -DEP128EMU_USE_XRGB8888
+
 CFLAGS += $(DEFINES)
-CXXFLAGS += $(DEFINES)
+CXXFLAGS += $(DEFINES) -std=c++2a
 
 include Makefile.common
 
@@ -121,6 +111,7 @@ INCLUDES := $(INCFLAGS)
 OBJECTS := $(SOURCES_CPP:.cpp=.o)
 OBJECTS += $(SOURCES_C:.c=.o)
 CFLAGS += -Wall -pedantic $(fpic)
+CXXFLAGS += -Wall -pedantic $(fpic)
 
 all Release: $(TARGET)
 
@@ -134,7 +125,7 @@ else
 endif
 
 %.o: %.cpp
-	$(CXX) $(CFLAGS) -std=c++2a $(INCLUDES) $(fpic) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(fpic) -c -o $@ $<
 	#$(CXX) -c -o $@ $< $(CXXFLAGS) $(INCDIRS)
 
 %.o: %.c
