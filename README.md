@@ -7,18 +7,19 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 
 ## Features
 
-Libretro features supported:
-* Load disk images, tape images, or direct files
-  * Enterprise disk images: `img`, `dsk`
-  * Enterprise tape images: `tap` (either ep128emu or epte format)
-  * Enterprise direct files: `com`, `trn`, `128`, `bas` or `.` (no extension)
-  * TVC disk images: `img`, `dsk` (TVC type guess from disk layout)
-  * TVC direct files: `cas`
-  * CPC disk images: `img`, `dsk` (CPCEMU and extended formats)
-  * CPC tape images: `cdt`
-  * Spectrum tape images: `tzx`
-  * Spectrum direct files: `tap`
-* Save/load state, rewind
+### Content types supported:
+* Enterprise disk images: `img`, `dsk`
+* Enterprise tape images: `tap` (either ep128emu or epte format)
+* Enterprise compressed files: `dtf` (via "ZozoTools" ROM)
+* Enterprise direct files: `com`, `trn`, `128`, `bas` or `.` (no extension)
+* TVC disk images: `img`, `dsk` (TVC type guess from disk layout)
+* TVC direct files: `cas`
+* CPC disk images: `img`, `dsk` (CPCEMU and extended formats)
+* CPC tape images: `cdt`
+* Spectrum tape images: `tzx`
+* Spectrum direct files: `tap`
+
+### Input mapping and configuration
 * Default d-pad input mapping for player 1:
   * Enterprise: internal joystick
   * TVC: internal joystick
@@ -38,16 +39,22 @@ Libretro features supported:
   * use high quality sound (disable if there are performance problems)
   * enable resolution changes
   * amount of border to keep when zooming in
+  * use original or enhanced ROM for Enterprise (faster memory test)
 
-Features added by ep128emu-core
+### Other features
+* Save/load state, rewind
 * Content autostart except for disk images
 * Customizable input mapping for player 1
   * See [sample.ep128cfg](core/sample.ep128cfg) to see how retropad buttons can be assigned for a specific game.
   * Autostart file name can also be specified to enable autostart for disk.
+* System-wide configuration file
+  * Following files are recognized in `ep128emu/config` inside retroarch system directory: `enterprise.ep128cfg`, `tvc.ep128cfg`, `pc.ep128cfg`, `zx.ep128cfg`
+  * Most options from ep128emu configuration are also recognized in .ep128cfg files,
 * Fit to content
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
+  * Borders can be cropped completely (default) or using a margin configurable among core options
 
-For the emulation features, see the [original README](README).
+For the emulation features, see the [original README](README). SD card, SID, MIDI emulation is not available in ep128emu-core.
 
 ## Using the binaries
 
@@ -57,16 +64,20 @@ For the emulation features, see the [original README](README).
 available.
 * ROM files for the systems to be emulated.
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
+    * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
+    * TOSEC ROMs can also be used: `Expandible OS v2.1 (1985)(Intelligent Software).bin`, `BASIC Interpreter v2.1 (1985)(Intelligent Software).bin`, `Disk Controller v1.3 (1985)(Intelligent Software).bin`
+    * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` or `ZozoTools v1.8 (19xx)(Zoltan Nemeth).bin` (DTF support)
   * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
   * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
   * ZX: `zx128.rom`
+    * ROM from TOSEC collection may be used: `ZX Spectrum 128K (1986)(Sinclair Research)(128K)[aka Derby].rom`
 * Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
 
 ### Running the core
 ```shell
 retroarch -L ep128emu_core_libretro.so -v
 ```
-Load content from in-game retroarch menu (default F1)
+Load content from in-game retroarch menu (default F1). For most content types, there is a startup sequence that will do the loading, if possible. Use fast-forward if loading is slow (such as tape input).
 
 
 ## Contributing
