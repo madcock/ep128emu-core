@@ -3,12 +3,11 @@
 namespace Ep128Emu
 {
 
-LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, bool showOverscan_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
+LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
                            const char* startSequence_, const char* cfgFile, bool useHalfFrame_, bool enhancedRom)
   : log_cb(log_cb_),
     useHalfFrame(useHalfFrame_),
     isHalfFrame(useHalfFrame_),
-    showOverscan(showOverscan_),
     canSkipFrames(canSkipFrames_),
     joypadConfigChanged(false),
     prevFrameCount(0),
@@ -37,8 +36,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineDetailedType == ZX16_TAPE || machineDetailedType == ZX16_FILE ||
           machineDetailedType == ZX48_TAPE || machineDetailedType == ZX48_FILE ||
-          machineDetailedType == ZX128_TAPE || machineDetailedType == ZX128_FILE
-         )
+          machineDetailedType == ZX128_TAPE || machineDetailedType == ZX128_FILE )
   {
     machineType = MACHINE_ZX;
     log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
@@ -80,13 +78,6 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   );
   //config->setErrorCallback(&LibretroCore::errorCallback, (void *) 0);
   currHeight = useHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT / 2 : EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-  if(!showOverscan)
-  {
-    fullHeight -= 40;
-    halfHeight -= 20;
-    defaultHalfHeight = halfHeight;
-    currHeight = useHalfFrame ? halfHeight : fullHeight;
-  }
   std::string romBasePath(romDirectory_);
   romBasePath.append("/ep128emu/roms/");
   std::string configBaseFile(romDirectory_);
@@ -117,6 +108,9 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x01].file=romBasePath+"exos21.rom";
       config->memory.rom[0x01].offset=16384;
     }
+    // HUN ROM: goes to segment 4 and then Basic goes to segment 5
+    //config->memory.rom[0x04].file=romBasePath+"hun.rom";
+    //config->memory.rom[0x04].offset=0;
     config->memory.rom[0x04].file=romBasePath+"basic21.rom";
     config->memory.rom[0x04].offset=0;
 
@@ -167,13 +161,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     config->memory.ram.size=128;
     config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
     config->memory.rom[0x10].offset=0;
-    // alternative rom for 6128 does not contain the second half
-    if(Ep128Emu::does_file_exist(config->memory.rom[0x10].file.c_str()))
-    {
-      config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
-      config->memory.rom[0x00].offset=16384;
-    }
-
+    config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
+    config->memory.rom[0x00].offset=16384;
     if(machineDetailedType == CPC_DISK)
     {
       config->memory.rom[0x07].file=romBasePath+"cpc_amsdos.rom";
@@ -218,32 +207,48 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       {
         std::map< std::string, std::string >::const_iterator  iter_altrom;
         std::string romShortName;
+        int page_index = config->memory.rom[i].offset / 16384;
+        std::string romPageName(std::to_string(page_index));
         std::string replacementFullName;
         size_t idx = config->memory.rom[i].file.rfind('/');
         if(idx != std::string::npos)
         {
           romShortName = config->memory.rom[i].file.substr(idx+1);
-        }
-
-        iter_altrom = rom_names_ep128emu_tosec.find(romShortName);
-        if (iter_altrom != rom_names_ep128emu_tosec.end())
-        {
-          replacementFullName = (*iter_altrom).second.c_str();
-          replacementFullName = romBasePath + replacementFullName;
-          if(!Ep128Emu::does_file_exist(replacementFullName.c_str()))
-          {
-            log_cb(RETRO_LOG_ERROR, "ROM file or alternative not found: %s / %s\n",config->memory.rom[i].file.c_str(),replacementFullName.c_str());
-            throw Ep128Emu::Exception("ROM file not found!");
-          }
-          else
-          {
-            log_cb(RETRO_LOG_DEBUG, "ROM file alternative found: %s / %s\n",config->memory.rom[i].file.c_str(),replacementFullName.c_str());
-            config->memory.rom[i].file = replacementFullName;
-          }
+          romPageName = config->memory.rom[i].file.substr(idx+1) + "_p" + romPageName;
         }
         else
         {
-          log_cb(RETRO_LOG_ERROR, "ROM file not found, no alternative: %s\n",config->memory.rom[i].file.c_str());
+          log_cb(RETRO_LOG_ERROR, "Invalid ROM name: %s \n",config->memory.rom[i].file.c_str());
+          throw Ep128Emu::Exception("ROM file not found!");
+        }
+
+        bool romFound = false;
+
+        for (iter_altrom = rom_names_ep128emu_tosec.begin(); iter_altrom != rom_names_ep128emu_tosec.end(); ++iter_altrom)
+        {
+          if ((*iter_altrom).first == romShortName || (*iter_altrom).first == romPageName )
+          {
+            replacementFullName = (*iter_altrom).second.c_str();
+            replacementFullName = romBasePath + replacementFullName;
+            if(Ep128Emu::does_file_exist(replacementFullName.c_str()))
+            {
+              log_cb(RETRO_LOG_INFO, "ROM file alternative found: %s => %s\n",romPageName.c_str(), (*iter_altrom).second.c_str());
+              config->memory.rom[i].file = replacementFullName;
+              romFound = true;
+              // If split ROM is used, remove offset.
+              if ((*iter_altrom).first == romPageName)
+                config->memory.rom[i].offset=0;
+              break;
+            }
+            else
+            {
+              log_cb(RETRO_LOG_DEBUG, "ROM file alternative not found: %s => %s\n",romShortName.c_str(),replacementFullName.c_str());
+            }
+          }
+        }
+        if(!romFound)
+        {
+          log_cb(RETRO_LOG_ERROR, "ROM file or any alternative not found: %s \n",config->memory.rom[i].file.c_str());
           throw Ep128Emu::Exception("ROM file not found!");
         }
 
@@ -298,26 +303,26 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   config->sound.highQuality = true;
   config->soundSettingsChanged = true;
 
-  // Order of settings:
-  // hardcoded defaults (above)
-  // system-wide defaults per machine type (this one)
+  // Priority order of settings:
+  // lowest: hardcoded defaults (above)
+  // medium: system-wide defaults per machine type (this one)
   if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
   {
     log_cb(RETRO_LOG_INFO, "Loading system wide configuration file: %s\n",configBaseFile.c_str());
     config->loadState(configBaseFile.c_str(),false);
   }
-  // and content-specific defaults
+  // highest: content-specific file
   if (cfgFile[0])
   {
     log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",configBaseFile.c_str());
     config->loadState(cfgFile,false);
   }
   initialize_keyboard_map();
+  initialize_joystick_map(JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
   if (config->contentFileName != "")
   {
     startSequence = startSequence + config->contentFileName + "\xfe\r";
   }
-
   //config->display.enabled = false;
   //config->displaySettingsChanged = true;
   log_cb(RETRO_LOG_INFO, "Applying settings\n");
@@ -422,7 +427,7 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_RIGHT]     = 0x3A;
   libretro_to_ep128emu_kbmap[RETROK_UP]        = 0x3B;
   libretro_to_ep128emu_kbmap[RETROK_F9]        = 0x3C; // HOLD
-  libretro_to_ep128emu_kbmap[RETROK_SCROLLOCK] = 0x3C; // HOLD - conflicts with "game focus" default
+  //libretro_to_ep128emu_kbmap[RETROK_SCROLLOCK] = 0x3C; // HOLD - conflicts with "game focus" default
   libretro_to_ep128emu_kbmap[RETROK_LEFT]      = 0x3D;
   libretro_to_ep128emu_kbmap[RETROK_RETURN]    = 0x3E;
   libretro_to_ep128emu_kbmap[RETROK_LALT]      = 0x3F;
@@ -499,70 +504,37 @@ void LibretroCore::initialize_keyboard_map(void)
     }
   }
   config->keyboardMapChanged = true;
+}
+
+void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int user4)
+{
+  // Lowest priority joystick settings: machine dependent hardcoded defaults.
   if (machineType == MACHINE_CPC)
   {
     // external joystick 1: controller 1 (cursor keys usually not used for game control)
-    inputJoyMap[0x73][0] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x72][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x71][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x70][0] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_X; // fire 1
-    inputJoyMap[0x75][0] = RETRO_DEVICE_ID_JOYPAD_B; // fire 2
+    update_joystick_map(joystickCodesExt1,0,6);
     // external joystick 2: controller 2
-    inputJoyMap[0x7b][1] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x7a][1] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x79][1] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x78][1] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x7c][1] = RETRO_DEVICE_ID_JOYPAD_X; // fire 1
-    inputJoyMap[0x7d][1] = RETRO_DEVICE_ID_JOYPAD_B; // fire 2
+    update_joystick_map(joystickCodesExt2,1,6);
   }
   else if (machineType == MACHINE_ZX)
   {
     // Kempston interface mapped to ext 1
-    inputJoyMap[0x73][0] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x72][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x71][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x70][0] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x74][0] = RETRO_DEVICE_ID_JOYPAD_A; // fire
+    update_joystick_map(joystickCodesExt1,0,5);
     // The 'left' Sinclair joystick maps the joystick directions and the fire button to the 1 (left), 2 (right), 3 (down), 4 (up) and 5 (fire) keys
-    inputJoyMap[0x1b][1] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x1d][1] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x19][1] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x1e][1] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x1c][1] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    update_joystick_map(joystickCodesSinclair1,1,5);
     // The 'right' Sinclair joystick maps to keys 6 (left), 7 (right), 8 (down), 9 (up) and 0 (fire)
-    inputJoyMap[0x2a][2] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x28][2] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x1a][2] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x18][2] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x2c][2] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    update_joystick_map(joystickCodesSinclair2,2,5);
     // A cursor joystick interfaces maps to keys 5 (left), 6 (down), 7 (up), 8 (right) and 0 (fire). (Protek and AGF)
-    inputJoyMap[0x18][3] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x1a][3] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x1c][3] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x28][3] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x2c][3] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    update_joystick_map(joystickCodesSinclair3,3,5);
   }
   else
   {
     // EP or TVC: internal joystick: controller 0
-    inputJoyMap[0x3b][0] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x39][0] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x3d][0] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x3a][0] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x46][0] = RETRO_DEVICE_ID_JOYPAD_X; // space
+    update_joystick_map(joystickCodesInt,0,5);
     // external joystick 1: controller 1
-    inputJoyMap[0x73][1] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x72][1] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x71][1] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x70][1] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x74][1] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    update_joystick_map(joystickCodesExt1,1,5);
     // external joystick 2: controller 2
-    inputJoyMap[0x7b][2] = RETRO_DEVICE_ID_JOYPAD_UP;
-    inputJoyMap[0x7a][2] = RETRO_DEVICE_ID_JOYPAD_DOWN;
-    inputJoyMap[0x79][2] = RETRO_DEVICE_ID_JOYPAD_LEFT;
-    inputJoyMap[0x78][2] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
-    inputJoyMap[0x7c][2] = RETRO_DEVICE_ID_JOYPAD_X; // fire
+    update_joystick_map(joystickCodesExt2,2,5);
   }
   inputJoyMap[0xff][0] = RETRO_DEVICE_ID_JOYPAD_A; // special: info button
   inputJoyMap[0xfe][0] = RETRO_DEVICE_ID_JOYPAD_R3; // special: fit to content
@@ -573,6 +545,7 @@ void LibretroCore::initialize_keyboard_map(void)
   inputJoyMap[0x1d][0] = RETRO_DEVICE_ID_JOYPAD_R2; // 3
   infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 R3->zoom ";
 
+  // Second priority: assignment read from .ep128cfg file
   std::string buttonprefix("EPKEY_");
   std::string button;
   std::map< std::string, unsigned char >::const_iterator  iter_epkey;
@@ -594,6 +567,40 @@ void LibretroCore::initialize_keyboard_map(void)
         infoMessage = infoMessage + config->joypadButtons[i] + "->" + config->joypad[i] + " ";
       }
     }
+  }
+  // Highest priority: core option settings (if they are not left on default)
+  int mappings[4] = {user1, user2, user3, user4};
+  for (int i=0; i<4; i++)
+  {
+    // TODO: 2nd / 3rd fire button assignment on need (CPC)
+    if(mappings[i]>0)
+      update_joystick_map(joystickCodeMap[mappings[i]],i,5);
+  }
+}
+
+void LibretroCore::update_joystick_map(const unsigned char * joystickCodes, int port, int length)
+{
+  reset_joystick_map(port);
+  inputJoyMap[joystickCodes[0]][port] = RETRO_DEVICE_ID_JOYPAD_UP;
+  inputJoyMap[joystickCodes[1]][port] = RETRO_DEVICE_ID_JOYPAD_DOWN;
+  inputJoyMap[joystickCodes[2]][port] = RETRO_DEVICE_ID_JOYPAD_LEFT;
+  inputJoyMap[joystickCodes[3]][port] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
+  inputJoyMap[joystickCodes[4]][port] = RETRO_DEVICE_ID_JOYPAD_X;
+  if(length>=6)
+    inputJoyMap[joystickCodes[5]][port] = RETRO_DEVICE_ID_JOYPAD_B;
+  if(length>=7)
+    inputJoyMap[joystickCodes[6]][port] = RETRO_DEVICE_ID_JOYPAD_Y;
+}
+
+void LibretroCore::reset_joystick_map(int port)
+{
+  for(int i=1; i<7; i++)
+  {
+    inputJoyMap[joystickCodeMap[i][0]][port] = -1;
+    inputJoyMap[joystickCodeMap[i][1]][port] = -1;
+    inputJoyMap[joystickCodeMap[i][2]][port] = -1;
+    inputJoyMap[joystickCodeMap[i][3]][port] = -1;
+    inputJoyMap[joystickCodeMap[i][4]][port] = -1;
   }
 }
 

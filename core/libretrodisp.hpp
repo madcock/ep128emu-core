@@ -179,9 +179,9 @@ namespace Ep128Emu {
     bool          framesPendingFlag;
     bool          vsyncState;
     bool          oddFrame;
-    unsigned char * lineBuf;
-    ThreadLock      threadLock1;
-    ThreadLock      threadLock2;
+    unsigned char *lineBuf;
+    ThreadLock    threadLock1;
+    ThreadLock    threadLock2;
     volatile bool videoResampleEnabled;
     volatile bool exitFlag;
     volatile bool limitFrameRateFlag;
@@ -218,14 +218,14 @@ namespace Ep128Emu {
     uint32_t frameSize;
     uint32_t interlacedFrameCount;
     uint32_t frameCount;
-    int           contentTopEdge;
-    int           contentLeftEdge;
-    int           contentBottomEdge;
-    int           contentRightEdge;
-    int viewPortX1;
-    int viewPortY1;
-    int viewPortX2;
-    int viewPortY2;
+    int      contentTopEdge;
+    int      contentLeftEdge;
+    int      contentBottomEdge;
+    int      contentRightEdge;
+    int      viewPortX1;
+    int      viewPortY1;
+    int      viewPortX2;
+    int      viewPortY2;
     volatile bool scanBorders;
     bool bordersScanned;
     LibretroDisplay(int xx, int yy, int ww, int hh,

@@ -1,24 +1,23 @@
 /* TODO
 
 build for windows, mac
-cpc1628 rom második fele tosec-ből?
 magyar nyelvű leírás is
-zx 48 load?
 licensing
-rpi-n segfault content loadkor
 
+ep midnight resistance dtf flicker
+cpc arctic fox syntax error
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
-overscant le kellene tiltani / megnézni mit csinál sw fb esetén mert vszg. nem oké
 a height detect hasonlóan
+wait állítás után keyboard lefele beragad?
 
 input:
-konfigurálható default kiosztás (core option)
-joystick kezelés 2/3 user -- tesztelni kellene
 4/6 joystick support
 
 m3u support (cpc 3 guerra)
+cp/m support (EP, CPC)
+hun font support EP
 
 low prio:
 opengl display support
@@ -78,7 +77,6 @@ int borderSize = 0;
 bool soundHq = true;
 
 bool canSkipFrames = false;
-bool showOverscan = false;
 bool enhancedRom = false;
 
 Ep128Emu::VMThread              *vmThread    = (Ep128Emu::VMThread *) 0;
@@ -191,6 +189,27 @@ static void check_variables(void)
     if(core) {
       //
   }
+
+  const char* joyVariableNames[4] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4"};
+  int userMap[4] = {0,0,0,0};
+  for (int i=0; i<4; i++) {
+    var.key = joyVariableNames[i];
+    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+    {
+      if(var.value[0] == 'I') { userMap[i]=Ep128Emu::JOY_INTERNAL;}
+      else if (var.value[0] == 'E') {
+        if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_EXT1;
+        else userMap[i] = Ep128Emu::JOY_EXT2;
+      }
+      else if (var.value[0] == 'S') {
+        if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_SINCLAIR1;
+        else userMap[i] = Ep128Emu::JOY_SINCLAIR2;
+      }
+      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::JOY_PROTEK;}
+    }
+    if(core)
+      core->initialize_joystick_map(userMap[0],userMap[1],userMap[2],userMap[3]);
+  }
 }
 
 }
@@ -268,12 +287,11 @@ void retro_init(void)
   environ_cb(RETRO_ENVIRONMENT_SET_FRAME_TIME_CALLBACK, &ftcb);
 
   environ_cb(RETRO_ENVIRONMENT_GET_CAN_DUPE,&canSkipFrames);
-  environ_cb(RETRO_ENVIRONMENT_GET_OVERSCAN,&showOverscan);
+  //environ_cb(RETRO_ENVIRONMENT_GET_OVERSCAN,&showan);
   // safe mode
   canSkipFrames = false;
-  //showOverscan = true;
   check_variables();
-  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
+  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
@@ -302,7 +320,6 @@ void retro_get_system_info(struct retro_system_info *info)
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
   float aspect = 4.0f / 3.0f;
-  //if(!core->showOverscan)
   aspect = 4.0f / (3.0f / (float) (core->isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)core->currHeight : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)core->currHeight));
   //aspect = 4.0f / (3.0f / (float) (EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)core->currHeight));
   info->timing = (struct retro_system_timing)
@@ -343,6 +360,10 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_useh", "Enable resolution changes (requires restart); 1|0" },
     { "ep128emu_brds", "Border lines to keep when zooming in; 0|2|4|8|10|20" },
     { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
+    { "ep128emu_joy1", "User 1 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
+    { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
+    { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
+    { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
     { NULL, NULL },
   };
 
@@ -542,6 +563,7 @@ bool retro_load_game(const struct retro_game_info *info)
     static const char *epDskFileHeader2 = "\xeb\x4c\x90";
     static const char *epComFileHeader = "\x00\x05";
     static const char *epBasFileHeader = "\x00\x04";
+    // static const char *zxTapFileHeader = "\x13\x00\x00\x00";
     // Startup sequence may contain:
     // - chars on the keyboard (a-z, 0-9, few symbols like :
     // - 0xff as wait character
@@ -608,7 +630,7 @@ bool retro_load_game(const struct retro_game_info *info)
         return false;
       }
     }
-    else if (contentExt == fileExtZx)
+    else if (contentExt == fileExtZx /*&& header_match(zxTapFileHeader,tmpBuf,4)*/)
     {
       detectedMachineDetailedType = Ep128Emu::ZX128_FILE;
       fileContent=true;
@@ -635,7 +657,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       log_cb(RETRO_LOG_INFO, "Creating core\n");
       check_variables();
-      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, showOverscan, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
+      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
       config = core->config;
       check_variables();
       if (diskContent)
