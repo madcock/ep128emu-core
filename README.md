@@ -40,6 +40,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * enable resolution changes
   * amount of border to keep when zooming in
   * use original or enhanced ROM for Enterprise (faster memory test)
+  * override joystick map for each user
 
 ### Other features
 * Save/load state, rewind
@@ -68,7 +69,9 @@ available.
     * TOSEC ROMs can also be used: `Expandible OS v2.1 (1985)(Intelligent Software).bin`, `BASIC Interpreter v2.1 (1985)(Intelligent Software).bin`, `Disk Controller v1.3 (1985)(Intelligent Software).bin`
     * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` or `ZozoTools v1.8 (19xx)(Zoltan Nemeth).bin` (DTF support)
   * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
+    * [tvcfileio.rom](roms/tvcfileio.rom) is a special image for ep128emu, needed only for direct file loading
   * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
+    * ROMs from TOSEC or cpcwiki.eu can also be used
   * ZX: `zx128.rom`
     * ROM from TOSEC collection may be used: `ZX Spectrum 128K (1986)(Sinclair Research)(128K)[aka Derby].rom`
 * Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
