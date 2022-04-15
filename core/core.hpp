@@ -74,7 +74,7 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
 {"cpc464.rom_p1"  , "BASIC_1.0.ROM"}, // second half, cpcwiki.eu naming
 {"cpc664.rom_p1"  , "BASIC_664.ROM"}, // second half, cpcwiki.eu naming
 {"cpc6128.rom_p1" , "BASIC_1.1.ROM"}, // second half, cpcwiki.eu naming
-{"cpc_amsdos.rom" , "AMSDOS_0.5.ROM"},
+{"cpc_amsdos.rom" , "AMSDOS_0.5.ROM"}, // cpcwiki.eu naming
 {"tvc_dos12d.rom" , "VT-DOS12-DISK.ROM"}, // tvc.homeserver.hu naming, binary does not fully match
 {"tvc22_ext.rom"  , "TVC22_D7.64K"}, // tvc.homeserver.hu naming
 {"tvc22_sys.rom"  , "TVC22_D6_D4.64K"}, // tvc.homeserver.hu naming. Combine the 8K dump files into one 16K file:
@@ -91,6 +91,10 @@ enum LibretroCore_joystick_type
   JOY_SINCLAIR1,
   JOY_SINCLAIR2,
   JOY_PROTEK,
+  JOY_EXT3,
+  JOY_EXT4,
+  JOY_EXT5,
+  JOY_EXT6,
   JOY_UNKNOWN = INT_MAX
 };
 
@@ -105,9 +109,18 @@ const unsigned char joystickCodesSinclair1[7] = { 0x1b, 0x1d, 0x19, 0x1e, 0x1c, 
 const unsigned char joystickCodesSinclair2[7] = { 0x2a, 0x28, 0x1a, 0x18, 0x2c, 0xff, 0xff };
 // A cursor joystick interfaces maps to keys 5 (left), 6 (down), 7 (up), 8 (right) and 0 (fire). (Protek and AGF)
 const unsigned char joystickCodesSinclair3[7] = { 0x18, 0x1a, 0x1c, 0x28, 0x2c, 0xff, 0xff };
+// External 3..6 joysticks for Enterprise. Very rarely used.
+// 3/4: column K
+const unsigned char joystickCodesExt3[7]      = { 0x63, 0x62, 0x61, 0x60, 0x64, 0x65, 0x66 };
+const unsigned char joystickCodesExt4[7]      = { 0x6b, 0x6a, 0x69, 0x68, 0x6c, 0x6d, 0x6e };
+// 5/6: column L
+const unsigned char joystickCodesExt5[7]      = { 0x53, 0x52, 0x51, 0x50, 0x54, 0x55, 0x56 };
+const unsigned char joystickCodesExt6[7]      = { 0x5b, 0x5a, 0x59, 0x58, 0x5c, 0x5d, 0x5e };
 
-const unsigned char* const joystickCodeMap[7] =
-{ nullptr, joystickCodesInt, joystickCodesExt1, joystickCodesExt2, joystickCodesSinclair1, joystickCodesSinclair2, joystickCodesSinclair3 };
+
+const unsigned char* const joystickCodeMap[11] =
+{ nullptr, joystickCodesInt, joystickCodesExt1, joystickCodesExt2, joystickCodesSinclair1, joystickCodesSinclair2, joystickCodesSinclair3,
+joystickCodesExt3, joystickCodesExt4, joystickCodesExt5, joystickCodesExt6 };
 
 class LibretroCore
 {

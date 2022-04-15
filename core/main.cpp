@@ -1,19 +1,17 @@
 /* TODO
 
-build for windows, mac
+build for mac
 magyar nyelvű leírás is
 licensing
+cheat?
 
 ep midnight resistance dtf flicker
-cpc arctic fox syntax error
+
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
 a height detect hasonlóan
 wait állítás után keyboard lefele beragad?
-
-input:
-4/6 joystick support
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
@@ -202,7 +200,11 @@ static void check_variables(void)
       if(var.value[0] == 'I') { userMap[i]=Ep128Emu::JOY_INTERNAL;}
       else if (var.value[0] == 'E') {
         if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_EXT1;
-        else userMap[i] = Ep128Emu::JOY_EXT2;
+        if (var.value[9] == '2') userMap[i]=Ep128Emu::JOY_EXT2;
+        if (var.value[9] == '3') userMap[i]=Ep128Emu::JOY_EXT3;
+        if (var.value[9] == '4') userMap[i]=Ep128Emu::JOY_EXT4;
+        if (var.value[9] == '5') userMap[i]=Ep128Emu::JOY_EXT5;
+        if (var.value[9] == '6') userMap[i]=Ep128Emu::JOY_EXT6;
       }
       else if (var.value[0] == 'S') {
         if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_SINCLAIR1;
@@ -369,10 +371,10 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_useh", "Enable resolution changes (requires restart); 1|0" },
     { "ep128emu_brds", "Border lines to keep when zooming in; 0|2|4|8|10|20" },
     { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
-    { "ep128emu_joy1", "User 1 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
-    { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
-    { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
-    { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek" },
+    { "ep128emu_joy1", "User 1 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+    { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+    { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+    { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { NULL, NULL },
   };
 

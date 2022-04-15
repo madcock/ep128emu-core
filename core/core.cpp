@@ -470,7 +470,9 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_KP2]        = 0x72;
   libretro_to_ep128emu_kbmap[RETROK_KP8]        = 0x73;
   libretro_to_ep128emu_kbmap[RETROK_KP0]        = 0x74;
-
+  // fire 2 and 3 for testing
+  //libretro_to_ep128emu_kbmap[RETROK_KP_PERIOD] = 0x75;
+  //libretro_to_ep128emu_kbmap[RETROK_KP_PLUS]   = 0x76;
   if(machineType == MACHINE_TVC)
   {
     /* tvc extra keys in original ep128emu (tvc key - EP key - default PC key):
