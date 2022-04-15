@@ -66,21 +66,24 @@ available.
 * ROM files for the systems to be emulated.
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
     * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
-    * TOSEC ROMs can also be used: `Expandible OS v2.1 (1985)(Intelligent Software).bin`, `BASIC Interpreter v2.1 (1985)(Intelligent Software).bin`, `Disk Controller v1.3 (1985)(Intelligent Software).bin`
-    * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` or `ZozoTools v1.8 (19xx)(Zoltan Nemeth).bin` (DTF support)
+    * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` (DTF support)
+    * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
     * [tvcfileio.rom](roms/tvcfileio.rom) is a special image for ep128emu, needed only for direct file loading
   * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
-    * ROMs from TOSEC or cpcwiki.eu can also be used
+    * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * ZX: `zx128.rom`
-    * ROM from TOSEC collection may be used: `ZX Spectrum 128K (1986)(Sinclair Research)(128K)[aka Derby].rom`
+    * TOSEC ROMs or [retroarch-system](https://github.com/Abdess/retroarch_system/tree/libretro/Sinclair%20-%20ZX%20Spectrum) ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
 * Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
 
 ### Running the core
 ```shell
-retroarch -L ep128emu_core_libretro.so -v
+# Linux
+retroarch -L ep128emu_core_libretro.so -v <content file>
+# Windows
+retroarch -L ep128emu_core_libretro.dll -v <content file>
 ```
-Load content from in-game retroarch menu (default F1). For most content types, there is a startup sequence that will do the loading, if possible. Use fast-forward if loading is slow (such as tape input).
+For most content types, there is a startup sequence that will do the program loading, if possible. Use fast-forward if loading is slow (such as tape input).
 
 
 ## Contributing
