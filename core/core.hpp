@@ -75,6 +75,11 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
 {"cpc664.rom_p1"  , "BASIC_664.ROM"}, // second half, cpcwiki.eu naming
 {"cpc6128.rom_p1" , "BASIC_1.1.ROM"}, // second half, cpcwiki.eu naming
 {"cpc_amsdos.rom" , "AMSDOS_0.5.ROM"},
+{"tvc_dos12d.rom" , "VT-DOS12-DISK.ROM"}, // tvc.homeserver.hu naming, binary does not fully match
+{"tvc22_ext.rom"  , "TVC22_D7.64K"}, // tvc.homeserver.hu naming
+{"tvc22_sys.rom"  , "TVC22_D6_D4.64K"}, // tvc.homeserver.hu naming. Combine the 8K dump files into one 16K file:
+// copy TVC22_D6.64K+TVC22_D4.64K TVC22_D6_D4.64K (Windows)
+// cat TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
 };
 
 enum LibretroCore_joystick_type
