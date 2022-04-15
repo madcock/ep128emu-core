@@ -55,7 +55,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
   * Borders can be cropped completely (default) or using a margin configurable among core options
 
-For the emulation features, see the [original README](README). SD card, SID, MIDI emulation is not available in ep128emu-core.
+For the emulation features, see the [original README](README). Since GUI is replaced by retroarch, features that would require own window (debugger, keyboard layout setting, etc) are not available. Some extra features not required for original games are also excluded (SD card, SID, MIDI, Spectrum emulation card for EP, mouse).
 
 ## Using the binaries
 
@@ -70,6 +70,7 @@ available.
     * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
     * [tvcfileio.rom](roms/tvcfileio.rom) is a special image for ep128emu, needed only for direct file loading
+    * ROMs from tvc.homeserver.hu can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
     * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * ZX: `zx128.rom`
