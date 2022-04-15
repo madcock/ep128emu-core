@@ -1,3 +1,22 @@
+
+// ep128emu-core -- libretro core version of the ep128emu emulator
+// Copyright (C) 2022 Zoltan Balogh
+// https://github.com/zoltanvb/ep128emu-core
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
 #include "core.hpp"
 #include "libretro_keys_reverse.h"
 namespace Ep128Emu
@@ -168,9 +187,12 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     configBaseFile = configBaseFile + "cpc.ep128cfg";
     bootframes[machineDetailedType] = 20*10;
     config->memory.ram.size=128;
+//    config->memory.ram.size=64;
     config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
+//    config->memory.rom[0x10].file=romBasePath+"cpc664.rom";
     config->memory.rom[0x10].offset=0;
     config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
+//    config->memory.rom[0x00].file=romBasePath+"cpc664.rom";
     config->memory.rom[0x00].offset=16384;
     if(machineDetailedType == CPC_DISK)
     {
@@ -609,7 +631,7 @@ void LibretroCore::update_joystick_map(const unsigned char * joystickCodes, int 
 
 void LibretroCore::reset_joystick_map(int port)
 {
-  for(int i=1; i<7; i++)
+  for(int i=1; i<11; i++)
   {
     inputJoyMap[joystickCodeMap[i][0]][port] = -1;
     inputJoyMap[joystickCodeMap[i][1]][port] = -1;

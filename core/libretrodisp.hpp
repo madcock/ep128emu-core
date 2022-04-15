@@ -1,7 +1,7 @@
 
-// ep128emu -- portable Enterprise 128 emulator
-// Copyright (C) 2003-2016 Istvan Varga <istvanv@users.sourceforge.net>
-// https://sourceforge.net/projects/ep128emu/
+// ep128emu-core -- libretro core version of the ep128emu emulator
+// Copyright (C) 2022 Zoltan Balogh
+// https://github.com/zoltanvb/ep128emu-core
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
