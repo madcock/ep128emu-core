@@ -85,7 +85,18 @@ else ifeq ($(platform), wincross64)
 	CXX = x86_64-w64-mingw32-g++
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++
-	EXTRA_LDF := -lwinmm -Wl,--export-all-symbols
+	LDFLAGS += -lwinmm -Wl,--export-all-symbols
+else ifeq ($(platform), wincross32)
+	TARGET := $(TARGET_NAME)_libretro.dll
+	AR = i686-w64-mingw32-ar
+	CC = i686-w64-mingw32-gcc
+	CXX = i686-w64-mingw32-g++
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
+	LDFLAGS += -static-libgcc -static-libstdc++ -L. -m32
+	LDFLAGS += -lwinmm -Wl,--export-all-symbols
+	PLATFORM_DEFINES += -march=pentium2
+	CFLAGS += -m32
+	CXXFLAGS += -m32
 endif
 
 ifeq ($(STATIC_LINKING), 1)
@@ -95,7 +106,7 @@ endif
 LIBM		= -lm -lpthread
 CC_AS ?= $(CC)
 
-LDFLAGS := -Wl,--as-needed
+LDFLAGS += -Wl,--as-needed
 LDFLAGS += $(LIBM)
 
 ifeq ($(DEBUG), 1)

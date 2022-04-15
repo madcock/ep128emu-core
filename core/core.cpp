@@ -41,6 +41,9 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     machineType = MACHINE_ZX;
     log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
   }
+  else {
+      log_cb(RETRO_LOG_INFO, "Emulated machine: EP\n");
+  }
   if(machineDetailedType == VM_CONFIG_UNKNOWN)
   {
     log_cb(RETRO_LOG_ERROR, "VM_CONFIG_UNKNOWN passed!\n");
@@ -69,7 +72,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     vm = new Ep128::Ep128VM(*(dynamic_cast<Ep128Emu::VideoDisplay *>(w)),
                             *audioOutput);
   }
-
+  log_cb(RETRO_LOG_DEBUG, "VM created\n");
   config = new Ep128Emu::EmulatorConfiguration(
     *vm, *(dynamic_cast<Ep128Emu::VideoDisplay *>(w)), *audioOutput
 #ifdef ENABLE_MIDI_PORT
@@ -79,9 +82,15 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   //config->setErrorCallback(&LibretroCore::errorCallback, (void *) 0);
   currHeight = useHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT / 2 : EP128EMU_LIBRETRO_SCREEN_HEIGHT;
   std::string romBasePath(romDirectory_);
-  romBasePath.append("/ep128emu/roms/");
   std::string configBaseFile(romDirectory_);
+#ifdef WIN32
+  romBasePath.append("\\ep128emu\\roms\\");
+  configBaseFile.append("\\ep128emu\\config\\");
+#else
+  romBasePath.append("/ep128emu/roms/");
   configBaseFile.append("/ep128emu/config/");
+#endif
+
   startSequence = startSequence_;
 
   if(machineType == MACHINE_EP)
@@ -210,7 +219,11 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
         int page_index = config->memory.rom[i].offset / 16384;
         std::string romPageName(std::to_string(page_index));
         std::string replacementFullName;
+#ifdef WIN32
+        size_t idx = config->memory.rom[i].file.rfind('\\');
+#else
         size_t idx = config->memory.rom[i].file.rfind('/');
+#endif
         if(idx != std::string::npos)
         {
           romShortName = config->memory.rom[i].file.substr(idx+1);
@@ -325,7 +338,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   //config->display.enabled = false;
   //config->displaySettingsChanged = true;
-  log_cb(RETRO_LOG_INFO, "Applying settings\n");
+  log_cb(RETRO_LOG_DEBUG, "Applying settings\n");
   config->applySettings();
 
   vmThread = new Ep128Emu::VMThread(*vm);
@@ -807,11 +820,13 @@ void LibretroCore::start(void)
   vmThread->lock(0x7FFFFFFF);
   vmThread->unlock();
   vmThread->pause(false);
+  log_cb(RETRO_LOG_DEBUG, "Core started\n");
 }
 
 void LibretroCore::run_for(retro_usec_t frameTime, float waitPeriod, void * fb)
 {
   //Ep128Emu::VMThread::VMThreadStatus  vmThreadStatus(*vmThread);
+  //log_cb(RETRO_LOG_DEBUG, "Running core for %d ms\n",frameTime);
   totalTime += frameTime;
   if(fb)
   {

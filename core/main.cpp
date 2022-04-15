@@ -50,6 +50,9 @@ sound.swPeriods	16
 #include "libretro-funcs.hpp"
 #include "libretrodisp.hpp"
 #include "core.hpp"
+#ifdef WIN32
+#include <windows.h>
+#endif // WIN32
 
 static struct retro_log_callback logging;
 static retro_log_printf_t log_cb;
@@ -291,12 +294,18 @@ void retro_init(void)
   // safe mode
   canSkipFrames = false;
   check_variables();
+#ifdef WIN32
+  timeBeginPeriod(1U);
+#endif
+  log_cb(RETRO_LOG_DEBUG, "Creating core...\n");
   core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
   check_variables();
+  log_cb(RETRO_LOG_DEBUG, "Starting core...\n");
   core->start();
+  core->change_resolution(core->currWidth,core->currHeight,environ_cb);
 }
 
 void retro_deinit(void)
@@ -312,7 +321,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.85";
+  info->library_version  = "v0.89";
   info->need_fullpath    = true;
   info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|dtf|.";
 }
