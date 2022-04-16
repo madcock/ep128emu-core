@@ -27,7 +27,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * ZX: Kempston
   * Fire is **X** button, **L**-**R**-**L2**-**R2** buttons are 0-1-2-3 (several games use these in menu)
   * Keyboard input is enabled, be aware that retroarch uses several hotkeys by default
-  * Use **A** button to display current layout
+  * Use **L3** button to display current layout
 * Default d-pad input mappings for further players
   * Enterprise: external 1 (also mapped to numpad), external 2
   * TVC: external 1 (also mapped to numpad), external 2
@@ -41,6 +41,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * amount of border to keep when zooming in
   * use original or enhanced ROM for Enterprise (faster memory test)
   * override joystick map for each user
+  * zoom and info keys for player 1
 
 ### Other features
 * Save/load state, rewind
@@ -49,7 +50,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * See [sample.ep128cfg](core/sample.ep128cfg) to see how retropad buttons can be assigned for a specific game.
   * Autostart file name can also be specified to enable autostart for disk.
 * System-wide configuration file
-  * Following files are recognized in `ep128emu/config` inside retroarch system directory: `enterprise.ep128cfg`, `tvc.ep128cfg`, `pc.ep128cfg`, `zx.ep128cfg`
+  * Following files are recognized in `ep128emu/config` inside retroarch system directory: `enterprise.ep128cfg`, `tvc.ep128cfg`, `cpc.ep128cfg`, `zx.ep128cfg`
   * Most options from ep128emu configuration are also recognized in .ep128cfg files,
 * Fit to content
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
@@ -61,8 +62,7 @@ For the emulation features, see the [original README](README). Since GUI is repl
 
 ### Requirements
 
-* A system with retroarch installed. Currently Linux x86_64 and arm builds are
-available.
+* A system with retroarch installed. Linux 64-bit, ARM 32-bit, and Windows 32 and 64 bit versions are currently available.
 * ROM files for the systems to be emulated.
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
     * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
@@ -89,11 +89,11 @@ For most content types, there is a startup sequence that will do the program loa
 
 ## Contributing
 
-Pull requests welcome. Especially for currently unsupported builds (like Windows or MacOS).
+Pull requests welcome. Especially for currently unsupported builds (like MacOS).
 
 ## Links
 
 
 ## Licensing
 
-To be specified, probably staying with GPL2 as ep128emu.
+Staying with GPL2 as ep128emu.
