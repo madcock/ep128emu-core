@@ -150,8 +150,8 @@ private:
 
 public:
   uint16_t audioBuffer[EP128EMU_SAMPLE_RATE*1000*2];
-  int inputJoyMap[256][4];
-  bool inputStateMap[256][4];
+  int inputJoyMap[256][EP128EMU_MAX_USERS];
+  bool inputStateMap[256][EP128EMU_MAX_USERS];
   bool useHalfFrame;
   bool isHalfFrame;
   bool canSkipFrames;
@@ -187,14 +187,14 @@ public:
 
   void initialize_keyboard_map(void);
   void update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
-  void initialize_joystick_map(int user1, int user2, int user3, int user4);
+  void initialize_joystick_map(int user1, int user2, int user3, int user4, int user5, int user6);
   void update_joystick_map(const unsigned char * joystickCodes, int port, int length);
   void reset_joystick_map(int port);
   void start(void);
   void run_for(retro_usec_t frameTime, float waitPeriod, void * fb);
   void sync_display();
   char* get_current_message(void);
-  void update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb);
+  void update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb, unsigned maxUsers);
   void render(retro_video_refresh_t video_cb, retro_environment_t environ_cb);
   void change_resolution(int width, int height, retro_environment_t environ_cb);
   void errorCallback(void *userData, const char *msg);

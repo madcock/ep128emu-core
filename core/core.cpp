@@ -353,7 +353,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     config->loadState(cfgFile,false);
   }
   initialize_keyboard_map();
-  initialize_joystick_map(JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
+  initialize_joystick_map(JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
   if (config->contentFileName != "")
   {
     startSequence = startSequence + config->contentFileName + "\xfe\r";
@@ -386,7 +386,7 @@ void LibretroCore::initialize_keyboard_map(void)
   {
     libretro_to_ep128emu_kbmap[i]=-1;
   }
-  for(int port=0; port<4; port++)
+  for(int port=0; port<EP128EMU_MAX_USERS; port++)
   {
     for(int i=0; i<256; i++)
     {
@@ -543,7 +543,7 @@ void LibretroCore::initialize_keyboard_map(void)
   config->keyboardMapChanged = true;
 }
 
-void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int user4)
+void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int user4, int user5, int user6)
 {
   // Lowest priority joystick settings: machine dependent hardcoded defaults.
   if (machineType == MACHINE_CPC)
@@ -566,12 +566,18 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
   }
   else
   {
-    // EP or TVC: internal joystick: controller 0
+    // EP or TVC: internal joystick: controller 0 / user 1
     update_joystick_map(joystickCodesInt,0,5);
     // external joystick 1: controller 1
     update_joystick_map(joystickCodesExt1,1,5);
     // external joystick 2: controller 2
     update_joystick_map(joystickCodesExt2,2,5);
+    // external joystick 3: controller 3
+    update_joystick_map(joystickCodesExt3,3,5);
+    // external joystick 4: controller 4
+    update_joystick_map(joystickCodesExt4,4,5);
+    // external joystick 5: controller 5 / user 6
+    update_joystick_map(joystickCodesExt5,5,5);
   }
   inputJoyMap[0xff][0] = RETRO_DEVICE_ID_JOYPAD_A; // special: info button
   inputJoyMap[0xfe][0] = RETRO_DEVICE_ID_JOYPAD_R3; // special: fit to content
@@ -580,6 +586,7 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
   inputJoyMap[0x19][0] = RETRO_DEVICE_ID_JOYPAD_R; // 1
   inputJoyMap[0x1e][0] = RETRO_DEVICE_ID_JOYPAD_L2; // 2
   inputJoyMap[0x1d][0] = RETRO_DEVICE_ID_JOYPAD_R2; // 3
+  // todo: fully dynamic info message
   infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 R3->zoom ";
 
   // Second priority: assignment read from .ep128cfg file
@@ -606,8 +613,8 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
     }
   }
   // Highest priority: core option settings (if they are not left on default)
-  int mappings[4] = {user1, user2, user3, user4};
-  for (int i=0; i<4; i++)
+  int mappings[EP128EMU_MAX_USERS] = {user1, user2, user3, user4, user5, user6};
+  for (int i=0; i<EP128EMU_MAX_USERS; i++)
   {
     // TODO: 2nd / 3rd fire button assignment on need (CPC)
     if(mappings[i]>0)
@@ -650,13 +657,14 @@ void LibretroCore::update_keyboard(bool down, unsigned keycode, uint32_t charact
   }
 }
 
-void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb)
+void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb, unsigned maxUsers)
 {
   int i;
-  int port;
+  unsigned port;
   bool currInputState;
+  unsigned scanLimit = maxUsers < EP128EMU_MAX_USERS ? maxUsers : EP128EMU_MAX_USERS;
 
-  for(port=0; port<4; port++)
+  for(port=0; port<scanLimit; port++)
   {
     for(i=0; i<256; i++)
     {

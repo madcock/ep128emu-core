@@ -2,8 +2,9 @@
 
 build for mac
 magyar nyelvű leírás is
-licensing
 cheat?
+info msg overlay
+arm build without dependency to glib version
 
 ep midnight resistance dtf flicker
 
@@ -11,7 +12,7 @@ gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
 a height detect hasonlóan
-wait állítás után keyboard lefele beragad?
+wait állítás után keyboard lefele beragad? -- kb reset
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
@@ -94,7 +95,7 @@ bool enableDiskControl = false;
 bool needsDiskControl = false;
 int borderSize = 0;
 bool soundHq = true;
-
+unsigned maxUsers;
 bool canSkipFrames = false;
 bool enhancedRom = false;
 
@@ -209,9 +210,12 @@ static void check_variables(void)
       //
   }
 
-  const char* joyVariableNames[4] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4"};
-  int userMap[4] = {0,0,0,0};
-  for (int i=0; i<4; i++) {
+  if(!environ_cb(RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS,&maxUsers))
+    maxUsers = EP128EMU_MAX_USERS;
+
+  const char* joyVariableNames[EP128EMU_MAX_USERS] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4", "ep128emu_joy5", "ep128emu_joy6"};
+  int userMap[EP128EMU_MAX_USERS] = {0,0,0,0,0,0};
+  for (int i=0; i<EP128EMU_MAX_USERS; i++) {
     var.key = joyVariableNames[i];
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
@@ -231,10 +235,10 @@ static void check_variables(void)
       else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::JOY_PROTEK;}
     }
     if(core)
-      core->initialize_joystick_map(userMap[0],userMap[1],userMap[2],userMap[3]);
+      core->initialize_joystick_map(userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
   }
 }
-
+  if(vmThread) vmThread->resetKeyboard();
 }
 
 void retro_init(void)
@@ -393,6 +397,9 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+    { "ep128emu_joy5", "User 5 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+    { "ep128emu_joy6", "User 6 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
+
     { NULL, NULL },
   };
 
@@ -433,7 +440,7 @@ void retro_reset(void)
 static void update_input(void)
 {
   input_poll_cb();
-  core->update_input(input_state_cb, environ_cb);
+  core->update_input(input_state_cb, environ_cb, maxUsers);
 }
 
 static void render(void)

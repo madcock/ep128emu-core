@@ -116,8 +116,29 @@ const std::map<std::string, unsigned char> epkey_reverse = {
 {"EPKEY_joy2d"   , 0x7B},
 {"EPKEY_joy2f"   , 0x7C},
 {"EPKEY_joy2f2"  , 0x7D},
-{"EPKEY_joy2f3"  , 0x7E}
-
+{"EPKEY_joy2f3"  , 0x7E},
+{"EPKEY_joy3r"   , 0x60},
+{"EPKEY_joy3l"   , 0x61},
+{"EPKEY_joy3u"   , 0x62},
+{"EPKEY_joy3d"   , 0x63},
+{"EPKEY_joy3f"   , 0x64},
+{"EPKEY_joy4r"   , 0x68},
+{"EPKEY_joy4l"   , 0x69},
+{"EPKEY_joy4u"   , 0x6A},
+{"EPKEY_joy4d"   , 0x6B},
+{"EPKEY_joy4f"   , 0x6C},
+{"EPKEY_joy5r"   , 0x50},
+{"EPKEY_joy5l"   , 0x51},
+{"EPKEY_joy5u"   , 0x52},
+{"EPKEY_joy5d"   , 0x53},
+{"EPKEY_joy5f"   , 0x54},
+{"EPKEY_joy6r"   , 0x58},
+{"EPKEY_joy6l"   , 0x59},
+{"EPKEY_joy6u"   , 0x5A},
+{"EPKEY_joy6d"   , 0x5B},
+{"EPKEY_joy6f"   , 0x5C},
+{"EPKEY_info"    , 0xFE},
+{"EPKEY_zoom"    , 0xFF},
 };
 
 // The last component is lowercase as it will be mapped directly from .ep128cfg file where it is used as lowercase

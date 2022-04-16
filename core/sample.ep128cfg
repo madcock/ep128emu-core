@@ -1,6 +1,6 @@
 # ep128emu-core content specific config file sample.
 # Should be next to the content and have the same basename as the content file itself
-# Example: exolon.com -> exolon.ep128cfg, sorcery.tap -> sorcery.ep128cfg
+# Example: exolon.com -> exolon.ep128cfg, Sorcery.tap -> Sorcery.ep128cfg
 
 # Joypad configuration. Example:
 # joypad.x "1"
@@ -8,13 +8,13 @@
 # Following values can be used (all lowercase):
 # a-z 0-9 f1-f8
 # \-^;:[],/.@
-# esc, enter, space, tab
-# lshift, rshift, ctrl, alt
+# esc, enter, space, tab, lshift, rshift, ctrl, alt
 # lock, stop, erase, del, ins
 # left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
+# zoom, info (special ep128emu-core functions)
 # joy1l, joy1r, joy1u, joy1d, joy1f, joy1f2, joy1f3 (external 1 joystick)
 # joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
-# Usually fire 1 is used, except on CPC where it is fire 2
+# Fire 1 is used. Similar mapping exists for external joysticks 3..6 (EP only)
 # CPC extra key mapping: F0 is pause, F9 is stop, Copy is ins, F Dot is alt,
 #   Clear is del, Delete is erase, Enter is rshift
 # TVC extra key mapping:
