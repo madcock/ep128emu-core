@@ -5,18 +5,20 @@ magyar nyelvű leírás is
 cheat?
 info msg overlay
 arm build without dependency to glib version
+ep128cfg support joy mapping
+ep128cfg support player 2 mapping
 
 ep midnight resistance dtf flicker
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
 sw fb + interlace = crash
-a height detect hasonlóan
 wait állítás után keyboard lefele beragad? -- kb reset
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
 hun font support EP
+locale support ep, cpc
 
 low prio:
 opengl display support
@@ -96,6 +98,7 @@ bool needsDiskControl = false;
 int borderSize = 0;
 bool soundHq = true;
 unsigned maxUsers;
+bool maxUsersSupported = true;
 bool canSkipFrames = false;
 bool enhancedRom = false;
 
@@ -154,7 +157,6 @@ static void update_keyboard_cb(bool down, unsigned keycode,
 
 static void check_variables(void)
 {
-
   struct retro_variable var =
   {
     .key = "ep128emu_wait",
@@ -206,12 +208,31 @@ static void check_variables(void)
   {
     if(var.value[0] == 'E') { enhancedRom = true;}
     else { enhancedRom = false;}
-    if(core) {
-      //
   }
 
-  if(!environ_cb(RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS,&maxUsers))
+  std::string zoomKey;
+  var.key = "ep128emu_zoom";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    zoomKey = var.value;
+    Ep128Emu::stringToLowerCase(zoomKey);
+  }
+
+  std::string infoKey;
+  var.key = "ep128emu_info";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    infoKey = var.value;
+    Ep128Emu::stringToLowerCase(infoKey);
+  }
+
+  // If function is not supported, use all users (and don't interrogate again)
+  if(maxUsersSupported && !environ_cb(RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS,&maxUsers)) {
     maxUsers = EP128EMU_MAX_USERS;
+    maxUsersSupported = false;
+    log_cb(RETRO_LOG_INFO, "GET_INPUT_MAX_USERS not supported, using fixed %d\n", EP128EMU_MAX_USERS);
+  }
+
 
   const char* joyVariableNames[EP128EMU_MAX_USERS] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4", "ep128emu_joy5", "ep128emu_joy6"};
   int userMap[EP128EMU_MAX_USERS] = {0,0,0,0,0,0};
@@ -235,9 +256,8 @@ static void check_variables(void)
       else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::JOY_PROTEK;}
     }
     if(core)
-      core->initialize_joystick_map(userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
+      core->initialize_joystick_map(zoomKey,infoKey,userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
   }
-}
   if(vmThread) vmThread->resetKeyboard();
 }
 
@@ -305,8 +325,8 @@ void retro_init(void)
   );
 
   log_cb(RETRO_LOG_INFO, "Retro ROM DIRECTORY %s\n", retro_system_bios_directory);
-  log_cb(RETRO_LOG_INFO, "Retro SAVE_DIRECTORY %s\n", retro_system_save_directory);
-  log_cb(RETRO_LOG_INFO, "Retro CONTENT_DIRECTORY %s\n", retro_content_directory);
+  log_cb(RETRO_LOG_DEBUG, "Retro SAVE_DIRECTORY %s\n", retro_system_save_directory);
+  log_cb(RETRO_LOG_DEBUG, "Retro CONTENT_DIRECTORY %s\n", retro_content_directory);
 
   struct retro_keyboard_callback kcb = { update_keyboard_cb };
   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kcb);
@@ -338,6 +358,8 @@ void retro_deinit(void)
   {
     delete core;
     core = (Ep128Emu::LibretroCore *) 0;
+    vmThread = (Ep128Emu::VMThread *) 0;
+    config = (Ep128Emu::EmulatorConfiguration *) 0;
   }
 }
 
@@ -393,6 +415,8 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_useh", "Enable resolution changes (requires restart); 1|0" },
     { "ep128emu_brds", "Border lines to keep when zooming in; 0|2|4|8|10|20" },
     { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
+    { "ep128emu_zoom", "User 1 Zoom button; R3|Start|Select|X|Y|A|B|L|R|L2|R2|L3" },
+    { "ep128emu_info", "User 1 Info button; L3|R3|Start|Select|X|Y|A|B|L|R|L2|R2" },
     { "ep128emu_joy1", "User 1 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
@@ -518,9 +542,9 @@ bool retro_load_game(const struct retro_game_info *info)
   if (!environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &fmt))
   {
 #ifdef EP128EMU_USE_XRGB8888
-    log_cb(RETRO_LOG_INFO, "XRGB8888 is not supported.\n");
+    log_cb(RETRO_LOG_ERROR, "XRGB8888 is not supported.\n");
 #else
-    log_cb(RETRO_LOG_INFO, "RGB565 is not supported.\n");
+    log_cb(RETRO_LOG_ERROR, "RGB565 is not supported.\n");
 #endif // EP128EMU_USE_XRGB8888
     return false;
   }
@@ -532,6 +556,8 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       delete core;
       core = (Ep128Emu::LibretroCore *) 0;
+      vmThread = (Ep128Emu::VMThread *) 0;
+      config = (Ep128Emu::EmulatorConfiguration *) 0;
     }
     log_cb(RETRO_LOG_INFO, "Loading game: %s \n",info->path);
     std::string filename(info->path);
@@ -560,7 +586,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     if(Ep128Emu::does_file_exist(configFile.c_str()))
     {
-      log_cb(RETRO_LOG_INFO, "Emulation configuration file: %s \n",configFile.c_str());
+      log_cb(RETRO_LOG_INFO, "Content specific configuration file: %s \n",configFile.c_str());
     }
     else
     {
@@ -691,9 +717,12 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     try
     {
-      log_cb(RETRO_LOG_INFO, "Creating core\n");
+      log_cb(RETRO_LOG_DEBUG, "Creating core\n");
       check_variables();
-      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
+      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, canSkipFrames,
+                                        retro_system_bios_directory, retro_system_save_directory,
+                                        startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
+      log_cb(RETRO_LOG_DEBUG, "Core created\n");
       config = core->config;
       check_variables();
       if (diskContent)
@@ -741,7 +770,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     config->setErrorCallback(&cfgErrorFunc, (void *) 0);
     vmThread = core->vmThread;
-    log_cb(RETRO_LOG_INFO, "Starting core\n");
+    log_cb(RETRO_LOG_DEBUG, "Starting core\n");
     core->start();
   }
 

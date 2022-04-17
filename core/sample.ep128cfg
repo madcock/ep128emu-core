@@ -12,7 +12,7 @@
 # lock, stop, erase, del, ins
 # left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
 # zoom, info (special ep128emu-core functions)
-# joy1l, joy1r, joy1u, joy1d, joy1f, joy1f2, joy1f3 (external 1 joystick)
+# joy1l, joy1r, joy1u, joy1d, fire,  fire2,  fire3  (external 1 joystick)
 # joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
 # Fire 1 is used. Similar mapping exists for external joysticks 3..6 (EP only)
 # CPC extra key mapping: F0 is pause, F9 is stop, Copy is ins, F Dot is alt,

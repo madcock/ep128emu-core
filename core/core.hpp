@@ -118,6 +118,8 @@ enum LibretroCore_joystick_type
 };
 
 // up - down - left - right - fire - fire2 - fire3
+// Fire2 is used only for CPC.
+// Actually there's nothing on any system that would use fire3 (maybe some mouse implementation on ep and cpc)
 const unsigned char joystickCodesInt[7]       = { 0x3b, 0x39, 0x3d, 0x3a, 0x46, 0xff, 0xff };
 const unsigned char joystickCodesExt1[7]      = { 0x73, 0x72, 0x71, 0x70, 0x74, 0x75, 0x76 };
 const unsigned char joystickCodesExt2[7]      = { 0x7b, 0x7a, 0x79, 0x78, 0x7c, 0x7d, 0x7e };
@@ -140,6 +142,10 @@ const unsigned char joystickCodesExt6[7]      = { 0x5b, 0x5a, 0x59, 0x58, 0x5c, 
 const unsigned char* const joystickCodeMap[11] =
 { nullptr, joystickCodesInt, joystickCodesExt1, joystickCodesExt2, joystickCodesSinclair1, joystickCodesSinclair2, joystickCodesSinclair3,
 joystickCodesExt3, joystickCodesExt4, joystickCodesExt5, joystickCodesExt6 };
+
+const char* const joystickNameMap[11] =
+{ nullptr, "Internal", "External 1", "External 2", "Sinclair 1", "Sinclair 2", "Protek", "External 3", "External 4", "External 5", "External 6" };
+
 
 class LibretroCore
 {
@@ -187,8 +193,9 @@ public:
 
   void initialize_keyboard_map(void);
   void update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
-  void initialize_joystick_map(int user1, int user2, int user3, int user4, int user5, int user6);
+  void initialize_joystick_map(std::string zoomKey, std::string infoKey, int user1, int user2, int user3, int user4, int user5, int user6);
   void update_joystick_map(const unsigned char * joystickCodes, int port, int length);
+  void reset_joystick_map(int port, unsigned value);
   void reset_joystick_map(int port);
   void start(void);
   void run_for(retro_usec_t frameTime, float waitPeriod, void * fb);

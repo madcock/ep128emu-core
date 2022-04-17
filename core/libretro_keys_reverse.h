@@ -21,6 +21,9 @@
 #define LIBRETROKEYSREVERSE_H__
 #include <string.h>
 
+#define EPKEY_INFO 0xff
+#define EPKEY_ZOOM 0xfe
+
 const std::map<std::string, unsigned char> epkey_reverse = {
 
 {"EPKEY_n"       , 0x00},
@@ -107,9 +110,9 @@ const std::map<std::string, unsigned char> epkey_reverse = {
 {"EPKEY_joy1l"   , 0x71},
 {"EPKEY_joy1u"   , 0x72},
 {"EPKEY_joy1d"   , 0x73},
-{"EPKEY_joy1f"   , 0x74},
-{"EPKEY_joy1f2"  , 0x75},
-{"EPKEY_joy1f3"  , 0x76},
+{"EPKEY_fire"    , 0x74},
+{"EPKEY_fire2"   , 0x75},
+{"EPKEY_fire3"   , 0x76},
 {"EPKEY_joy2r"   , 0x78},
 {"EPKEY_joy2l"   , 0x79},
 {"EPKEY_joy2u"   , 0x7A},
@@ -137,8 +140,9 @@ const std::map<std::string, unsigned char> epkey_reverse = {
 {"EPKEY_joy6u"   , 0x5A},
 {"EPKEY_joy6d"   , 0x5B},
 {"EPKEY_joy6f"   , 0x5C},
-{"EPKEY_info"    , 0xFE},
-{"EPKEY_zoom"    , 0xFF},
+// Codes above 0x80 are interpreted by the core itself, not the emulated machine.
+{"EPKEY_zoom"    , EPKEY_ZOOM},
+{"EPKEY_info"    , EPKEY_INFO},
 };
 
 // The last component is lowercase as it will be mapped directly from .ep128cfg file where it is used as lowercase
@@ -159,12 +163,15 @@ const std::map<std::string, unsigned char> retro_joypad_reverse = {
 {"RETRO_DEVICE_ID_JOYPAD_l2"      ,12},
 {"RETRO_DEVICE_ID_JOYPAD_r2"      ,13},
 {"RETRO_DEVICE_ID_JOYPAD_l3"      ,14},
-{"RETRO_DEVICE_ID_JOYPAD_r3"      ,15}
+{"RETRO_DEVICE_ID_JOYPAD_r3"      ,15},
+{"RETRO_DEVICE_ID_JOYPAD_disable",255},
 };
 
+// Utility arrays to have a well defined order of info printout.
+const char* const buttonNames[16] = { "B","Y","Select","Start","Up","Down","Left","Right","A","X","L","R","L2","R2","L3","R3" };
+const int buttonOrderInInfoMessage[12] = {9,1,8,0,10,11,12,13,14,15,2,3};
 
-
-
+// Currently not used, maybe in the future.
 const std::map<std::string, int> retrok_reverse = {
    {"RETROK_UNKNOWN"        , 0},
    {"RETROK_FIRST"          , 0},
@@ -188,12 +195,12 @@ const std::map<std::string, int> retrok_reverse = {
    {"RETROK_COMMA"          , 44},
    {"RETROK_MINUS"          , 45},
    {"RETROK_PERIOD"         , 46},
-   {"RETROK_SLASH"         , 47},
+   {"RETROK_SLASH"          , 47},
    {"RETROK_0"              , 48},
    {"RETROK_1"              , 49},
    {"RETROK_2"              , 50},
-   {"RETROK_3"             , 51},
-   {"RETROK_4"             , 52},
+   {"RETROK_3"              , 51},
+   {"RETROK_4"              , 52},
    {"RETROK_5"              , 53},
    {"RETROK_6"              , 54},
    {"RETROK_7"              , 55},
@@ -216,7 +223,7 @@ const std::map<std::string, int> retrok_reverse = {
    {"RETROK_b"              , 98},
    {"RETROK_c"              , 99},
    {"RETROK_d"              , 100},
-   {"RETROK_e"             , 101},
+   {"RETROK_e"              , 101},
    {"RETROK_f"              , 102},
    {"RETROK_g"              , 103},
    {"RETROK_h"              , 104},

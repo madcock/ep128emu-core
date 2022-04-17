@@ -1,4 +1,3 @@
-
 // ep128emu-core -- libretro core version of the ep128emu emulator
 // Copyright (C) 2022 Zoltan Balogh
 // https://github.com/zoltanvb/ep128emu-core
@@ -60,8 +59,9 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     machineType = MACHINE_ZX;
     log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
   }
-  else {
-      log_cb(RETRO_LOG_INFO, "Emulated machine: EP\n");
+  else
+  {
+    log_cb(RETRO_LOG_INFO, "Emulated machine: EP\n");
   }
   if(machineDetailedType == VM_CONFIG_UNKNOWN)
   {
@@ -353,7 +353,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     config->loadState(cfgFile,false);
   }
   initialize_keyboard_map();
-  initialize_joystick_map(JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
+  initialize_joystick_map(std::string(""),std::string(""), JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
   if (config->contentFileName != "")
   {
     startSequence = startSequence + config->contentFileName + "\xfe\r";
@@ -493,8 +493,8 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_KP8]        = 0x73;
   libretro_to_ep128emu_kbmap[RETROK_KP0]        = 0x74;
   // fire 2 and 3 for testing
-  //libretro_to_ep128emu_kbmap[RETROK_KP_PERIOD] = 0x75;
-  //libretro_to_ep128emu_kbmap[RETROK_KP_PLUS]   = 0x76;
+  libretro_to_ep128emu_kbmap[RETROK_KP_PERIOD]  = 0x75;
+  libretro_to_ep128emu_kbmap[RETROK_KP_PLUS]    = 0x76;
   if(machineType == MACHINE_TVC)
   {
     /* tvc extra keys in original ep128emu (tvc key - EP key - default PC key):
@@ -543,13 +543,15 @@ void LibretroCore::initialize_keyboard_map(void)
   config->keyboardMapChanged = true;
 }
 
-void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int user4, int user5, int user6)
+void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string infoKey, int user1, int user2, int user3, int user4, int user5, int user6)
 {
   // Lowest priority joystick settings: machine dependent hardcoded defaults.
+  infoMessage = "Joypad: ";
   if (machineType == MACHINE_CPC)
   {
     // external joystick 1: controller 1 (cursor keys usually not used for game control)
     update_joystick_map(joystickCodesExt1,0,6);
+    infoMessage += joystickNameMap[2];
     // external joystick 2: controller 2
     update_joystick_map(joystickCodesExt2,1,6);
   }
@@ -557,6 +559,7 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
   {
     // Kempston interface mapped to ext 1
     update_joystick_map(joystickCodesExt1,0,5);
+    infoMessage += joystickNameMap[2];
     // The 'left' Sinclair joystick maps the joystick directions and the fire button to the 1 (left), 2 (right), 3 (down), 4 (up) and 5 (fire) keys
     update_joystick_map(joystickCodesSinclair1,1,5);
     // The 'right' Sinclair joystick maps to keys 6 (left), 7 (right), 8 (down), 9 (up) and 0 (fire)
@@ -568,6 +571,7 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
   {
     // EP or TVC: internal joystick: controller 0 / user 1
     update_joystick_map(joystickCodesInt,0,5);
+    infoMessage += joystickNameMap[1];
     // external joystick 1: controller 1
     update_joystick_map(joystickCodesExt1,1,5);
     // external joystick 2: controller 2
@@ -579,15 +583,13 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
     // external joystick 5: controller 5 / user 6
     update_joystick_map(joystickCodesExt5,5,5);
   }
-  inputJoyMap[0xff][0] = RETRO_DEVICE_ID_JOYPAD_A; // special: info button
-  inputJoyMap[0xfe][0] = RETRO_DEVICE_ID_JOYPAD_R3; // special: fit to content
-  inputJoyMap[0x3e][0] = RETRO_DEVICE_ID_JOYPAD_Y; // enter
-  inputJoyMap[0x2c][0] = RETRO_DEVICE_ID_JOYPAD_L; // 0
-  inputJoyMap[0x19][0] = RETRO_DEVICE_ID_JOYPAD_R; // 1
+  inputJoyMap[EPKEY_INFO][0] = RETRO_DEVICE_ID_JOYPAD_L3; // special: info button
+  inputJoyMap[EPKEY_ZOOM][0] = RETRO_DEVICE_ID_JOYPAD_R3; // special: fit to content
+  inputJoyMap[0x3e][0] = RETRO_DEVICE_ID_JOYPAD_Y;  // enter
+  inputJoyMap[0x2c][0] = RETRO_DEVICE_ID_JOYPAD_L;  // 0
+  inputJoyMap[0x19][0] = RETRO_DEVICE_ID_JOYPAD_R;  // 1
   inputJoyMap[0x1e][0] = RETRO_DEVICE_ID_JOYPAD_L2; // 2
   inputJoyMap[0x1d][0] = RETRO_DEVICE_ID_JOYPAD_R2; // 3
-  // todo: fully dynamic info message
-  infoMessage = "Key map: X->space Y->enter L->0 R->1 L2->2 R2->3 R3->zoom ";
 
   // Second priority: assignment read from .ep128cfg file
   std::string buttonprefix("EPKEY_");
@@ -607,18 +609,71 @@ void LibretroCore::initialize_joystick_map(int user1, int user2, int user3, int 
       iter_joypad = retro_joypad_reverse.find(joypadButton);
       if (iter_epkey != epkey_reverse.end() && iter_joypad != retro_joypad_reverse.end())
       {
+        reset_joystick_map(0, (*iter_joypad).second);
         inputJoyMap[((*iter_epkey).second)][0] = (*iter_joypad).second;
-        infoMessage = infoMessage + config->joypadButtons[i] + "->" + config->joypad[i] + " ";
       }
     }
   }
   // Highest priority: core option settings (if they are not left on default)
+  if(zoomKey != "")
+  {
+    joypadButton = joypadPrefix + zoomKey;
+    iter_joypad = retro_joypad_reverse.find(joypadButton);
+    if (iter_joypad != retro_joypad_reverse.end())
+    {
+      reset_joystick_map(0, (*iter_joypad).second);
+      inputJoyMap[EPKEY_ZOOM][0] = (*iter_joypad).second;
+    }
+  }
+  if(infoKey != "")
+  {
+    joypadButton = joypadPrefix + infoKey;
+    iter_joypad = retro_joypad_reverse.find(joypadButton);
+    if (iter_joypad != retro_joypad_reverse.end())
+    {
+      reset_joystick_map(0, (*iter_joypad).second);
+      inputJoyMap[EPKEY_INFO][0] = (*iter_joypad).second;
+    }
+  }
+
   int mappings[EP128EMU_MAX_USERS] = {user1, user2, user3, user4, user5, user6};
   for (int i=0; i<EP128EMU_MAX_USERS; i++)
   {
-    // TODO: 2nd / 3rd fire button assignment on need (CPC)
     if(mappings[i]>0)
-      update_joystick_map(joystickCodeMap[mappings[i]],i,5);
+    {
+      // Use 2nd fire button for CPC
+      if(machineType == MACHINE_CPC)
+        update_joystick_map(joystickCodeMap[mappings[i]],i,6);
+      // Otherwise, only 1 fire button
+      else
+        update_joystick_map(joystickCodeMap[mappings[i]],i,5);
+      infoMessage = "Joypad: ";
+      infoMessage += joystickNameMap[mappings[i]];
+    }
+  }
+
+  // Fill the info text.
+  infoMessage += ", button map: ";
+  for (int j=0; j<12; j++)
+  {
+    int btnIndex = buttonOrderInInfoMessage[j];
+
+    for(int i=0; i<256; i++)
+    {
+      if(inputJoyMap[i][0] == btnIndex )
+      {
+        infoMessage += buttonNames[inputJoyMap[i][0]];
+        infoMessage += "=";
+        for (auto it = epkey_reverse.begin(); it != epkey_reverse.end(); ++it)
+          if (it->second == i)
+          {
+            infoMessage += it->first.substr(6,6);
+            break;
+          }
+        infoMessage += " ";
+        break;
+      }
+    }
   }
 }
 
@@ -630,21 +685,39 @@ void LibretroCore::update_joystick_map(const unsigned char * joystickCodes, int 
   inputJoyMap[joystickCodes[2]][port] = RETRO_DEVICE_ID_JOYPAD_LEFT;
   inputJoyMap[joystickCodes[3]][port] = RETRO_DEVICE_ID_JOYPAD_RIGHT;
   inputJoyMap[joystickCodes[4]][port] = RETRO_DEVICE_ID_JOYPAD_X;
-  if(length>=6)
-    inputJoyMap[joystickCodes[5]][port] = RETRO_DEVICE_ID_JOYPAD_B;
-  if(length>=7)
+  if(length>=6 && joystickCodes[5] < 0x80)
+    inputJoyMap[joystickCodes[5]][port] = RETRO_DEVICE_ID_JOYPAD_A;
+  if(length>=7  && joystickCodes[6] < 0x80)
     inputJoyMap[joystickCodes[6]][port] = RETRO_DEVICE_ID_JOYPAD_Y;
+}
+
+void LibretroCore::reset_joystick_map(int port, unsigned value)
+{
+  for(int i=0; i<255; i++)
+  {
+    if((unsigned)inputJoyMap[i][port] == value)
+      inputJoyMap[i][port] = -1;
+  }
 }
 
 void LibretroCore::reset_joystick_map(int port)
 {
   for(int i=1; i<11; i++)
   {
-    inputJoyMap[joystickCodeMap[i][0]][port] = -1;
-    inputJoyMap[joystickCodeMap[i][1]][port] = -1;
-    inputJoyMap[joystickCodeMap[i][2]][port] = -1;
-    inputJoyMap[joystickCodeMap[i][3]][port] = -1;
-    inputJoyMap[joystickCodeMap[i][4]][port] = -1;
+    // reset only the one that was set previously
+    if (inputJoyMap[joystickCodeMap[i][0]][port] == RETRO_DEVICE_ID_JOYPAD_UP)
+    {
+      inputJoyMap[joystickCodeMap[i][0]][port] = -1;
+      inputJoyMap[joystickCodeMap[i][1]][port] = -1;
+      inputJoyMap[joystickCodeMap[i][2]][port] = -1;
+      inputJoyMap[joystickCodeMap[i][3]][port] = -1;
+      inputJoyMap[joystickCodeMap[i][4]][port] = -1;
+      if(joystickCodeMap[i][5] < 0x80)
+        inputJoyMap[joystickCodeMap[i][5]][port] = -1;
+      if(joystickCodeMap[i][6] < 0x80)
+        inputJoyMap[joystickCodeMap[i][6]][port] = -1;
+      break;
+    }
   }
 }
 
@@ -679,7 +752,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
           }
           else
           {
-            if(i == 0xFF)
+            if(i == EPKEY_INFO)
             {
               struct retro_message message;
               std::string longMsg = "Wait for end of startup sequence... ";
@@ -695,7 +768,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
               message.frames = 50 * 4;
               environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &message);
             }
-            if(i == 0xFE)
+            if(i == EPKEY_ZOOM)
             {
               w->scanBorders = true;
             }
@@ -798,7 +871,7 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
       if (detectedHeight >= 150 && detectedWidth >= 200)
       {
         w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
-        log_cb(RETRO_LOG_INFO, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
+        log_cb(RETRO_LOG_DEBUG, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
         change_resolution(detectedWidth, detectedHeight/2, environ_cb);
       }
     }
@@ -840,7 +913,7 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
     .max_height   = EP128EMU_LIBRETRO_SCREEN_HEIGHT,
     .aspect_ratio = aspect,
   };
-  log_cb(RETRO_LOG_INFO, "Changing resolution: %d x %d\n",width,height);
+  log_cb(RETRO_LOG_DEBUG, "Changing resolution: %d x %d\n",width,height);
   environ_cb(RETRO_ENVIRONMENT_SET_GEOMETRY, &g);
   currWidth = width;
   currHeight = height;
