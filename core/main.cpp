@@ -2,22 +2,25 @@
 
 build for mac
 magyar nyelvű leírás is
-cheat?
+cheat support
 info msg overlay
 arm build without dependency to glib version
 ep128cfg support joy mapping
 ep128cfg support player 2 mapping
+info msg for other players
+detailed type detection from content name
+detailed type setting from ep128cfg
 
 ep midnight resistance dtf flicker
 
 gfx:
-crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze -- waituntil-lal mintha nem lenne -- de van
+crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
 sw fb + interlace = crash
 wait állítás után keyboard lefele beragad? -- kb reset
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
-hun font support EP
+hun font support EP szex-teszt
 locale support ep, cpc
 
 low prio:
@@ -233,7 +236,6 @@ static void check_variables(void)
     log_cb(RETRO_LOG_INFO, "GET_INPUT_MAX_USERS not supported, using fixed %d\n", EP128EMU_MAX_USERS);
   }
 
-
   const char* joyVariableNames[EP128EMU_MAX_USERS] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4", "ep128emu_joy5", "ep128emu_joy6"};
   int userMap[EP128EMU_MAX_USERS] = {0,0,0,0,0,0};
   for (int i=0; i<EP128EMU_MAX_USERS; i++) {
@@ -277,8 +279,6 @@ void retro_init(void)
     enableDiskControl = true;
   else
     enableDiskControl = false;
-
-
 
   const char *system_dir = NULL;
   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
@@ -367,9 +367,9 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.89";
+  info->library_version  = "v0.90";
   info->need_fullpath    = true;
-  info->valid_extensions = "trn|com|bas|128|tap|img|cas|dsk|tzx|cdt|dtf|.";
+  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -423,12 +423,9 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy5", "User 5 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { "ep128emu_joy6", "User 6 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-
     { NULL, NULL },
   };
-
   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
-
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)

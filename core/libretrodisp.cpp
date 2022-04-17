@@ -1,4 +1,3 @@
-
 // ep128emu-core -- libretro core version of the ep128emu emulator
 // Copyright (C) 2022 Zoltan Balogh
 // https://github.com/zoltanvb/ep128emu-core
@@ -25,7 +24,10 @@ namespace Ep128Emu
 {
 
 // --------------------------------------------------------------------------
-
+// The colormap does the static conversion from the ep128emu output (Nick format)
+// to the pixel format that can be used by the framebuffer (RGB565 or XRGB8888)
+// Floating point conversion wouldn't be strictly necessary, it is inherited
+// from the ep128emu feature of tunable display parameters.
 LibretroDisplay::Colormap::Colormap()
 {
   palette16 = new uint16_t[256];
@@ -96,13 +98,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[15] = outBuf[14] =
-                       outBuf[13] = outBuf[12] =
-                                      outBuf[11] = outBuf[10] =
-                                            outBuf[ 9] = outBuf[ 8] =
-                                                outBuf[ 7] = outBuf[ 6] =
-                                                    outBuf[ 5] = outBuf[ 4] =
-                                                        outBuf[ 3] = outBuf[ 2] =
-                                                            outBuf[ 1] = outBuf[ 0] = 0x00;
+        outBuf[13] = outBuf[12] =
+        outBuf[11] = outBuf[10] =
+        outBuf[ 9] = outBuf[ 8] =
+        outBuf[ 7] = outBuf[ 6] =
+        outBuf[ 5] = outBuf[ 4] =
+        outBuf[ 3] = outBuf[ 2] =
+        outBuf[ 1] = outBuf[ 0] = 0x00;
         outBuf = outBuf + 16;
         bufp = bufp + 1;
         if (outBuf >= endp)
@@ -114,13 +116,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[15] = outBuf[14] =
-                       outBuf[13] = outBuf[12] =
-                                      outBuf[11] = outBuf[10] =
-                                            outBuf[ 9] = outBuf[ 8] =
-                                                outBuf[ 7] = outBuf[ 6] =
-                                                    outBuf[ 5] = outBuf[ 4] =
-                                                        outBuf[ 3] = outBuf[ 2] =
-                                                            outBuf[ 1] = outBuf[ 0] = bufp[1];
+        outBuf[13] = outBuf[12] =
+        outBuf[11] = outBuf[10] =
+        outBuf[ 9] = outBuf[ 8] =
+        outBuf[ 7] = outBuf[ 6] =
+        outBuf[ 5] = outBuf[ 4] =
+        outBuf[ 3] = outBuf[ 2] =
+        outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf = outBuf + 16;
         bufp = bufp + 2;
         if (outBuf >= endp)
@@ -132,13 +134,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[ 7] = outBuf[ 6] =
-                       outBuf[ 5] = outBuf[ 4] =
-                                      outBuf[ 3] = outBuf[ 2] =
-                                            outBuf[ 1] = outBuf[ 0] = bufp[1];
+        outBuf[ 5] = outBuf[ 4] =
+        outBuf[ 3] = outBuf[ 2] =
+        outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf[15] = outBuf[14] =
-                       outBuf[13] = outBuf[12] =
-                                      outBuf[11] = outBuf[10] =
-                                            outBuf[ 9] = outBuf[ 8] = bufp[2];
+        outBuf[13] = outBuf[12] =
+        outBuf[11] = outBuf[10] =
+        outBuf[ 9] = outBuf[ 8] = bufp[2];
         outBuf = outBuf + 16;
         bufp = bufp + 3;
         if (outBuf >= endp)
@@ -171,13 +173,13 @@ void LibretroDisplay::decodeLine(unsigned char *outBuf,
       do
       {
         outBuf[ 3] = outBuf[ 2] =
-                       outBuf[ 1] = outBuf[ 0] = bufp[1];
+        outBuf[ 1] = outBuf[ 0] = bufp[1];
         outBuf[ 7] = outBuf[ 6] =
-                       outBuf[ 5] = outBuf[ 4] = bufp[2];
+        outBuf[ 5] = outBuf[ 4] = bufp[2];
         outBuf[11] = outBuf[10] =
-                       outBuf[ 9] = outBuf[ 8] = bufp[3];
+        outBuf[ 9] = outBuf[ 8] = bufp[3];
         outBuf[15] = outBuf[14] =
-                       outBuf[13] = outBuf[12] = bufp[4];
+        outBuf[13] = outBuf[12] = bufp[4];
         outBuf = outBuf + 16;
         bufp = bufp + 5;
         if (outBuf >= endp)
@@ -326,13 +328,13 @@ LibretroDisplay::getDisplayParameters() const
 void LibretroDisplay::drawLine(const uint8_t *buf, size_t nBytes)
 {
 
-    if (curLine >= 0 && curLine < (EP128EMU_LIBRETRO_SCREEN_HEIGHT + 2))
-    {
-      Message_LineData  *m = allocateMessage<Message_LineData>();
-      m->lineNum = curLine;
-      m->copyLine(buf, nBytes);
-      queueMessage(m);
-    }
+  if (curLine >= 0 && curLine < (EP128EMU_LIBRETRO_SCREEN_HEIGHT + 2))
+  {
+    Message_LineData  *m = allocateMessage<Message_LineData>();
+    m->lineNum = curLine;
+    m->copyLine(buf, nBytes);
+    queueMessage(m);
+  }
   if (vsyncCnt != 0)
   {
     curLine += 2;
@@ -361,6 +363,7 @@ void LibretroDisplay::vsyncStateChange(bool newState, unsigned int currentSlot_)
   {
     vsyncCnt = 2 - EP128EMU_VSYNC_OFFSET;
     // Odd frames are detected by vSync activated in the middle of the line (half-line sync)
+    // This will trigger 2nd "field" in interlaced mode.
     oddFrame = (currentSlot_ >= 20U && currentSlot_ < 48U);
     if (oddFrame)
     {
@@ -450,6 +453,7 @@ LibretroDisplay::LibretroDisplay(int xx, int yy, int ww, int hh,
   this->start();
 }
 
+// Enable display processing. If sync is required, do not return until all input is processed.
 void LibretroDisplay::wakeDisplay(bool syncRequired)
 {
   threadLock1.notify();
@@ -459,37 +463,49 @@ void LibretroDisplay::wakeDisplay(bool syncRequired)
   }
 }
 
-void LibretroDisplay::resetViewport() {
-    setViewport(0,0,EP128EMU_LIBRETRO_SCREEN_WIDTH-1,EP128EMU_LIBRETRO_SCREEN_HEIGHT-1);
+void LibretroDisplay::resetViewport()
+{
+  setViewport(0,0,EP128EMU_LIBRETRO_SCREEN_WIDTH-1,EP128EMU_LIBRETRO_SCREEN_HEIGHT-1);
 }
 
-bool LibretroDisplay::setViewport(int x1, int y1, int x2, int y2) {
-    if (x1>=0 && x1<x2) {
-    } else return false;
-    if (y1>=0 && y1<y2) {
-    } else return false;
-    if (x2<EP128EMU_LIBRETRO_SCREEN_WIDTH) {
-    } else return false;
-    if (y2<EP128EMU_LIBRETRO_SCREEN_HEIGHT) {
-    } else return false;
+bool LibretroDisplay::setViewport(int x1, int y1, int x2, int y2)
+{
+  if (x1>=0 && x1<x2)
+  {
+  }
+  else return false;
+  if (y1>=0 && y1<y2)
+  {
+  }
+  else return false;
+  if (x2<EP128EMU_LIBRETRO_SCREEN_WIDTH)
+  {
+  }
+  else return false;
+  if (y2<EP128EMU_LIBRETRO_SCREEN_HEIGHT)
+  {
+  }
+  else return false;
 
-    viewPortX1=x1;
-    viewPortY1=y1;
-    viewPortX2 = x2;
-    viewPortY2 = y2;
-    return true;
+  viewPortX1 = x1;
+  viewPortY1 = y1;
+  viewPortX2 = x2;
+  viewPortY2 = y2;
+  return true;
 }
 
-bool LibretroDisplay::isViewportDefault() {
-    if(
+bool LibretroDisplay::isViewportDefault()
+{
+  if(
     viewPortX1 == 0 &&
     viewPortY1 == 0 &&
     viewPortX2 == EP128EMU_LIBRETRO_SCREEN_WIDTH-1 &&
     viewPortY2 == EP128EMU_LIBRETRO_SCREEN_HEIGHT-1
-    ) return true;
-    else return false;
+  ) return true;
+  else return false;
 }
 
+// Main display routine implementing Thread::run.
 void LibretroDisplay::run()
 {
   bool frameDone;
@@ -625,22 +641,25 @@ void LibretroDisplay::limitFrameRate(bool isEnabled)
 void LibretroDisplay::draw(void * fb, bool scanForBorder)
 {
   int borderColor = 0;
-  int firstNonzeroLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-  int firstNonzeroCol = EP128EMU_LIBRETRO_SCREEN_WIDTH;
+  int firstNonzeroLine   = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
+  int firstNonzeroCol    = EP128EMU_LIBRETRO_SCREEN_WIDTH;
   int firstNonborderLine = EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-  int firstNonborderCol = EP128EMU_LIBRETRO_SCREEN_WIDTH;
-  int lastNonzeroLine = 0;
-  int lastNonzeroCol = 0;
-  int lastNonborderLine = 0;
-  int lastNonborderCol = 0;
+  int firstNonborderCol  = EP128EMU_LIBRETRO_SCREEN_WIDTH;
+  int lastNonzeroLine    = 0;
+  int lastNonzeroCol     = 0;
+  int lastNonborderLine  = 0;
+  int lastNonborderCol   = 0;
 
   // render to own framebuf always if there's a chance of resolution change
-  if ((scanForBorder || bordersScanned) && !interlacedFrameCount) {
+  if ((scanForBorder || bordersScanned) && !interlacedFrameCount)
+  {
     frame_bufActive = frame_buf1;
   }
   for (int yc = 0; yc < EP128EMU_LIBRETRO_SCREEN_HEIGHT; yc++)
   {
+    // Skip odd lines if interlace is not used.
     if (!interlacedFrameCount && (yc & 1)) continue;
+    // Skip any display if not within viewport (inclusive).
     if (yc < viewPortY1 || yc > viewPortY2) continue;
     if (lineBuffers[yc])
     {
@@ -654,6 +673,7 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
 
       for(int i=0; i<EP128EMU_LIBRETRO_SCREEN_WIDTH; i++)
       {
+        // Skip any display if not within viewport (inclusive).
         if (i<viewPortX1 || i>viewPortX2) continue;
         unsigned char pixelValue = lineBuf[i];
 
@@ -669,6 +689,7 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
           {
             nonzero=true;
             if(i<firstNonzeroCol)firstNonzeroCol = i;
+            // Detect border color only in the first 5 rows (arbitrary decision)
             if (yc<5 && borderColor == 0) borderColor = pixelResult;
           }
           if (!nonborder && borderColor>0 && pixelResult != borderColor)
@@ -688,6 +709,8 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
         int currWidth = viewPortX2 - viewPortX1 + 1;
         int currLine = yc - viewPortY1;
         int currPos = i - viewPortX1;
+        // Fake interlace: use previous frame's alternate lines.
+        // Fake as there's no fading or other effect to actually emulate interlace artifacts
         if (interlacedFrameCount)
         {
           frame_bufActive[currLine * currWidth + currPos] = pixelResult;
@@ -704,7 +727,7 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
           }
           else
           {
-            // doublescan
+            // doublescan if half frame usage is disabled
             frame_bufActive[currLine * currWidth + currPos] = pixelResult;
             frame_bufActive[(currLine+1) * currWidth + currPos] = pixelResult;
           }
@@ -717,6 +740,7 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
       }
       // known problem: if there is border, then bottom edge will not be the obvious screen edge of black and border
       // but the last row where any other content is present
+      // also if game uses 1-color dithered border, that will also be cut off
       if(scanForBorder && nonborder)
       {
         if(yc < firstNonborderLine) firstNonborderLine = yc;
@@ -726,16 +750,19 @@ void LibretroDisplay::draw(void * fb, bool scanForBorder)
   }
   if (scanForBorder)
   {
-    if (borderColor > 0) {
-      contentTopEdge = firstNonborderLine;
-      contentBottomEdge = lastNonborderLine;
-      contentLeftEdge = firstNonborderCol;
-      contentRightEdge = lastNonborderCol;
-    } else {
-      contentTopEdge = firstNonzeroLine;
-      contentBottomEdge = lastNonzeroLine;
-      contentLeftEdge = firstNonzeroCol;
-      contentRightEdge = lastNonzeroCol;
+    if (borderColor > 0)
+    {
+      contentTopEdge    = firstNonborderLine;
+      contentBottomEdge =  lastNonborderLine;
+      contentLeftEdge   = firstNonborderCol;
+      contentRightEdge  =  lastNonborderCol;
+    }
+    else
+    {
+      contentTopEdge    = firstNonzeroLine;
+      contentBottomEdge =  lastNonzeroLine;
+      contentLeftEdge   = firstNonzeroCol;
+      contentRightEdge  =  lastNonzeroCol;
     }
     bordersScanned = true;
   }

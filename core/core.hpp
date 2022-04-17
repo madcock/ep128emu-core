@@ -45,8 +45,10 @@ enum LibretroCore_VM_config
   EP64_FILE_DTF,
   TVC64_FILE,
   TVC64_DISK,
-  CPC_TAPE,
+  CPC_TAPE, // Default is CPC6128
   CPC_DISK,
+  CPC_464_TAPE,
+  CPC_664_DISK,
   ZX16_TAPE,
   ZX16_FILE,
   ZX48_TAPE,
@@ -81,24 +83,24 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
 {"zx128.rom_p0"   , "128-0.rom"}, // github.com/Abdess/retroarch_system
 {"zx128.rom_p1"   , "128-1.rom"}, // github.com/Abdess/retroarch_system
 {"cpc_amsdos.rom" , "Amstrad CPC 664 Amsdos (1985)(Amstrad)[AMSDOS.ROM].rom"},
-{"cpc464.rom_p0"  , "Amstrad CPC 464 OS (1985)(Amstrad)[OS.ROM].rom"}, // first half
-{"cpc664.rom_p0"  , "Amstrad CPC 664 OS (1985)(Amstrad)[OS.ROM].rom"}, // first half
-{"cpc6128.rom_p0" , "Amstrad CPC 6128 OS (1985)(Amstrad)[OS.ROM].rom"}, // first half
-{"cpc464.rom_p1"  , "Amstrad CPC 464 BASIC (1985)(Amstrad)[BASIC.ROM].rom"}, // second half
-{"cpc664.rom_p1"  , "Amstrad CPC 664 BASIC (1985)(Amstrad)[BASIC.ROM].rom"}, // second half
+{"cpc464.rom_p0"  , "Amstrad CPC 464 OS (1985)(Amstrad)[OS.ROM].rom"},        // first half
+{"cpc664.rom_p0"  , "Amstrad CPC 664 OS (1985)(Amstrad)[OS.ROM].rom"},        // first half
+{"cpc6128.rom_p0" , "Amstrad CPC 6128 OS (1985)(Amstrad)[OS.ROM].rom"},       // first half
+{"cpc464.rom_p1"  , "Amstrad CPC 464 BASIC (1985)(Amstrad)[BASIC.ROM].rom"},  // second half
+{"cpc664.rom_p1"  , "Amstrad CPC 664 BASIC (1985)(Amstrad)[BASIC.ROM].rom"},  // second half
 {"cpc6128.rom_p1" , "Amstrad CPC 6128 BASIC (1986)(Amstrad)[BASIC.ROM].rom"}, // second half
-{"cpc464.rom_p0"  , "OS_464.ROM"}, // first half, cpcwiki.eu naming
-{"cpc664.rom_p0"  , "OS_664.ROM"}, // first half, cpcwiki.eu naming
-{"cpc6128.rom_p0" , "OS_6128.ROM"}, // first half, cpcwiki.eu naming
-{"cpc464.rom_p1"  , "BASIC_1.0.ROM"}, // second half, cpcwiki.eu naming
-{"cpc664.rom_p1"  , "BASIC_664.ROM"}, // second half, cpcwiki.eu naming
-{"cpc6128.rom_p1" , "BASIC_1.1.ROM"}, // second half, cpcwiki.eu naming
+{"cpc464.rom_p0"  , "OS_464.ROM"},     // first half,  cpcwiki.eu naming
+{"cpc664.rom_p0"  , "OS_664.ROM"},     // first half,  cpcwiki.eu naming
+{"cpc6128.rom_p0" , "OS_6128.ROM"},    // first half,  cpcwiki.eu naming
+{"cpc464.rom_p1"  , "BASIC_1.0.ROM"},  // second half, cpcwiki.eu naming
+{"cpc664.rom_p1"  , "BASIC_664.ROM"},  // second half, cpcwiki.eu naming
+{"cpc6128.rom_p1" , "BASIC_1.1.ROM"},  // second half, cpcwiki.eu naming
 {"cpc_amsdos.rom" , "AMSDOS_0.5.ROM"}, // cpcwiki.eu naming
 {"tvc_dos12d.rom" , "VT-DOS12-DISK.ROM"}, // tvc.homeserver.hu naming, binary does not fully match
-{"tvc22_ext.rom"  , "TVC22_D7.64K"}, // tvc.homeserver.hu naming
-{"tvc22_sys.rom"  , "TVC22_D6_D4.64K"}, // tvc.homeserver.hu naming. Combine the 8K dump files into one 16K file:
-// copy TVC22_D6.64K+TVC22_D4.64K TVC22_D6_D4.64K (Windows)
-// cat TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
+{"tvc22_ext.rom"  , "TVC22_D7.64K"},      // tvc.homeserver.hu naming
+{"tvc22_sys.rom"  , "TVC22_D6_D4.64K"},   // tvc.homeserver.hu naming. Combine the 8K dump files into one 16K file:
+                                          // copy TVC22_D6.64K+TVC22_D4.64K  TVC22_D6_D4.64K (Windows)
+                                          // cat  TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
 };
 
 enum LibretroCore_joystick_type
@@ -114,16 +116,17 @@ enum LibretroCore_joystick_type
   JOY_EXT4,
   JOY_EXT5,
   JOY_EXT6,
+  JOY_TYPE_AMOUNT, // used only for array sizes
   JOY_UNKNOWN = INT_MAX
 };
 
-// up - down - left - right - fire - fire2 - fire3
+// Order of codes: up - down - left - right - fire - fire2 - fire3
 // Fire2 is used only for CPC.
 // Actually there's nothing on any system that would use fire3 (maybe some mouse implementation on ep and cpc)
 const unsigned char joystickCodesInt[7]       = { 0x3b, 0x39, 0x3d, 0x3a, 0x46, 0xff, 0xff };
 const unsigned char joystickCodesExt1[7]      = { 0x73, 0x72, 0x71, 0x70, 0x74, 0x75, 0x76 };
 const unsigned char joystickCodesExt2[7]      = { 0x7b, 0x7a, 0x79, 0x78, 0x7c, 0x7d, 0x7e };
-// ZX: Kempston interface mapped to ext 1
+// ZX: Kempston interface mapped to ext 1 already inside ep128emu so ext1 codes can be used.
 // The 'left' Sinclair joystick maps the joystick directions and the fire button to the 1 (left), 2 (right), 3 (down), 4 (up) and 5 (fire) keys
 const unsigned char joystickCodesSinclair1[7] = { 0x1b, 0x1d, 0x19, 0x1e, 0x1c, 0xff, 0xff };
 // The 'right' Sinclair joystick maps to keys 6 (left), 7 (right), 8 (down), 9 (up) and 0 (fire)
@@ -138,12 +141,11 @@ const unsigned char joystickCodesExt4[7]      = { 0x6b, 0x6a, 0x69, 0x68, 0x6c, 
 const unsigned char joystickCodesExt5[7]      = { 0x53, 0x52, 0x51, 0x50, 0x54, 0x55, 0x56 };
 const unsigned char joystickCodesExt6[7]      = { 0x5b, 0x5a, 0x59, 0x58, 0x5c, 0x5d, 0x5e };
 
-
-const unsigned char* const joystickCodeMap[11] =
+const unsigned char* const joystickCodeMap[JOY_TYPE_AMOUNT] =
 { nullptr, joystickCodesInt, joystickCodesExt1, joystickCodesExt2, joystickCodesSinclair1, joystickCodesSinclair2, joystickCodesSinclair3,
 joystickCodesExt3, joystickCodesExt4, joystickCodesExt5, joystickCodesExt6 };
 
-const char* const joystickNameMap[11] =
+const char* const joystickNameMap[JOY_TYPE_AMOUNT] =
 { nullptr, "Internal", "External 1", "External 2", "Sinclair 1", "Sinclair 2", "Protek", "External 3", "External 4", "External 5", "External 6" };
 
 
@@ -188,8 +190,6 @@ public:
   LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
   const char* startSequence_, const char* cfgFile, bool useHalfFrame, bool enhancedRom);
   virtual ~LibretroCore();
-
-
 
   void initialize_keyboard_map(void);
   void update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);

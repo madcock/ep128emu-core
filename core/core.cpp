@@ -112,6 +112,9 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
 
   startSequence = startSequence_;
 
+  // RAM/ROM configuration begin
+  // Practically all important parts of configuration are set up here, no other file is needed
+  // Usage of configBaseFile is completely optional.
   if(machineType == MACHINE_EP)
   {
     configBaseFile = configBaseFile + "enterprise.ep128cfg";
@@ -136,7 +139,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x01].file=romBasePath+"exos21.rom";
       config->memory.rom[0x01].offset=16384;
     }
-    // HUN ROM: goes to segment 4 and then Basic goes to segment 5
+    // TODO Locale support: HUN ROM: goes to segment 4 and then Basic goes to segment 5
     //config->memory.rom[0x04].file=romBasePath+"hun.rom";
     //config->memory.rom[0x04].offset=0;
     config->memory.rom[0x04].file=romBasePath+"basic21.rom";
@@ -184,15 +187,14 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineType == MACHINE_CPC)
   {
+    // TODO machineDetailedType for 464/664
+    // TODO locale support
     configBaseFile = configBaseFile + "cpc.ep128cfg";
     bootframes[machineDetailedType] = 20*10;
     config->memory.ram.size=128;
-//    config->memory.ram.size=64;
     config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
-//    config->memory.rom[0x10].file=romBasePath+"cpc664.rom";
     config->memory.rom[0x10].offset=0;
     config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
-//    config->memory.rom[0x00].file=romBasePath+"cpc664.rom";
     config->memory.rom[0x00].offset=16384;
     if(machineDetailedType == CPC_DISK)
     {
@@ -702,7 +704,7 @@ void LibretroCore::reset_joystick_map(int port, unsigned value)
 
 void LibretroCore::reset_joystick_map(int port)
 {
-  for(int i=1; i<11; i++)
+  for(int i=1; i<JOY_TYPE_AMOUNT; i++)
   {
     // reset only the one that was set previously
     if (inputJoyMap[joystickCodeMap[i][0]][port] == RETRO_DEVICE_ID_JOYPAD_UP)
@@ -746,10 +748,13 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
         currInputState = input_state_cb(port, RETRO_DEVICE_JOYPAD, 0, inputJoyMap[i][port]);
         if (currInputState && !inputStateMap[i][port])
         {
+          // Joystick map codes below 0x80 are interpreted as keyboard state
+          // including all joystick types (int, ext)
           if(i<128)
           {
             vmThread->setKeyboardState(i,true);
           }
+          // All other codes are interpreted by the libretro core itself.
           else
           {
             if(i == EPKEY_INFO)
@@ -783,15 +788,21 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       }
     }
   }
+  // startSequence handling.
+  // Send keyboard input at specific frames (down presses)
   if (startSequenceIndex < startSequence.length())
   {
     if (w->frameCount == (bootframes[machineDetailedType] + startSequenceIndex*20))
     {
+      // Double quote " is not available on the keyboard so it gets a special mapping
+      // Generic solution was not designed as this startsequence is really limited
       if((unsigned char)startSequence.at(startSequenceIndex) == 254)
       {
         update_keyboard(true,RETROK_LSHIFT,0,0);
         update_keyboard(true,RETROK_2,0,0);
       }
+      // F1 is available on the keyboard, but has no single-character map that would be
+      // suitable for .ep128cfg file, special mapping again
       else if((unsigned char)startSequence.at(startSequenceIndex) == 253)
       {
         update_keyboard(true,RETROK_F1,0,0);
@@ -803,6 +814,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       startSequenceIndex++;
     }
   }
+  // Send keyboard input at specific frames (key releases)
   if (startSequenceIndex <= startSequence.length())
   {
     if (startSequenceIndex > 0 && w->frameCount == (bootframes[machineDetailedType] + (startSequenceIndex-1)*20+10))
@@ -832,6 +844,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
     }
   }
 }
+
 void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t environ_cb)
 {
   // Transition from half frame (normal video mode) to interlaced
@@ -870,9 +883,16 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
 
       if (detectedHeight >= 150 && detectedWidth >= 200)
       {
-        w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
-        log_cb(RETRO_LOG_DEBUG, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
-        change_resolution(detectedWidth, detectedHeight/2, environ_cb);
+        bool setSuccess = w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
+        if (setSuccess) {
+          log_cb(RETRO_LOG_DEBUG, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
+          change_resolution(detectedWidth, detectedHeight/2, environ_cb);
+        }
+        else {
+          log_cb(RETRO_LOG_WARN, "Viewport setting error: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
+        }
+      } else {
+        log_cb(RETRO_LOG_INFO, "Viewport not set, detected: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
       }
     }
   }
@@ -880,13 +900,14 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
 
   if (canSkipFrames && prevFrameCount == w->frameCount)
   {
-    //printf("frame dupe %d \n",prevFrameCount);
+    log_cb(RETRO_LOG_DEBUG, "frame dupe %d \n",prevFrameCount);
     video_cb(NULL, 0, 0, 0);
   }
   else
   {
     prevFrameCount = w->frameCount;
     {
+      // Video callback, stride depends on pixel format (4 byte / 2 byte)
 #ifdef EP128EMU_USE_XRGB8888
       video_cb(w->frame_bufActive, currWidth, currHeight, stride << 2);
 #else
@@ -900,7 +921,9 @@ void LibretroCore::change_resolution(int width, int height, retro_environment_t 
 {
 
   float aspect = 4.0f / 3.0f;
-  // For some reason, aspect is wrong if based purely on pixel basis - if half height is used, it needs to be taken into account
+  // Adjust aspect ratio if viewport is set to something else,
+  // as border detection is done independently for all 4 edges
+  // If half height is used, it needs to be taken into account
   aspect = 4.0f / (3.0f /
                    (float) (isHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT/2/(float)height : EP128EMU_LIBRETRO_SCREEN_HEIGHT/(float)height) *
                    (float) (EP128EMU_LIBRETRO_SCREEN_WIDTH/(float)width)
@@ -933,6 +956,7 @@ void LibretroCore::run_for(retro_usec_t frameTime, float waitPeriod, void * fb)
   //Ep128Emu::VMThread::VMThreadStatus  vmThreadStatus(*vmThread);
   //log_cb(RETRO_LOG_DEBUG, "Running core for %d ms\n",frameTime);
   totalTime += frameTime;
+  // Direct framebuffer usage
   if(fb)
   {
 #ifdef EP128EMU_USE_XRGB8888
@@ -941,6 +965,7 @@ void LibretroCore::run_for(retro_usec_t frameTime, float waitPeriod, void * fb)
     w->frame_bufActive = (uint16_t*)fb;
 #endif // EP128EMU_USE_XRGB8888
   }
+  // Own framebuffer usage
   else
   {
 #ifdef EP128EMU_USE_XRGB8888
@@ -949,8 +974,8 @@ void LibretroCore::run_for(retro_usec_t frameTime, float waitPeriod, void * fb)
     w->frame_bufActive = (uint16_t*) w->frame_buf1;
 #endif // EP128EMU_USE_XRGB8888
   }
-  vmThread->allowRunFor(frameTime);
 
+  vmThread->allowRunFor(frameTime);
   do
   {
     w->wakeDisplay(false);
@@ -969,7 +994,7 @@ void LibretroCore::sync_display(void)
 void LibretroCore::errorCallback(void *userData, const char *msg)
 {
   (void) userData;
-  std::fprintf(stderr, "WARNING: %s\n", msg);
+  log_cb(RETRO_LOG_ERROR, "Core error callback: %s\n", msg);
 }
 
 }       // namespace Ep128Emu
