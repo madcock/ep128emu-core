@@ -21,7 +21,7 @@
 namespace Ep128Emu
 {
 
-LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
+LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, int contentLocale, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
                            const char* startSequence_, const char* cfgFile, bool useHalfFrame_, bool enhancedRom)
   : log_cb(log_cb_),
     useHalfFrame(useHalfFrame_),
@@ -139,11 +139,16 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x01].file=romBasePath+"exos21.rom";
       config->memory.rom[0x01].offset=16384;
     }
-    // TODO Locale support: HUN ROM: goes to segment 4 and then Basic goes to segment 5
-    //config->memory.rom[0x04].file=romBasePath+"hun.rom";
-    //config->memory.rom[0x04].offset=0;
-    config->memory.rom[0x04].file=romBasePath+"basic21.rom";
-    config->memory.rom[0x04].offset=0;
+    if(contentLocale == LOCALE_HUN) {
+    // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
+      config->memory.rom[0x04].file=romBasePath+"hun.rom";
+      config->memory.rom[0x04].offset=0;
+      config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+      config->memory.rom[0x05].offset=0;
+    } else {
+      config->memory.rom[0x04].file=romBasePath+"basic21.rom";
+      config->memory.rom[0x04].offset=0;
+    }
 
     if(machineDetailedType == EP128_FILE || machineDetailedType == EP128_FILE_DTF)
     {

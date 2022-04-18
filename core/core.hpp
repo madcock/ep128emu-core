@@ -148,6 +148,20 @@ joystickCodesExt3, joystickCodesExt4, joystickCodesExt5, joystickCodesExt6 };
 const char* const joystickNameMap[JOY_TYPE_AMOUNT] =
 { nullptr, "Internal", "External 1", "External 2", "Sinclair 1", "Sinclair 2", "Protek", "External 3", "External 4", "External 5", "External 6" };
 
+enum LibretroCore_locale
+{
+  LOCALE_UK,
+  LOCALE_HUN,
+  LOCALE_GER,
+  LOCALE_ESP,
+  LOCALE_FRA,
+  LOCALE_AMOUNT,
+  LOCALE_UNKNOWN = INT_MAX
+};
+
+const std::string locale_identifiers[LOCALE_AMOUNT] = {
+  "(uk)", "(hu)", "(ger)", "(es)", "(fr)"
+};
 
 class LibretroCore
 {
@@ -187,7 +201,7 @@ public:
 
   // ----------------
 
-  LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
+  LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType, int contentLocale, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
   const char* startSequence_, const char* cfgFile, bool useHalfFrame, bool enhancedRom);
   virtual ~LibretroCore();
 

@@ -3,7 +3,6 @@
 build for mac
 magyar nyelvű leírás is
 cheat support
-info msg overlay
 arm build without dependency to glib version
 ep128cfg support joy mapping
 ep128cfg support player 2 mapping
@@ -17,6 +16,8 @@ gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
 sw fb + interlace = crash
 wait állítás után keyboard lefele beragad? -- kb reset
+info msg overlay
+long info msg with game instructions
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
@@ -28,12 +29,6 @@ opengl display support
 demo record/play
 support for content in zip
 egér
-
-audio kaphatná ezeket konfigból, ahogy a többi (latency??)
-valami a signed-unsigned környékén eltéved, ha nem konstansból megy a 16
-sound.hwPeriods	16
-sound.sampleRate	44100
-sound.swPeriods	16
 
 */
 
@@ -342,7 +337,7 @@ void retro_init(void)
   timeBeginPeriod(1U);
 #endif
   log_cb(RETRO_LOG_DEBUG, "Creating core...\n");
-  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
+  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, Ep128Emu::LOCALE_UK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
@@ -581,6 +576,15 @@ bool retro_load_game(const struct retro_game_info *info)
     contentBasename = contentFile;
     Ep128Emu::stringToLowerCase(contentBasename);
 
+    int contentLocale = Ep128Emu::LOCALE_UK;
+    for(int i=1;i<Ep128Emu::LOCALE_AMOUNT;i++) {
+      idx = filename.rfind(Ep128Emu::locale_identifiers[i]);
+      if(idx != std::string::npos) {
+        contentLocale = i;
+        break;
+      }
+    }
+
     if(Ep128Emu::does_file_exist(configFile.c_str()))
     {
       log_cb(RETRO_LOG_INFO, "Content specific configuration file: %s \n",configFile.c_str());
@@ -716,7 +720,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       log_cb(RETRO_LOG_DEBUG, "Creating core\n");
       check_variables();
-      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, canSkipFrames,
+      core = new Ep128Emu::LibretroCore(log_cb, detectedMachineDetailedType, contentLocale, canSkipFrames,
                                         retro_system_bios_directory, retro_system_save_directory,
                                         startupSequence,configFile.c_str(),useHalfFrame, enhancedRom);
       log_cb(RETRO_LOG_DEBUG, "Core created\n");
