@@ -17,6 +17,15 @@
 // along with this program; if not, write to the Free Software
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+/* TODO:
+these may be used from config instead of hardcoded constant
+but, there are some problems (probably signed-unsigned mismatch)
+if they are simply replaced
+sound.hwPeriods	16
+sound.sampleRate	44100
+sound.swPeriods	16
+*/
+
 #include "ep128emu.hpp"
 #include "system.hpp"
 #include "libretrosnd.hpp"
