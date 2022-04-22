@@ -33,29 +33,31 @@
 namespace Ep128Emu
 {
 
-enum LibretroCore_VM_config
-{
-  EP128_DISK,
-  EP128_TAPE,
-  EP128_FILE,
-  EP128_FILE_DTF,
-  EP64_DISK,
-  EP64_TAPE,
-  EP64_FILE,
-  EP64_FILE_DTF,
-  TVC64_FILE,
-  TVC64_DISK,
-  CPC_TAPE, // Default is CPC6128
-  CPC_DISK,
-  CPC_464_TAPE,
-  CPC_664_DISK,
-  ZX16_TAPE,
-  ZX16_FILE,
-  ZX48_TAPE,
-  ZX48_FILE,
-  ZX128_TAPE,
-  ZX128_FILE,
-  VM_CONFIG_UNKNOWN = INT_MAX
+// VM main type compatibility is checked by subtracting types
+// so do not use type indexes in the x50-x99 range
+const std::map<std::string, int> VM_config {
+ { "VM_CONFIG_AUTO" , 0},
+ { "EP128_DISK"     , 100},
+ { "EP128_TAPE"     , 101},
+ { "EP128_FILE"     , 102},
+ { "EP128_FILE_DTF" , 103},
+ { "EP64_DISK"      , 110},
+ { "EP64_TAPE"      , 111},
+ { "EP64_FILE"      , 112},
+ { "EP64_FILE_DTF"  , 113},
+ { "TVC64_FILE"     , 200},
+ { "TVC64_DISK"     , 201},
+ { "CPC_TAPE"       , 300}, // Default is CPC6128
+ { "CPC_DISK"       , 301},
+ { "CPC_464_TAPE"   , 302},
+ { "CPC_664_DISK"   , 303},
+ { "ZX16_TAPE"      , 400},
+ { "ZX16_FILE"      , 401},
+ { "ZX48_TAPE"      , 402},
+ { "ZX48_FILE"      , 403},
+ { "ZX128_TAPE"     , 404},
+ { "ZX128_FILE"     , 405},
+ { "VM_CONFIG_UNKNOWN" , INT_MAX},
 };
 
 enum LibretroCore_VM_type
@@ -103,22 +105,22 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
                                           // cat  TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
 };
 
-enum LibretroCore_joystick_type
-{
-  JOY_DEFAULT=0,
-  JOY_INTERNAL,
-  JOY_EXT1,
-  JOY_EXT2,
-  JOY_SINCLAIR1,
-  JOY_SINCLAIR2,
-  JOY_PROTEK,
-  JOY_EXT3,
-  JOY_EXT4,
-  JOY_EXT5,
-  JOY_EXT6,
-  JOY_TYPE_AMOUNT, // used only for array sizes
-  JOY_UNKNOWN = INT_MAX
+const std::map<std::string, int> joystick_type {
+  {"",          0  },
+  {"DEFAULT",   0  },
+  {"INTERNAL",  1  },
+  {"EXT1",      2  },
+  {"EXT2",      3  },
+  {"SINCLAIR1", 4  },
+  {"SINCLAIR2", 5  },
+  {"PROTEK",    6  },
+  {"EXT3",      7  },
+  {"EXT4",      8  },
+  {"EXT5",      9  },
+  {"EXT6",      10 },
+  {"UNKNOWN", INT_MAX},
 };
+const int JOY_TYPE_AMOUNT = 11;
 
 // Order of codes: up - down - left - right - fire - fire2 - fire3
 // Fire2 is used only for CPC.
@@ -168,7 +170,7 @@ class LibretroCore
 private:
   retro_log_printf_t log_cb;
   int libretro_to_ep128emu_kbmap[RETROK_LAST];
-  unsigned int bootframes[64];
+  unsigned int bootframes;
 
 public:
   uint16_t audioBuffer[EP128EMU_SAMPLE_RATE*1000*2];

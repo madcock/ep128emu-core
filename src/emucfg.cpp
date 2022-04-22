@@ -124,6 +124,9 @@ namespace Ep128Emu {
     defineConfigurationVariable(*this, "vm.enableFileIO",
                                 vm.enableFileIO, false,
                                 vmConfigurationChanged);
+    defineConfigurationVariable(*this, "machineDetailedType",
+                                machineDetailedType, std::string(""),
+                                memoryConfigurationChanged);
     // ----------------
     defineConfigurationVariable(*this, "memory.ram.size",
                                 memory.ram.size, 128,
@@ -285,6 +288,12 @@ namespace Ep128Emu {
       //printf("Defining %s\n",js);
       defineConfigurationVariable(*this, std::string(js),
                                   joypad[i], std::string(""),
+                                  keyboardMapChanged);
+    }
+    for (int i = 0; i < 6; i++) {
+      std::sprintf(js, "joypad.user%d",i+1);
+      defineConfigurationVariable(*this, std::string(js),
+                                  joypadUser[i], std::string(""),
                                   keyboardMapChanged);
     }
     defineConfigurationVariable(*this, std::string("contentfilename"),

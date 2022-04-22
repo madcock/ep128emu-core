@@ -42,28 +42,42 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     vmThread(NULL),
     config(NULL)
 {
-  if(machineDetailedType == TVC64_DISK || machineDetailedType == TVC64_FILE)
+  std::string romBasePath(romDirectory_);
+  std::string configBaseFile(romDirectory_);
+#ifdef WIN32
+  romBasePath.append("\\ep128emu\\roms\\");
+  configBaseFile.append("\\ep128emu\\config\\");
+#else
+  romBasePath.append("/ep128emu/roms/");
+  configBaseFile.append("/ep128emu/config/");
+#endif
+
+  if(machineDetailedType == VM_config.at("TVC64_DISK") || machineDetailedType == VM_config.at("TVC64_FILE"))
   {
     machineType = MACHINE_TVC;
     log_cb(RETRO_LOG_INFO, "Emulated machine: TVC\n");
+    configBaseFile = configBaseFile + "tvc.ep128cfg";
   }
-  else if(machineDetailedType == CPC_DISK || machineDetailedType == CPC_TAPE)
+  else if(machineDetailedType == VM_config.at("CPC_DISK") || machineDetailedType == VM_config.at("CPC_TAPE"))
   {
     machineType = MACHINE_CPC;
     log_cb(RETRO_LOG_INFO, "Emulated machine: CPC\n");
+    configBaseFile = configBaseFile + "cpc.ep128cfg";
   }
-  else if(machineDetailedType == ZX16_TAPE || machineDetailedType == ZX16_FILE ||
-          machineDetailedType == ZX48_TAPE || machineDetailedType == ZX48_FILE ||
-          machineDetailedType == ZX128_TAPE || machineDetailedType == ZX128_FILE )
+  else if(machineDetailedType == VM_config.at("ZX16_TAPE")  || machineDetailedType == VM_config.at("ZX16_FILE") ||
+          machineDetailedType == VM_config.at("ZX48_TAPE")  || machineDetailedType == VM_config.at("ZX48_FILE") ||
+          machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE") )
   {
     machineType = MACHINE_ZX;
     log_cb(RETRO_LOG_INFO, "Emulated machine: ZX\n");
+    configBaseFile = configBaseFile + "zx.ep128cfg";
   }
   else
   {
     log_cb(RETRO_LOG_INFO, "Emulated machine: EP\n");
+    configBaseFile = configBaseFile + "enterprise.ep128cfg";
   }
-  if(machineDetailedType == VM_CONFIG_UNKNOWN)
+  if(machineDetailedType == VM_config.at("VM_CONFIG_UNKNOWN"))
   {
     log_cb(RETRO_LOG_ERROR, "VM_CONFIG_UNKNOWN passed!\n");
     throw Ep128Emu::Exception("Machine configuration not recognized!");
@@ -98,30 +112,52 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     , *midiPort
 #endif
   );
+
   //config->setErrorCallback(&LibretroCore::errorCallback, (void *) 0);
   currHeight = useHalfFrame ? EP128EMU_LIBRETRO_SCREEN_HEIGHT / 2 : EP128EMU_LIBRETRO_SCREEN_HEIGHT;
-  std::string romBasePath(romDirectory_);
-  std::string configBaseFile(romDirectory_);
-#ifdef WIN32
-  romBasePath.append("\\ep128emu\\roms\\");
-  configBaseFile.append("\\ep128emu\\config\\");
-#else
-  romBasePath.append("/ep128emu/roms/");
-  configBaseFile.append("/ep128emu/config/");
-#endif
 
-  startSequence = startSequence_;
+  // Load extra configuration files.
+  // At this point, only machineDetailedType will be interpreted, all others will be overwritten a bit later.
+  if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
+  {
+    log_cb(RETRO_LOG_INFO, "Loading system wide configuration file: %s\n",configBaseFile.c_str());
+    config->loadState(configBaseFile.c_str(),false);
+  }
+  if (cfgFile[0])
+  {
+    log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",configBaseFile.c_str());
+    config->loadState(cfgFile,false);
+  }
+
+  // Check if the forced configuration matches the main VM type.
+  if (config->machineDetailedType != "") {
+    int newDetailedType = VM_config.at(config->machineDetailedType);
+    if(newDetailedType - machineDetailedType > 50 || newDetailedType - machineDetailedType < -50) {
+      log_cb(RETRO_LOG_ERROR, "Incompatible machine type from config file: %s instead of %d\n",config->machineDetailedType.c_str(),machineDetailedType);
+      throw Ep128Emu::Exception("Machine configuration incompatibilty!");
+    }
+    log_cb(RETRO_LOG_INFO, "Detailed machine type from configuration: %s instead of %d\n",config->machineDetailedType.c_str(),machineDetailedType);
+    machineDetailedType = newDetailedType;
+  }
 
   // RAM/ROM configuration begin
   // Practically all important parts of configuration are set up here, no other file is needed
   // Usage of configBaseFile is completely optional.
   if(machineType == MACHINE_EP)
   {
-    configBaseFile = configBaseFile + "enterprise.ep128cfg";
-    config->memory.ram.size=128;
+    bool is_EP64 = (machineDetailedType  == VM_config.at("EP64_DISK")  || machineDetailedType == VM_config.at("EP64_FILE") ||
+                    machineDetailedType  == VM_config.at("EP64_TAPE")  || machineDetailedType == VM_config.at("EP64_FILE_DTF")) ? true : false;
+    bool use_file = (machineDetailedType == VM_config.at("EP128_FILE") || machineDetailedType == VM_config.at("EP64_FILE")) ? true : false;
+    bool use_disk = (machineDetailedType == VM_config.at("EP128_DISK") || machineDetailedType == VM_config.at("EP64_DISK")) ? true : false;
+    bool use_dtf = (machineDetailedType  == VM_config.at("EP128_FILE_DTF") || machineDetailedType == VM_config.at("EP64_FILE_DTF")) ? true : false;
+
+    if (is_EP64)
+      config->memory.ram.size=64;
+    else
+      config->memory.ram.size=128;
     if (enhancedRom)
     {
-      bootframes[machineDetailedType] = 20*10;
+      bootframes = 20*10;
       config->memory.rom[0x00].file=romBasePath+"exos24uk.rom";
       config->memory.rom[0x00].offset=0;
       config->memory.rom[0x01].file=romBasePath+"exos24uk.rom";
@@ -131,9 +167,14 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
       config->memory.rom[0x03].offset=49152;
     }
-    else
-    {
-      bootframes[machineDetailedType] = 40*10;
+    else if (is_EP64) {
+      bootframes = 30*10;
+      config->memory.rom[0x00].file=romBasePath+"exos20.rom";
+      config->memory.rom[0x00].offset=0;
+      config->memory.rom[0x01].file=romBasePath+"exos20.rom";
+      config->memory.rom[0x01].offset=16384;
+    } else {
+      bootframes = 40*10;
       config->memory.rom[0x00].file=romBasePath+"exos21.rom";
       config->memory.rom[0x00].offset=0;
       config->memory.rom[0x01].file=romBasePath+"exos21.rom";
@@ -143,18 +184,24 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
       config->memory.rom[0x04].file=romBasePath+"hun.rom";
       config->memory.rom[0x04].offset=0;
-      config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+      if (is_EP64)
+        config->memory.rom[0x05].file=romBasePath+"basic20.rom";
+      else
+        config->memory.rom[0x05].file=romBasePath+"basic21.rom";
       config->memory.rom[0x05].offset=0;
     } else {
-      config->memory.rom[0x04].file=romBasePath+"basic21.rom";
+      if (is_EP64)
+        config->memory.rom[0x04].file=romBasePath+"basic20.rom";
+      else
+        config->memory.rom[0x05].file=romBasePath+"basic21.rom";
       config->memory.rom[0x04].offset=0;
     }
 
-    if(machineDetailedType == EP128_FILE || machineDetailedType == EP128_FILE_DTF)
+    if(use_file || use_dtf)
     {
       config->memory.rom[0x10].file=romBasePath+"epfileio.rom";
       config->memory.rom[0x10].offset=0;
-      if(machineDetailedType == EP128_FILE_DTF)
+      if(use_dtf)
       {
         config->memory.rom[0x40].file=romBasePath+"zt19uk.rom";
         config->memory.rom[0x40].offset=0;
@@ -162,7 +209,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
         config->memory.rom[0x41].offset=16384;
       }
     }
-    if(machineDetailedType == EP128_DISK || machineDetailedType == EP128_FILE)
+    if(use_file || use_disk)
     {
       config->memory.rom[0x20].file=romBasePath+"exdos13.rom";
       config->memory.rom[0x20].offset=0;
@@ -172,36 +219,34 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineType == MACHINE_TVC)
   {
-    configBaseFile = configBaseFile + "tvc.ep128cfg";
-    bootframes[machineDetailedType] = 50*10;
+    bootframes = 50*10;
     config->memory.ram.size=128;
     config->memory.rom[0x00].file=romBasePath+"tvc22_sys.rom";
     config->memory.rom[0x00].offset=0;
     config->memory.rom[0x02].file=romBasePath+"tvc22_ext.rom";
     config->memory.rom[0x02].offset=0;
-    if(machineDetailedType == TVC64_FILE)
+    if(machineDetailedType == VM_config.at("TVC64_FILE"))
     {
       config->memory.rom[0x04].file=romBasePath+"tvcfileio.rom";
       config->memory.rom[0x04].offset=0;
     }
-    if(machineDetailedType == TVC64_DISK)
+    if(machineDetailedType == VM_config.at("TVC64_DISK"))
     {
       config->memory.rom[0x03].file=romBasePath+"tvc_dos12d.rom";
       config->memory.rom[0x03].offset=0;
     }
   }
-  else if(machineType == MACHINE_CPC)
+  else if(machineType == VM_config.at("MACHINE_CPC"))
   {
     // TODO machineDetailedType for 464/664
     // TODO locale support
-    configBaseFile = configBaseFile + "cpc.ep128cfg";
-    bootframes[machineDetailedType] = 20*10;
+    bootframes = 20*10;
     config->memory.ram.size=128;
     config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
     config->memory.rom[0x10].offset=0;
     config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
     config->memory.rom[0x00].offset=16384;
-    if(machineDetailedType == CPC_DISK)
+    if(machineDetailedType == VM_config.at("CPC_DISK"))
     {
       config->memory.rom[0x07].file=romBasePath+"cpc_amsdos.rom";
       config->memory.rom[0x07].offset=0;
@@ -209,13 +254,14 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineType == MACHINE_ZX)
   {
-    configBaseFile = configBaseFile + "zx.ep128cfg";
-    bootframes[machineDetailedType] = 20*10;
-    if(machineDetailedType == ZX16_TAPE || machineDetailedType == ZX16_FILE)
+    // TODO machineDetailedType for 16/48/128
+    // TODO locale support (?)
+    bootframes = 20*10;
+    if(machineDetailedType == VM_config.at("ZX16_TAPE") || machineDetailedType == VM_config.at("ZX16_FILE"))
     {
       config->memory.ram.size=16;
     }
-    else if (machineDetailedType == ZX48_TAPE || machineDetailedType == ZX48_FILE)
+    else if (machineDetailedType == VM_config.at("ZX48_TAPE") || machineDetailedType == VM_config.at("ZX48_FILE"))
     {
       config->memory.ram.size=48;
     }
@@ -224,7 +270,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.ram.size=128;
     }
 
-    if(machineDetailedType == ZX128_TAPE || machineDetailedType == ZX128_FILE)
+    if(machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE"))
     {
       config->memory.rom[0x00].file=romBasePath+"zx128.rom";
       config->memory.rom[0x00].offset=0;
@@ -322,7 +368,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineType == MACHINE_ZX)
   {
-    if(machineDetailedType == ZX128_TAPE || machineDetailedType == ZX128_FILE)
+    if(machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE"))
     {
       config->vm.cpuClockFrequency=3546896;
       config->vm.soundClockFrequency=221681;
@@ -345,22 +391,22 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   config->sound.highQuality = true;
   config->soundSettingsChanged = true;
 
-  // Priority order of settings:
-  // lowest: hardcoded defaults (above)
-  // medium: system-wide defaults per machine type (this one)
+  // Reload config files to enforce priority of settings.
   if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
   {
-    log_cb(RETRO_LOG_INFO, "Loading system wide configuration file: %s\n",configBaseFile.c_str());
     config->loadState(configBaseFile.c_str(),false);
   }
   // highest: content-specific file
   if (cfgFile[0])
   {
-    log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",configBaseFile.c_str());
     config->loadState(cfgFile,false);
   }
+
   initialize_keyboard_map();
-  initialize_joystick_map(std::string(""),std::string(""), JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT,JOY_DEFAULT);
+  initialize_joystick_map(std::string(""),std::string(""),
+    joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),
+    joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"));
+  startSequence = startSequence_;
   if (config->contentFileName != "")
   {
     startSequence = startSequence + config->contentFileName + "\xfe\r";
@@ -621,6 +667,7 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
       }
     }
   }
+
   // Highest priority: core option settings (if they are not left on default)
   if(zoomKey != "")
   {
@@ -643,7 +690,15 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
     }
   }
 
-  int mappings[EP128EMU_MAX_USERS] = {user1, user2, user3, user4, user5, user6};
+  // Override joypad users (received from core options) with config values, if they are left at default.
+  int mappings[EP128EMU_MAX_USERS] = {
+    user1 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[0]) : user1,
+    user2 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[1]) : user2,
+    user3 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[2]) : user3,
+    user4 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[3]) : user4,
+    user5 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[4]) : user5,
+    user6 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[5]) : user6,
+    };
   for (int i=0; i<EP128EMU_MAX_USERS; i++)
   {
     if(mappings[i]>0)
@@ -654,8 +709,10 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
       // Otherwise, only 1 fire button
       else
         update_joystick_map(joystickCodeMap[mappings[i]],i,5);
-      infoMessage = "Joypad: ";
-      infoMessage += joystickNameMap[mappings[i]];
+      if (i==0) {
+        infoMessage = "Joypad: ";
+        infoMessage += joystickNameMap[mappings[i]];
+      }
     }
   }
 
@@ -664,7 +721,6 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
   for (int j=0; j<12; j++)
   {
     int btnIndex = buttonOrderInInfoMessage[j];
-
     for(int i=0; i<256; i++)
     {
       if(inputJoyMap[i][0] == btnIndex )
@@ -797,7 +853,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
   // Send keyboard input at specific frames (down presses)
   if (startSequenceIndex < startSequence.length())
   {
-    if (w->frameCount == (bootframes[machineDetailedType] + startSequenceIndex*20))
+    if (w->frameCount == (bootframes + startSequenceIndex*20))
     {
       // Double quote " is not available on the keyboard so it gets a special mapping
       // Generic solution was not designed as this startsequence is really limited
@@ -822,7 +878,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
   // Send keyboard input at specific frames (key releases)
   if (startSequenceIndex <= startSequence.length())
   {
-    if (startSequenceIndex > 0 && w->frameCount == (bootframes[machineDetailedType] + (startSequenceIndex-1)*20+10))
+    if (startSequenceIndex > 0 && w->frameCount == (bootframes + (startSequenceIndex-1)*20+10))
     {
       if((unsigned char)startSequence.at(startSequenceIndex-1) == 254)
       {
@@ -841,7 +897,7 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       {
         startSequenceIndex++;
         // Start tape for ZX at the end of startup sequence
-        if(machineDetailedType == ZX128_TAPE)
+        if(machineDetailedType == VM_config.at("ZX128_TAPE"))
         {
           vm->tapePlay();
         }

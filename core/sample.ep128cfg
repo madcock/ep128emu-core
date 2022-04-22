@@ -1,8 +1,42 @@
-# ep128emu-core content specific config file sample.
+# ep128emu-core config file sample.
 # Should be next to the content and have the same basename as the content file itself
-# Example: exolon.com -> exolon.ep128cfg, Sorcery.tap -> Sorcery.ep128cfg
+# Examples:
+#   Sorcery.tap -> Sorcery.ep128cfg
+#   Catacomb (1985)(Enterprise Computers).com -> Catacomb (1985)(Enterprise Computers).ep128cfg
+# A configuration file can also be put to retroarch system directory/ep128emu/config,
+# for each emulated system. using these names:
+#   enterprise.ep128cfg
+#   tvc.ep128cfg
+#   cpc.ep128cfg
+#   zx.ep128cfg
+# Priority of setting, lowest to highest:
+#   ep128emu-core hardcoded defaults
+#   system-wide configuration file
+#   content specific configuration file
+#   core options set in RetroArch GUI (if not set to default)
 
-# Joypad configuration. Example:
+# Joypad direction and fire mapping. Can be empty, which means machine-dependent default:
+# EP: user1 internal, user2..user6 ext1..ext5
+# CPC: user1 ext1, user2 ext2
+# TVC: user1 internal, user2..3 ext1..2
+# ZX: user1 ext1 (Kempston), user2 Sinclair1, user3 Sinclair2, user4 Protek
+
+# Or one of:
+# INTERNAL (internal joystick of EP and TVC)
+# EXT1, EXT2 (external joysticks for EP, TVC, CPC, EXT1 is Kempston for ZX)
+# SINCLAIR1, SINCLAIR2, PROTEK (adapters for ZX Spectrum)
+# EXT3, EXT4, EXT5, EXT6 (additional external joysticks for EP, very rarely used)
+# Use the quotes, i.e.
+# joypad.user1 "EXT1"
+
+joypad.user1 ""
+joypad.user2 ""
+joypad.user3 ""
+joypad.user4 ""
+joypad.user5 ""
+joypad.user6 ""
+
+# Joypad detailed configuration for user 1. Example:
 # joypad.x "1"
 # This maps retropad button X to key 1 on emulated keyboard.
 # Following values can be used (all lowercase):
@@ -39,4 +73,23 @@ joypad.left ""
 joypad.right ""
 
 # Content file name. Use in case of disk images to automatically load a program.
+
 contentfilename ""
+
+# Emulated machine type. Normally autodetected from content. Can be one of the following:
+# Enterprise:
+# EP128_DISK, EP128_TAPE, EP128_FILE, EP128_FILE_DTF
+# EP64_DISK, EP64_TAPE, EP64_FILE, EP64_FILE_DTF
+# TVC:
+# TVC64_FILE, TVC64_DISK
+# CPC (6128 unless noted):
+# CPC_TAPE, CPC_DISK, CPC_464_TAPE, CPC_664_DISK
+# ZX:
+# ZX16_TAPE, ZX16_FILE, ZX48_TAPE, ZX48_FILE, ZX128_TAPE, ZX128_FILE
+# Variants with _DISK are for disk images, _TAPE for tape images
+# _FILE can be used for direct file reading (.cas for TVC, .tap for ZX, ,com/.bas/other extensions for EP)
+# _FILE_DTF is for DTF compressed files
+
+machineDetailedType ""
+
+# Other ep128emu options are also recognized, but not tested extensively.

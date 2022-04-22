@@ -4,13 +4,10 @@ build for mac
 magyar nyelvű leírás is
 cheat support
 arm build without dependency to glib version
-ep128cfg support joy mapping
-ep128cfg support player 2 mapping
-info msg for other players
 detailed type detection from content name
-detailed type setting from ep128cfg
 
-ep midnight resistance dtf flicker
+https://github.com/libretro/libretro-super/blob/master/dist/info/00_example_libretro.info
+https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
@@ -18,6 +15,7 @@ sw fb + interlace = crash
 wait állítás után keyboard lefele beragad? -- kb reset
 info msg overlay
 long info msg with game instructions
+virtual keyboard
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
@@ -25,6 +23,9 @@ hun font support EP szex-teszt
 locale support ep, cpc
 
 low prio:
+ep128cfg support player 2 mapping
+info msg for other players
+TAPir format support
 opengl display support
 demo record/play
 support for content in zip
@@ -237,20 +238,20 @@ static void check_variables(void)
     var.key = joyVariableNames[i];
     if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
     {
-      if(var.value[0] == 'I') { userMap[i]=Ep128Emu::JOY_INTERNAL;}
+      if(var.value[0] == 'I') { userMap[i]=Ep128Emu::joystick_type.at("INTERNAL");}
       else if (var.value[0] == 'E') {
-        if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_EXT1;
-        if (var.value[9] == '2') userMap[i]=Ep128Emu::JOY_EXT2;
-        if (var.value[9] == '3') userMap[i]=Ep128Emu::JOY_EXT3;
-        if (var.value[9] == '4') userMap[i]=Ep128Emu::JOY_EXT4;
-        if (var.value[9] == '5') userMap[i]=Ep128Emu::JOY_EXT5;
-        if (var.value[9] == '6') userMap[i]=Ep128Emu::JOY_EXT6;
+        if (var.value[9] == '1') userMap[i]=Ep128Emu::joystick_type.at("EXT1");
+        if (var.value[9] == '2') userMap[i]=Ep128Emu::joystick_type.at("EXT2");
+        if (var.value[9] == '3') userMap[i]=Ep128Emu::joystick_type.at("EXT3");
+        if (var.value[9] == '4') userMap[i]=Ep128Emu::joystick_type.at("EXT4");
+        if (var.value[9] == '5') userMap[i]=Ep128Emu::joystick_type.at("EXT5");
+        if (var.value[9] == '6') userMap[i]=Ep128Emu::joystick_type.at("EXT6");
       }
       else if (var.value[0] == 'S') {
-        if (var.value[9] == '1') userMap[i]=Ep128Emu::JOY_SINCLAIR1;
-        else userMap[i] = Ep128Emu::JOY_SINCLAIR2;
+        if (var.value[9] == '1') userMap[i]=Ep128Emu::joystick_type.at("SINCLAIR1");
+        else userMap[i] = Ep128Emu::joystick_type.at("SINCLAIR2");
       }
-      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::JOY_PROTEK;}
+      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::joystick_type.at("JOY_PROTEK");}
     }
     if(core)
       core->initialize_joystick_map(zoomKey,infoKey,userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
@@ -337,7 +338,7 @@ void retro_init(void)
   timeBeginPeriod(1U);
 #endif
   log_cb(RETRO_LOG_DEBUG, "Creating core...\n");
-  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::EP128_DISK, Ep128Emu::LOCALE_UK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
+  core = new Ep128Emu::LibretroCore(log_cb, Ep128Emu::VM_config.at("EP128_DISK"), Ep128Emu::LOCALE_UK, canSkipFrames, retro_system_bios_directory, retro_system_save_directory,"","",useHalfFrame, enhancedRom);
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
@@ -636,12 +637,12 @@ bool retro_load_game(const struct retro_game_info *info)
     bool tapeContent = false;
     bool diskContent = false;
     bool fileContent = false;
-    int detectedMachineDetailedType = Ep128Emu::VM_CONFIG_UNKNOWN;
+    int detectedMachineDetailedType = Ep128Emu::VM_config.at("VM_CONFIG_UNKNOWN");
 
     // start with longer magic strings - less chance of mis-detection
     if(header_match(cpcDskFileHeader,tmpBuf,11) or header_match(cpcExtFileHeader,tmpBuf,21))
     {
-      detectedMachineDetailedType = Ep128Emu::CPC_DISK;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("CPC_DISK");
       diskContent=true;
       startupSequence ="cat\r\xff\xff\xff\xff\xff\xffrun\xfe";
     }
@@ -650,26 +651,26 @@ bool retro_load_game(const struct retro_game_info *info)
       // if tzx format is called cdt, it is for CPC
       if (contentExt == tapeExtCpc)
       {
-        detectedMachineDetailedType = Ep128Emu::CPC_TAPE;
+        detectedMachineDetailedType = Ep128Emu::VM_config.at("CPC_TAPE");
         tapeContent = true;
         startupSequence ="run\xfe\r\r";
       }
       else
       {
-        detectedMachineDetailedType = Ep128Emu::ZX128_TAPE;
+        detectedMachineDetailedType = Ep128Emu::VM_config.at("ZX128_TAPE");
         tapeContent = true;
         startupSequence ="\r";
       }
     }
     else if(header_match(epteFileMagic,tmpBuf,32) || header_match(ep128emuTapFileHeader,tmpBuf,8))
     {
-      detectedMachineDetailedType = Ep128Emu::EP128_TAPE;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
       startupSequence =" \xff\xfd";
     }
     else if (contentExt == fileExtTvc && header_match(zeroBytes,&(tmpBuf[5]),nBytes-6))
     {
-      detectedMachineDetailedType = Ep128Emu::TVC64_FILE;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("TVC64_FILE");
       fileContent=true;
       startupSequence =" \xffload\r";
     }
@@ -678,14 +679,14 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       if (header_match(tvcDskFileHeader,tmpBuf,3))
       {
-        detectedMachineDetailedType = Ep128Emu::TVC64_DISK;
+        detectedMachineDetailedType = Ep128Emu::VM_config.at("TVC64_DISK");
         diskContent=true;
         // ext 2 - dir - esc - load"
         startupSequence =" ext 2\r dir\r \x1bload\xfe";
       }
       else if (header_match(epDskFileHeader1,tmpBuf,3) || header_match(epDskFileHeader2,tmpBuf,3))
       {
-        detectedMachineDetailedType = Ep128Emu::EP128_DISK;
+        detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_DISK");
         diskContent=true;
       }
       else {
@@ -695,19 +696,19 @@ bool retro_load_game(const struct retro_game_info *info)
     }
     else if (contentExt == fileExtZx /*&& header_match(zxTapFileHeader,tmpBuf,4)*/)
     {
-      detectedMachineDetailedType = Ep128Emu::ZX128_FILE;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("ZX128_FILE");
       fileContent=true;
       startupSequence ="\r";
     }
     else if (contentExt == fileExtDtf) {
-      detectedMachineDetailedType = Ep128Emu::EP128_FILE_DTF;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_FILE_DTF");
       fileContent=true;
       startupSequence =" \xff\xff\xff\xff\xff:dl ";
     }
     // last resort: EP file, first 2 bytes
     else if (header_match(epComFileHeader,tmpBuf,2) || header_match(epBasFileHeader,tmpBuf,2))
     {
-      detectedMachineDetailedType = Ep128Emu::EP128_FILE;
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_FILE");
       fileContent=true;
       startupSequence =" \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfd";
     }
@@ -744,7 +745,7 @@ bool retro_load_game(const struct retro_game_info *info)
         config->fileioSettingsChanged = true;
         config->vm.enableFileIO=true;
         config->vmConfigurationChanged = true;
-        if( detectedMachineDetailedType == Ep128Emu::EP128_FILE_DTF ) {
+        if( detectedMachineDetailedType == Ep128Emu::VM_config.at("EP128_FILE_DTF") ) {
           core->startSequence += contentBasename+"\r";
         }
       }
