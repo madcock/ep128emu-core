@@ -20,23 +20,19 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 * Spectrum direct files: `tap`
 
 ### Input mapping and configuration
-| Emulated machine | User 1 default | User 2 default |
-| ---------------- | ------ | ------ |
-| Enterprise | Internal | External 1 |
-| TVC  | Internal | External 1 |
-| CPC  | External 1 | External 2 |
-| ZX  | Kempston | Sinclair 1 |
+| Emulated machine | User 1 default | User 2 default | User 3 default |
+| ---------------- | ------ | ------ | ------ |
+| Enterprise | Internal | External 1 | External 2 |
+| TVC | Internal | External 1 |  External 2 |
+| CPC | External 1 | External 2 | |
+| ZX | Kempston | Sinclair 1 | Sinclair 2 |
 
-* Default d-pad input mapping:
-  * Fire is **X** button, 
+* Fire is **X** button. CPC Fire2 is **A** button.
+* Keyboard input is enabled
+  * Be aware that retroarch uses several hotkeys by default, use "Game focus" (Scroll Lock)
 * Other buttons for User 1:
   * **L**-**R**-**L2**-**R2** buttons are 0-1-2-3 (several games use these in menu)
-  * Keyboard input is enabled, be aware that retroarch uses several hotkeys by default
   * Use **L3** button to display current layout
-* Default d-pad input mappings for further players
-  * Enterprise: external 2..5
-  * TVC: external 2
-  * ZX: Sinclair 2, Protek
 * Configurable core options:
   * wait period (set to 0 if there are performance problems, set higher to reduce CPU load)
   * use software framebuffer (experimental, may crash)
@@ -50,10 +46,12 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 ### Other features
 * Save/load state, rewind
 * Content autostart except for disk images
-* Customizable input mapping for player 1
-  * See [sample.ep128cfg](core/sample.ep128cfg) to see how retropad buttons can be assigned for a specific game.
-  * Autostart file name can also be specified to enable autostart for disk.
-* System-wide configuration file
+* Customizable configuration (per-content or system-wide)
+  * See [sample.ep128cfg](core/sample.ep128cfg) for details
+  * User 1 button map can be finetuned
+  * Joypad setup for other users can be changed
+  * Emulated machine type can be changed
+  * Autostart can be enabled also for disk images
   * Following files are recognized in `ep128emu/config` inside retroarch system directory: `enterprise.ep128cfg`, `tvc.ep128cfg`, `cpc.ep128cfg`, `zx.ep128cfg`
   * Most options from ep128emu configuration are also recognized in .ep128cfg files,
 * Fit to content
