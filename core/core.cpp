@@ -236,7 +236,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x03].offset=0;
     }
   }
-  else if(machineType == VM_config.at("MACHINE_CPC"))
+  else if(machineType == MACHINE_CPC)
   {
     // TODO machineDetailedType for 464/664
     // TODO locale support

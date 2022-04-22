@@ -29,7 +29,7 @@ TAPir format support
 opengl display support
 demo record/play
 support for content in zip
-egér
+EP Mouse support
 
 */
 
@@ -251,7 +251,7 @@ static void check_variables(void)
         if (var.value[9] == '1') userMap[i]=Ep128Emu::joystick_type.at("SINCLAIR1");
         else userMap[i] = Ep128Emu::joystick_type.at("SINCLAIR2");
       }
-      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::joystick_type.at("JOY_PROTEK");}
+      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::joystick_type.at("PROTEK");}
     }
     if(core)
       core->initialize_joystick_map(zoomKey,infoKey,userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
