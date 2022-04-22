@@ -20,19 +20,23 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 * Spectrum direct files: `tap`
 
 ### Input mapping and configuration
-* Default d-pad input mapping for player 1:
-  * Enterprise: internal joystick
-  * TVC: internal joystick
-  * CPC: external joystick
-  * ZX: Kempston
-  * Fire is **X** button, **L**-**R**-**L2**-**R2** buttons are 0-1-2-3 (several games use these in menu)
+| Emulated machine | User 1 default | User 2 default |
+| ---------------- | ------ | ------ |
+| Enterprise | Internal | External 1 |
+| TVC  | Internal | External 1 |
+| CPC  | External 1 | External 2 |
+| ZX  | Kempston | Sinclair 1 |
+
+* Default d-pad input mapping:
+  * Fire is **X** button, 
+* Other buttons for User 1:
+  * **L**-**R**-**L2**-**R2** buttons are 0-1-2-3 (several games use these in menu)
   * Keyboard input is enabled, be aware that retroarch uses several hotkeys by default
   * Use **L3** button to display current layout
 * Default d-pad input mappings for further players
-  * Enterprise: external 1 (also mapped to numpad), external 2
-  * TVC: external 1 (also mapped to numpad), external 2
-  * CPC: external 2
-  * ZX: Sinclair 1, Sinclair 2, Protek
+  * Enterprise: external 2..5
+  * TVC: external 2
+  * ZX: Sinclair 2, Protek
 * Configurable core options:
   * wait period (set to 0 if there are performance problems, set higher to reduce CPU load)
   * use software framebuffer (experimental, may crash)
