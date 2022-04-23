@@ -103,7 +103,7 @@ ifeq ($(STATIC_LINKING), 1)
     EXT := a
 endif
 
-LIBM		= -lm -lpthread
+LIBM		= -lpthread
 CC_AS ?= $(CC)
 
 LDFLAGS += -Wl,--as-needed
@@ -123,15 +123,15 @@ DEFINES := $(PLATFORM_DEFINES) -DEXCLUDE_SOUND_LIBS -DEP128EMU_LIBRETRO_CORE
 # DEFINES += -DEP128EMU_USE_XRGB8888
 
 CFLAGS += $(DEFINES)
-CXXFLAGS += $(DEFINES) -std=c++2a
+CXXFLAGS += $(DEFINES) -std=c++0x
 
 include Makefile.common
 
 INCLUDES := $(INCFLAGS)
 OBJECTS := $(SOURCES_CPP:.cpp=.o)
 OBJECTS += $(SOURCES_C:.c=.o)
-CFLAGS += -Wall -pedantic $(fpic)
-CXXFLAGS += -Wall -pedantic $(fpic)
+CFLAGS += -Wall $(fpic)
+CXXFLAGS += -Wall $(fpic)
 
 all Release: $(TARGET)
 

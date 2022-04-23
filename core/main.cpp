@@ -57,7 +57,7 @@ EP Mouse support
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <math.h>
+//#include <math.h>
 #include <algorithm>
 
 #include "ep128vm.hpp"
@@ -363,7 +363,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.90";
+  info->library_version  = "v0.91";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
 }
