@@ -116,7 +116,7 @@ namespace Ep128Emu {
 
     signed int framesToSend = 0;
     // slowly try to pull frames towards the expected amount
-    framesToSend = expectedFrames + (availableFrames - expectedFrames - expectedLatencyFrames)/10;
+    framesToSend = expectedFrames + (availableFrames - expectedFrames - expectedLatencyFrames)/100;
     if (framesToSend > availableFrames) framesToSend = availableFrames;
     //printf("Trying forwardAudioData: rd %d wr %d av %d exp %d fts %d\n",readBufIndex,writeBufIndex_, availableFrames, expectedFrames, framesToSend);
 
