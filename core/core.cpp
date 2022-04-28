@@ -596,6 +596,7 @@ void LibretroCore::initialize_keyboard_map(void)
   config->keyboardMapChanged = true;
 }
 
+// TODO: split to key and joystick setup, maybe using user + index
 void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string infoKey, int user1, int user2, int user3, int user4, int user5, int user6)
 {
   // Lowest priority joystick settings: machine dependent hardcoded defaults.

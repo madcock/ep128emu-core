@@ -101,8 +101,11 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
 {"tvc_dos12d.rom" , "VT-DOS12-DISK.ROM"}, // tvc.homeserver.hu naming, binary does not fully match
 {"tvc22_ext.rom"  , "TVC22_D7.64K"},      // tvc.homeserver.hu naming
 {"tvc22_sys.rom"  , "TVC22_D6_D4.64K"},   // tvc.homeserver.hu naming. Combine the 8K dump files into one 16K file:
-                                          // copy TVC22_D6.64K+TVC22_D4.64K  TVC22_D6_D4.64K (Windows)
-                                          // cat  TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
+  // copy TVC22_D6.64K+TVC22_D4.64K  TVC22_D6_D4.64K (Windows)
+  // cat  TVC22_D6.64K TVC22_D4.64K >TVC22_D6_D4.64K (Linux)
+{"basic20.rom"    , "BASIC 1.0 (198x)(Enterprise).bin"}, // Combine the 8K dump files into one 16K file:
+  // copy "BASIC 1.0 - EPROM 1-2 (198x)(Enterprise).bin"+"BASIC 1.0 - EPROM 2-2 (198x)(Enterprise).bin"  "BASIC 1.0 (198x)(Enterprise).bin" (Windows)
+  // cat  "BASIC 1.0 - EPROM 1-2 (198x)(Enterprise).bin" "BASIC 1.0 - EPROM 2-2 (198x)(Enterprise).bin" >"BASIC 1.0 (198x)(Enterprise).bin" (Linux)
 };
 
 const std::map<std::string, int> joystick_type {
@@ -121,6 +124,50 @@ const std::map<std::string, int> joystick_type {
   {"UNKNOWN", INT_MAX},
 };
 const int JOY_TYPE_AMOUNT = 11;
+
+#define RETRO_DEVICE_EP_JOYSTICK_DEF  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define RETRO_DEVICE_EP_JOYSTICK_INT  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT1 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT2 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+#define RETRO_DEVICE_EP_JOYSTICK_SIN1 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
+#define RETRO_DEVICE_EP_JOYSTICK_SIN2 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
+#define RETRO_DEVICE_EP_JOYSTICK_PROT RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT3 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT4 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 9)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT5 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 10)
+#define RETRO_DEVICE_EP_JOYSTICK_EXT6 RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 11)
+
+const std::map<unsigned, std::string> joystick_type_retrodev {
+  {RETRO_DEVICE_NONE,             "DEFAULT"   },
+  {RETRO_DEVICE_JOYPAD,           "DEFAULT"   },
+  {RETRO_DEVICE_EP_JOYSTICK_DEF,  "DEFAULT"   },
+  {RETRO_DEVICE_EP_JOYSTICK_INT,  "INTERNAL"  },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT1, "EXT1"      },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT2, "EXT2"      },
+  {RETRO_DEVICE_EP_JOYSTICK_SIN1, "SINCLAIR1" },
+  {RETRO_DEVICE_EP_JOYSTICK_SIN2, "SINCLAIR2" },
+  {RETRO_DEVICE_EP_JOYSTICK_PROT, "PROTEK"    },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT3, "EXT3"      },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT4, "EXT4"      },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT5, "EXT5"      },
+  {RETRO_DEVICE_EP_JOYSTICK_EXT6, "EXT6"      },
+};
+
+static const struct retro_controller_description controller_description[] = {
+  { "Core default",        RETRO_DEVICE_EP_JOYSTICK_DEF  },
+  { "Internal Joystick",   RETRO_DEVICE_EP_JOYSTICK_INT  },
+  { "External Joystick 1 / Kempston", RETRO_DEVICE_EP_JOYSTICK_EXT1 },
+  { "External Joystick 2", RETRO_DEVICE_EP_JOYSTICK_EXT2 },
+  { "Sinclair Joystick 1", RETRO_DEVICE_EP_JOYSTICK_SIN1 },
+  { "Sinclair Joystick 2", RETRO_DEVICE_EP_JOYSTICK_SIN2 },
+  { "Protek Joystick",     RETRO_DEVICE_EP_JOYSTICK_PROT },
+  { "External Joystick 3", RETRO_DEVICE_EP_JOYSTICK_EXT3 },
+  { "External Joystick 4", RETRO_DEVICE_EP_JOYSTICK_EXT4 },
+  { "External Joystick 5", RETRO_DEVICE_EP_JOYSTICK_EXT5 },
+  { "External Joystick 6", RETRO_DEVICE_EP_JOYSTICK_EXT6 },
+  { "None", RETRO_DEVICE_NONE },
+};
+
 
 // Order of codes: up - down - left - right - fire - fire2 - fire3
 // Fire2 is used only for CPC.

@@ -3,9 +3,9 @@
 build for mac
 magyar nyelvű leírás is
 cheat support
-arm build without dependency to glib version
 detailed type detection from content name
-
+double free crash at new game load sometimes
+set_subsystem_info
 https://github.com/libretro/libretro-super/blob/master/dist/info/00_example_libretro.info
 https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
 
@@ -19,7 +19,7 @@ virtual keyboard
 
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
-hun font support EP szex-teszt
+:HFONT support
 locale support ep, cpc
 
 low prio:
@@ -232,30 +232,11 @@ static void check_variables(void)
     log_cb(RETRO_LOG_INFO, "GET_INPUT_MAX_USERS not supported, using fixed %d\n", EP128EMU_MAX_USERS);
   }
 
-  const char* joyVariableNames[EP128EMU_MAX_USERS] = {"ep128emu_joy1", "ep128emu_joy2", "ep128emu_joy3", "ep128emu_joy4", "ep128emu_joy5", "ep128emu_joy6"};
-  int userMap[EP128EMU_MAX_USERS] = {0,0,0,0,0,0};
-  for (int i=0; i<EP128EMU_MAX_USERS; i++) {
-    var.key = joyVariableNames[i];
-    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-    {
-      if(var.value[0] == 'I') { userMap[i]=Ep128Emu::joystick_type.at("INTERNAL");}
-      else if (var.value[0] == 'E') {
-        if (var.value[9] == '1') userMap[i]=Ep128Emu::joystick_type.at("EXT1");
-        if (var.value[9] == '2') userMap[i]=Ep128Emu::joystick_type.at("EXT2");
-        if (var.value[9] == '3') userMap[i]=Ep128Emu::joystick_type.at("EXT3");
-        if (var.value[9] == '4') userMap[i]=Ep128Emu::joystick_type.at("EXT4");
-        if (var.value[9] == '5') userMap[i]=Ep128Emu::joystick_type.at("EXT5");
-        if (var.value[9] == '6') userMap[i]=Ep128Emu::joystick_type.at("EXT6");
-      }
-      else if (var.value[0] == 'S') {
-        if (var.value[9] == '1') userMap[i]=Ep128Emu::joystick_type.at("SINCLAIR1");
-        else userMap[i] = Ep128Emu::joystick_type.at("SINCLAIR2");
-      }
-      else if(var.value[0] == 'P') { userMap[i]=Ep128Emu::joystick_type.at("PROTEK");}
-    }
-    if(core)
-      core->initialize_joystick_map(zoomKey,infoKey,userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
-  }
+  if(core)
+    core->initialize_joystick_map(zoomKey,infoKey,
+    Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"),
+    Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"));
+
   if(vmThread) vmThread->resetKeyboard();
 }
 
@@ -323,6 +304,18 @@ void retro_init(void)
   log_cb(RETRO_LOG_INFO, "Retro ROM DIRECTORY %s\n", retro_system_bios_directory);
   log_cb(RETRO_LOG_DEBUG, "Retro SAVE_DIRECTORY %s\n", retro_system_save_directory);
   log_cb(RETRO_LOG_DEBUG, "Retro CONTENT_DIRECTORY %s\n", retro_content_directory);
+
+   static const struct retro_controller_info ports[EP128EMU_MAX_USERS+1] = {
+      { Ep128Emu::controller_description, 11  }, // port 1
+      { Ep128Emu::controller_description, 11  }, // port 2
+      { Ep128Emu::controller_description, 11  }, // port 3
+      { Ep128Emu::controller_description, 11  }, // port 4
+      { Ep128Emu::controller_description, 11  }, // port 5
+      { Ep128Emu::controller_description, 11  }, // port 6
+      { NULL, 0 }
+   };
+
+   environ_cb( RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports );
 
   struct retro_keyboard_callback kcb = { update_keyboard_cb };
   environ_cb(RETRO_ENVIRONMENT_SET_KEYBOARD_CALLBACK, &kcb);
@@ -413,12 +406,6 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
     { "ep128emu_zoom", "User 1 Zoom button; R3|Start|Select|X|Y|A|B|L|R|L2|R2|L3" },
     { "ep128emu_info", "User 1 Info button; L3|R3|Start|Select|X|Y|A|B|L|R|L2|R2" },
-    { "ep128emu_joy1", "User 1 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-    { "ep128emu_joy2", "User 2 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-    { "ep128emu_joy3", "User 3 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-    { "ep128emu_joy4", "User 4 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-    { "ep128emu_joy5", "User 5 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
-    { "ep128emu_joy6", "User 6 Controller; Default|Internal / Cursor|External 1 / Kempston|External 2|Sinclair 1|Sinclair 2|Protek|External 3|External 4|External 5|External 6" },
     { NULL, NULL },
   };
   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
@@ -600,6 +587,7 @@ bool retro_load_game(const struct retro_game_info *info)
     std::string fileExtDtf = "dtf";
     std::string fileExtTvc = "cas";
     std::string diskExtTvc = "dsk";
+    //std::string tapeExtSnd = "notwav";
     //std::string tapeExtZx = "tzx";
     std::string fileExtZx = "tap";
     std::string tapeExtCpc = "cdt";
@@ -662,7 +650,7 @@ bool retro_load_game(const struct retro_game_info *info)
         startupSequence ="\r";
       }
     }
-    else if(header_match(epteFileMagic,tmpBuf,32) || header_match(ep128emuTapFileHeader,tmpBuf,8))
+    else if(header_match(epteFileMagic,tmpBuf,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) /*|| contentExt == tapeExtSnd*/)
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
@@ -879,6 +867,22 @@ unsigned retro_api_version(void)
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
   log_cb(RETRO_LOG_INFO, "Plugging device %u into port %u.\n", device, port);
+  std::map< unsigned, std::string>::const_iterator  iter_joytype;
+  iter_joytype = Ep128Emu::joystick_type_retrodev.find(device);
+  if (port < EP128EMU_MAX_USERS && iter_joytype != Ep128Emu::joystick_type_retrodev.end())
+  {
+    int userMap[EP128EMU_MAX_USERS] = {
+      Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"),
+      Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"),
+      Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT")};
+
+    unsigned mappedDev = Ep128Emu::joystick_type.at((*iter_joytype).second);
+    log_cb(RETRO_LOG_INFO, "Mapped device %s for user %u \n", (*iter_joytype).second.c_str(), port);
+
+    userMap[port] = mappedDev;
+    if(core)
+      core->initialize_joystick_map(std::string(""),std::string(""),userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
+  }
 }
 
 unsigned retro_get_region(void)
