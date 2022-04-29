@@ -2,11 +2,8 @@
 
 build for mac
 magyar nyelvű leírás is
-cheat support
-detailed type detection from content name
 double free crash at new game load sometimes
 set_subsystem_info
-https://github.com/libretro/libretro-super/blob/master/dist/info/00_example_libretro.info
 https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
 
 gfx:
@@ -17,10 +14,12 @@ info msg overlay
 long info msg with game instructions
 virtual keyboard
 
+detailed type detection from content name
+cheat support
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
-:HFONT support
 locale support ep, cpc
+rom config for clkoff+hfont
 
 low prio:
 ep128cfg support player 2 mapping
@@ -356,7 +355,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.91";
+  info->library_version  = "v0.92";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
 }
@@ -569,6 +568,7 @@ bool retro_load_game(const struct retro_game_info *info)
       idx = filename.rfind(Ep128Emu::locale_identifiers[i]);
       if(idx != std::string::npos) {
         contentLocale = i;
+        log_cb(RETRO_LOG_INFO, "Locale detected: %s \n",Ep128Emu::locale_identifiers[i].c_str());
         break;
       }
     }

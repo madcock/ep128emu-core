@@ -130,9 +130,11 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
 
   // Check if the forced configuration matches the main VM type.
-  if (config->machineDetailedType != "") {
+  if (config->machineDetailedType != "")
+  {
     int newDetailedType = VM_config.at(config->machineDetailedType);
-    if(newDetailedType - machineDetailedType > 50 || newDetailedType - machineDetailedType < -50) {
+    if(newDetailedType - machineDetailedType > 50 || newDetailedType - machineDetailedType < -50)
+    {
       log_cb(RETRO_LOG_ERROR, "Incompatible machine type from config file: %s instead of %d\n",config->machineDetailedType.c_str(),machineDetailedType);
       throw Ep128Emu::Exception("Machine configuration incompatibilty!");
     }
@@ -167,21 +169,25 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
       config->memory.rom[0x03].offset=49152;
     }
-    else if (is_EP64) {
+    else if (is_EP64)
+    {
       bootframes = 30*10;
       config->memory.rom[0x00].file=romBasePath+"exos20.rom";
       config->memory.rom[0x00].offset=0;
       config->memory.rom[0x01].file=romBasePath+"exos20.rom";
       config->memory.rom[0x01].offset=16384;
-    } else {
+    }
+    else
+    {
       bootframes = 40*10;
       config->memory.rom[0x00].file=romBasePath+"exos21.rom";
       config->memory.rom[0x00].offset=0;
       config->memory.rom[0x01].file=romBasePath+"exos21.rom";
       config->memory.rom[0x01].offset=16384;
     }
-    if(contentLocale == LOCALE_HUN) {
-    // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
+    if(contentLocale == LOCALE_HUN)
+    {
+      // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
       config->memory.rom[0x04].file=romBasePath+"hun.rom";
       config->memory.rom[0x04].offset=0;
       if (is_EP64)
@@ -189,7 +195,18 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       else
         config->memory.rom[0x05].file=romBasePath+"basic21.rom";
       config->memory.rom[0x05].offset=0;
-    } else {
+      // HFONT is used from epdos rom
+      config->memory.rom[0x06].file=romBasePath+"epd19hft.rom";
+      config->memory.rom[0x06].offset=0;
+      config->memory.rom[0x07].file=romBasePath+"epd19hft.rom";
+      config->memory.rom[0x07].offset=16384;
+      config->memory.rom[0x40].file=romBasePath+"zt19hfnt.rom";
+      config->memory.rom[0x40].offset=0;
+      config->memory.rom[0x41].file=romBasePath+"zt19hfnt.rom";
+      config->memory.rom[0x41].offset=16384;
+    }
+    else
+    {
       if (is_EP64)
         config->memory.rom[0x04].file=romBasePath+"basic20.rom";
       else
@@ -238,24 +255,42 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   else if(machineType == MACHINE_CPC)
   {
-    // TODO machineDetailedType for 464/664
     // TODO locale support
     bootframes = 20*10;
-    config->memory.ram.size=128;
-    config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
-    config->memory.rom[0x10].offset=0;
-    config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
-    config->memory.rom[0x00].offset=16384;
-    if(machineDetailedType == VM_config.at("CPC_DISK"))
+    if(machineDetailedType == VM_config.at("CPC_464_TAPE"))
+    {
+      config->memory.ram.size=64;
+      config->memory.rom[0x10].file=romBasePath+"cpc464.rom";
+      config->memory.rom[0x10].offset=0;
+      config->memory.rom[0x00].file=romBasePath+"cpc464.rom";
+      config->memory.rom[0x00].offset=16384;
+    }
+    else if(machineDetailedType == VM_config.at("CPC_664_DISK"))
+    {
+      config->memory.ram.size=64;
+      config->memory.rom[0x10].file=romBasePath+"cpc664.rom";
+      config->memory.rom[0x10].offset=0;
+      config->memory.rom[0x00].file=romBasePath+"cpc664.rom";
+      config->memory.rom[0x00].offset=16384;
+    }
+    else
+    {
+      // 6128 as default
+      config->memory.ram.size=128;
+      config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
+      config->memory.rom[0x10].offset=0;
+      config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
+      config->memory.rom[0x00].offset=16384;
+    }
+    if(machineDetailedType == VM_config.at("CPC_DISK") || machineDetailedType == VM_config.at("CPC_664_DISK"))
     {
       config->memory.rom[0x07].file=romBasePath+"cpc_amsdos.rom";
       config->memory.rom[0x07].offset=0;
     }
+
   }
   else if(machineType == MACHINE_ZX)
   {
-    // TODO machineDetailedType for 16/48/128
-    // TODO locale support (?)
     bootframes = 20*10;
     if(machineDetailedType == VM_config.at("ZX16_TAPE") || machineDetailedType == VM_config.at("ZX16_FILE"))
     {
@@ -283,6 +318,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x00].offset=0;
     }
   }
+  // ROM validity check: scan ROM definitions and check if files can be be found.
+  // If not, try to use replacement file
   for(int i=0; i<68; i++)
   {
     if(config->memory.rom[i].file.length()>0)
@@ -339,7 +376,6 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
           log_cb(RETRO_LOG_ERROR, "ROM file or any alternative not found: %s \n",config->memory.rom[i].file.c_str());
           throw Ep128Emu::Exception("ROM file not found!");
         }
-
       }
     }
   }
@@ -404,8 +440,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
 
   initialize_keyboard_map();
   initialize_joystick_map(std::string(""),std::string(""),
-    joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),
-    joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"));
+                          joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),
+                          joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"));
   startSequence = startSequence_;
   if (config->contentFileName != "")
   {
@@ -692,14 +728,15 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
   }
 
   // Override joypad users (received from core options) with config values, if they are left at default.
-  int mappings[EP128EMU_MAX_USERS] = {
+  int mappings[EP128EMU_MAX_USERS] =
+  {
     user1 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[0]) : user1,
     user2 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[1]) : user2,
     user3 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[2]) : user3,
     user4 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[3]) : user4,
     user5 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[4]) : user5,
     user6 == joystick_type.at("DEFAULT") ? joystick_type.at(config->joypadUser[5]) : user6,
-    };
+  };
   for (int i=0; i<EP128EMU_MAX_USERS; i++)
   {
     if(mappings[i]>0)
@@ -710,7 +747,8 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
       // Otherwise, only 1 fire button
       else
         update_joystick_map(joystickCodeMap[mappings[i]],i,5);
-      if (i==0) {
+      if (i==0)
+      {
         infoMessage = "Joypad: ";
         infoMessage += joystickNameMap[mappings[i]];
       }
@@ -946,14 +984,18 @@ void LibretroCore::render(retro_video_refresh_t video_cb, retro_environment_t en
       if (detectedHeight >= 150 && detectedWidth >= 200)
       {
         bool setSuccess = w->setViewport(proposedX1,proposedY1,proposedX2,proposedY2);
-        if (setSuccess) {
+        if (setSuccess)
+        {
           log_cb(RETRO_LOG_DEBUG, "Viewport reduced: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
           change_resolution(detectedWidth, detectedHeight/2, environ_cb);
         }
-        else {
+        else
+        {
           log_cb(RETRO_LOG_WARN, "Viewport setting error: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
         }
-      } else {
+      }
+      else
+      {
         log_cb(RETRO_LOG_INFO, "Viewport not set, detected: %d,%d / %d,%d\n",proposedX1,proposedY1,proposedX2,proposedY2);
       }
     }
