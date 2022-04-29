@@ -20,7 +20,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 * Spectrum direct files: `tap`
 
 ### Input mapping and configuration
-| Emulated machine | User 1 default | User 2 default | User 3 default |
+| Emulated machine | User 1 default joypad | User 2 default joypad | User 3 default joypad |
 | ---------------- | ------ | ------ | ------ |
 | Enterprise | Internal | External 1 | External 2 |
 | TVC | Internal | External 1 |  External 2 |
@@ -28,6 +28,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 | ZX | Kempston | Sinclair 1 | Sinclair 2 |
 
 * Fire is **X** button. CPC Fire2 is **A** button.
+* Joypad setup can be changed under Port Controls / Device Type
 * Keyboard input is enabled
   * Be aware that retroarch uses several hotkeys by default, use "Game focus" (Scroll Lock)
 * Other buttons for User 1:
@@ -40,7 +41,6 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * enable resolution changes
   * amount of border to keep when zooming in
   * use original or enhanced ROM for Enterprise (faster memory test)
-  * override joystick map for each user
   * zoom and info keys for player 1
 
 ### Other features
