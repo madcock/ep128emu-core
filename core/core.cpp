@@ -445,7 +445,21 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   startSequence = startSequence_;
   if (config->contentFileName != "")
   {
-    startSequence = startSequence + config->contentFileName + "\xfe\r";
+    bool injectedBeforeStart = false;
+    if (startSequence.length()>0) {
+      // For load sequences where F1 is pressed ("START"), inject "content file name" before that
+      // to allow for some customization (like key click off)
+      if((unsigned char)startSequence.at(startSequence.length()-1) == 253) {
+        startSequence.pop_back();
+        startSequence = startSequence + config->contentFileName + "\r" + "\xfd";
+        injectedBeforeStart = true;
+        log_cb(RETRO_LOG_DEBUG, "Extended startup sequence (START case)\n");
+      }
+    }
+    if (!injectedBeforeStart) {
+      startSequence = startSequence + config->contentFileName + "\xfe\r";
+      log_cb(RETRO_LOG_DEBUG, "Extended startup sequence (disk load case)\n");
+    }
   }
   //config->display.enabled = false;
   //config->displaySettingsChanged = true;
