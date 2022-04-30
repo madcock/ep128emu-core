@@ -866,7 +866,7 @@ unsigned retro_api_version(void)
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-  log_cb(RETRO_LOG_INFO, "Plugging device %u into port %u.\n", device, port);
+  //log_cb(RETRO_LOG_INFO, "Plugging device %u into port %u.\n", device, port);
   std::map< unsigned, std::string>::const_iterator  iter_joytype;
   iter_joytype = Ep128Emu::joystick_type_retrodev.find(device);
   if (port < EP128EMU_MAX_USERS && iter_joytype != Ep128Emu::joystick_type_retrodev.end())
