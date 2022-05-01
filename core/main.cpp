@@ -558,6 +558,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       contentExt=""; // No extension found
     }
+    log_cb(RETRO_LOG_DEBUG, "Content extension: %s \n",contentExt.c_str());
     Ep128Emu::splitPath(filename,contentPath,contentFile);
     contentBasename = contentFile;
     Ep128Emu::stringToLowerCase(contentBasename);
@@ -579,6 +580,7 @@ bool retro_load_game(const struct retro_game_info *info)
     else
     {
       configFile = "";
+      log_cb(RETRO_LOG_DEBUG, "No content specific config file exists\n");
     }
 
     std::string diskExt = "img";
@@ -596,7 +598,7 @@ bool retro_load_game(const struct retro_game_info *info)
     uint8_t tmpBuf[nBytes];
     static const char zeroBytes[nBytes] = "\0";
 
-    imageFile = Ep128Emu::fileOpen(info->path, "r+b");
+    imageFile = Ep128Emu::fileOpen(info->path, "rb");
     std::fseek(imageFile, 0L, SEEK_SET);
     if(std::fread(&(tmpBuf[0]), sizeof(uint8_t), nBytes, imageFile) != nBytes)
     {
@@ -653,7 +655,7 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
-      startupSequence =" \xff\xfd";
+      startupSequence =" \xff\xff\xfd";
     }
     else if (contentExt == fileExtTvc && header_match(zeroBytes,&(tmpBuf[5]),nBytes-6))
     {

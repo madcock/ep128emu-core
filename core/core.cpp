@@ -148,10 +148,12 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   if(machineType == MACHINE_EP)
   {
     bool is_EP64 = (machineDetailedType  == VM_config.at("EP64_DISK")  || machineDetailedType == VM_config.at("EP64_FILE") ||
-                    machineDetailedType  == VM_config.at("EP64_TAPE")  || machineDetailedType == VM_config.at("EP64_FILE_DTF")) ? true : false;
+                    machineDetailedType  == VM_config.at("EP64_TAPE")  || machineDetailedType == VM_config.at("EP64_FILE_DTF") ||
+                    machineDetailedType  == VM_config.at("EP64_TAPE_NOCART")) ? true : false;
     bool use_file = (machineDetailedType == VM_config.at("EP128_FILE") || machineDetailedType == VM_config.at("EP64_FILE")) ? true : false;
     bool use_disk = (machineDetailedType == VM_config.at("EP128_DISK") || machineDetailedType == VM_config.at("EP64_DISK")) ? true : false;
     bool use_dtf = (machineDetailedType  == VM_config.at("EP128_FILE_DTF") || machineDetailedType == VM_config.at("EP64_FILE_DTF")) ? true : false;
+    bool use_cartridge = (machineDetailedType  == VM_config.at("EP128_TAPE_NOCART") || machineDetailedType  == VM_config.at("EP64_TAPE_NOCART")) ? false : true;
 
     if (is_EP64)
       config->memory.ram.size=64;
@@ -190,11 +192,13 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
       config->memory.rom[0x04].file=romBasePath+"hun.rom";
       config->memory.rom[0x04].offset=0;
-      if (is_EP64)
-        config->memory.rom[0x05].file=romBasePath+"basic20.rom";
-      else
-        config->memory.rom[0x05].file=romBasePath+"basic21.rom";
-      config->memory.rom[0x05].offset=0;
+      if (use_cartridge) {
+        if (is_EP64)
+          config->memory.rom[0x05].file=romBasePath+"basic20.rom";
+        else
+          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+        config->memory.rom[0x05].offset=0;
+      }
       // HFONT is used from epdos rom
       config->memory.rom[0x06].file=romBasePath+"epd19hft.rom";
       config->memory.rom[0x06].offset=0;
@@ -207,11 +211,13 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     }
     else
     {
-      if (is_EP64)
-        config->memory.rom[0x04].file=romBasePath+"basic20.rom";
-      else
-        config->memory.rom[0x05].file=romBasePath+"basic21.rom";
-      config->memory.rom[0x04].offset=0;
+      if (use_cartridge) {
+        if (is_EP64)
+          config->memory.rom[0x04].file=romBasePath+"basic20.rom";
+        else
+          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+        config->memory.rom[0x04].offset=0;
+      }
     }
 
     if(use_file || use_dtf)
@@ -447,13 +453,20 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   {
     bool injectedBeforeStart = false;
     if (startSequence.length()>0) {
-      // For load sequences where F1 is pressed ("START"), inject "content file name" before that
+      // For EP load sequences where F1 is pressed ("START"), inject "content file name" before that
       // to allow for some customization (like key click off)
       if((unsigned char)startSequence.at(startSequence.length()-1) == 253) {
-        startSequence.pop_back();
-        startSequence = startSequence + config->contentFileName + "\r" + "\xfd";
-        injectedBeforeStart = true;
-        log_cb(RETRO_LOG_DEBUG, "Extended startup sequence (START case)\n");
+        // ...except for no-cartridge types where first F1 is pressed (load), then file name
+        if (machineDetailedType  == VM_config.at("EP128_TAPE_NOCART") || machineDetailedType  == VM_config.at("EP64_TAPE_NOCART")) {
+          startSequence = startSequence + config->contentFileName + "\r";
+          injectedBeforeStart = true;
+          log_cb(RETRO_LOG_DEBUG, "Extended startup sequence (NOCART case)\n");
+        } else {
+          startSequence.pop_back();
+          startSequence = startSequence + config->contentFileName + "\r" + "\xfd";
+          injectedBeforeStart = true;
+          log_cb(RETRO_LOG_DEBUG, "Extended startup sequence (START case)\n");
+        }
       }
     }
     if (!injectedBeforeStart) {
