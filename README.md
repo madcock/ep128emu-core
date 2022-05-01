@@ -7,6 +7,8 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 
 ## Features
 
+For the emulation features, see the [original README](README). Since GUI is replaced by retroarch, features that would require own window (debugger, keyboard layout setting, etc) are not available. Some extra features not required for original games are also excluded (SD card, SID, MIDI, Spectrum emulation card for EP, mouse).
+
 ### Content types supported:
 * Enterprise disk images: `img`, `dsk`
 * Enterprise tape images: `tap` (either ep128emu or epte format)
@@ -18,6 +20,9 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 * CPC tape images: `cdt`
 * Spectrum tape images: `tzx`
 * Spectrum direct files: `tap`
+
+For most content types, there is a startup sequence that will do the program loading, except for disk images. Use fast-forward if loading is slow (such as tape input).
+
 
 ### Input mapping and configuration
 | Emulated machine | User 1 default joypad | User 2 default joypad | User 3 default joypad |
@@ -36,7 +41,7 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * Use **L3** button to display current layout
 * Configurable core options:
   * wait period (set to 0 if there are performance problems, set higher to reduce CPU load)
-  * use software framebuffer (experimental, may crash)
+  * use software framebuffer (slight performance improvement, may crash)
   * use high quality sound (disable if there are performance problems)
   * enable resolution changes
   * amount of border to keep when zooming in
@@ -58,13 +63,11 @@ Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
   * Borders can be cropped completely (default) or using a margin configurable among core options
 
-For the emulation features, see the [original README](README). Since GUI is replaced by retroarch, features that would require own window (debugger, keyboard layout setting, etc) are not available. Some extra features not required for original games are also excluded (SD card, SID, MIDI, Spectrum emulation card for EP, mouse).
-
 ## Using the binaries
 
 ### Requirements
 
-* A system with retroarch installed. Linux 64-bit, ARM 32-bit, and Windows 32 and 64 bit versions are currently available.
+* A system with retroarch installed. Linux 64-bit, ARM 32-bit, and Windows 32 and 64 bit versions of the core are currently available.
 * ROM files for the systems to be emulated.
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
     * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
@@ -86,8 +89,6 @@ retroarch -L ep128emu_core_libretro.so -v <content file>
 # Windows
 retroarch -L ep128emu_core_libretro.dll -v <content file>
 ```
-For most content types, there is a startup sequence that will do the program loading, if possible. Use fast-forward if loading is slow (such as tape input).
-
 
 ## Contributing
 
@@ -95,6 +96,9 @@ Pull requests welcome. Especially for currently unsupported builds (like MacOS).
 
 ## Links
 
+* [ep128.hu](http://www.ep128.hu/) - games and ROMs for Enterprise
+* [enterpriseforever.com](https://enterpriseforever.com/) - Enterprise community
+* [tvc.homeserver.hu](http://tvc.homeserver.hu/) - TVC page (Hungarian only)
 
 ## Licensing
 
