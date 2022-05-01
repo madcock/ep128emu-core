@@ -3,7 +3,6 @@
 build for mac
 magyar nyelvű leírás is
 double free crash at new game load sometimes
-set_subsystem_info
 https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
 
 gfx:

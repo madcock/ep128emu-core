@@ -73,6 +73,9 @@ joypad.left ""
 joypad.right ""
 
 # Content file name. Use in case of disk images to automatically load a program.
+# Extra function: in case of EP tape and file types, which are normally started with
+# F1 (START), an extra command can be included here, such as "set key click off"
+# that will be executed before loading. (Not valid for DTF type.)
 
 contentfilename ""
 
