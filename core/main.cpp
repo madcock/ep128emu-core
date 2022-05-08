@@ -4,6 +4,8 @@ build for mac
 magyar nyelvű leírás is
 double free crash at new game load sometimes
 https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
+save state for speaker and mono states
+  new snapshot version
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze

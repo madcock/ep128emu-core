@@ -225,6 +225,9 @@ namespace Ep128Emu {
     defineConfigurationVariable(*this, "sound.highQuality",
                                 sound.highQuality, true,
                                 soundSettingsChanged);
+    defineConfigurationVariable(*this, "sound.mono",
+                                sound.mono, false,
+                                soundSettingsChanged);
     defineConfigurationVariable(*this, "sound.device",
                                 sound.device, int(0),
                                 soundSettingsChanged, -1.0, 1000.0);
@@ -665,6 +668,7 @@ namespace Ep128Emu {
         }
       }
       vm_.setAudioOutputHighQuality(sound.highQuality);
+      vm_.setAudioOutputMono(sound.mono);
       vm_.setAudioOutputVolume(float(sound.volume));
       vm_.setAudioOutputFilters(float(sound.dcBlockFilter1Freq),
                                 float(sound.dcBlockFilter2Freq));

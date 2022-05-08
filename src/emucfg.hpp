@@ -117,6 +117,7 @@ namespace Ep128Emu {
     struct SoundConfiguration_ {
       bool        enabled;
       bool        highQuality;
+      bool        mono;
       int         device;
       double      sampleRate;
       double      latency;
