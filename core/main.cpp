@@ -615,6 +615,7 @@ bool retro_load_game(const struct retro_game_info *info)
     static const char *epDskFileHeader1 = "\xeb\x3c\x90";
     static const char *epDskFileHeader2 = "\xeb\x4c\x90";
     static const char *epComFileHeader = "\x00\x05";
+    static const char *epComFileHeader2 = "\x00\x06";
     static const char *epBasFileHeader = "\x00\x04";
     // static const char *zxTapFileHeader = "\x13\x00\x00\x00";
     // Startup sequence may contain:
@@ -695,7 +696,7 @@ bool retro_load_game(const struct retro_game_info *info)
       startupSequence =" \xff\xff\xff\xff\xff:dl ";
     }
     // last resort: EP file, first 2 bytes
-    else if (header_match(epComFileHeader,tmpBuf,2) || header_match(epBasFileHeader,tmpBuf,2))
+    else if (header_match(epComFileHeader,tmpBuf,2) || header_match(epComFileHeader2,tmpBuf,2) || header_match(epBasFileHeader,tmpBuf,2))
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_FILE");
       fileContent=true;
@@ -743,7 +744,7 @@ bool retro_load_game(const struct retro_game_info *info)
       if (tapeContent)
       {
         // ZX tape will be started at the end of the startup sequence
-        if (core->machineType == Ep128Emu::MACHINE_ZX)
+        if (core->machineType == Ep128Emu::MACHINE_ZX || config->tape.forceMotorOn)
         {
         }
         // for other machines, remote control will take care of actual tape control, just start it
@@ -833,6 +834,8 @@ bool retro_unserialize(const void *data_, size_t size)
   core->vm->registerChunkTypes(f);
   f.processAllChunks();
   core->config->applySettings();
+  core->startSequenceIndex = core->startSequence.length();
+  if(vmThread) vmThread->resetKeyboard();
 
   // todo: restore filenamecallback if file is used?
   return true;

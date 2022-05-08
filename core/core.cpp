@@ -962,8 +962,8 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
       if (startSequenceIndex == startSequence.length())
       {
         startSequenceIndex++;
-        // Start tape for ZX at the end of startup sequence
-        if(machineDetailedType == VM_config.at("ZX128_TAPE"))
+        // Start tape for ZX at the end of startup sequence, or if there is forced tape play
+        if(machineDetailedType == VM_config.at("ZX128_TAPE") || config->tape.forceMotorOn)
         {
           vm->tapePlay();
         }
