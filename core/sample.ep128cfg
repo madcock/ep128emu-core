@@ -95,4 +95,7 @@ contentfilename ""
 
 machineDetailedType ""
 
+# Force mono sound (for faulty games that only output sound on one side)
+# sound.mono Yes
+
 # Other ep128emu options are also recognized, but not tested extensively.
