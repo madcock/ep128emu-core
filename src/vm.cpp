@@ -335,7 +335,6 @@ namespace Ep128Emu {
   void VirtualMachine::setAudioOutputMono(bool forceMono_)
   {
     forceMono = forceMono_;
-    printf("Setting mono status: %d",forceMono_ ? 1 : 0);
   }
 
   void VirtualMachine::setEnableAudioOutput(bool isEnabled)
