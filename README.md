@@ -47,6 +47,7 @@ For most content types, there is a startup sequence that will do the program loa
   * amount of border to keep when zooming in
   * use original or enhanced ROM for Enterprise (faster memory test)
   * zoom and info keys for player 1
+  * autofire button and speed for player 1
 
 ### Other features
 * Save/load state, rewind
@@ -72,6 +73,7 @@ For most content types, there is a startup sequence that will do the program loa
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
     * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
     * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` (DTF support)
+    * For EP64: `exos20.rom`, `basic20.rom`
     * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
   * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
     * [tvcfileio.rom](roms/tvcfileio.rom) is a special image for ep128emu, needed only for direct file loading
