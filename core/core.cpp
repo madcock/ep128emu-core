@@ -24,6 +24,9 @@ namespace Ep128Emu
 LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, int contentLocale, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
                            const char* startSequence_, const char* cfgFile, bool useHalfFrame_, bool enhancedRom)
   : log_cb(log_cb_),
+    autofireFrame(0),
+    autofireButtonId(256),
+    autofireFrameCycle(1),
     useHalfFrame(useHalfFrame_),
     isHalfFrame(useHalfFrame_),
     canSkipFrames(canSkipFrames_),
@@ -445,7 +448,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
 
   initialize_keyboard_map();
-  initialize_joystick_map(std::string(""),std::string(""),
+  initialize_joystick_map(std::string(""),std::string(""),std::string(""),-1,
                           joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),
                           joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"));
   startSequence = startSequence_;
@@ -660,7 +663,7 @@ void LibretroCore::initialize_keyboard_map(void)
 }
 
 // TODO: split to key and joystick setup, maybe using user + index
-void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string infoKey, int user1, int user2, int user3, int user4, int user5, int user6)
+void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string infoKey, std::string autofireKey, int autofireSpeed, int user1, int user2, int user3, int user4, int user5, int user6)
 {
   // Lowest priority joystick settings: machine dependent hardcoded defaults.
   infoMessage = "Joypad: ";
@@ -754,6 +757,19 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
     }
   }
 
+  if(autofireKey != "")
+  {
+    joypadButton = joypadPrefix + autofireKey;
+    iter_joypad = retro_joypad_reverse.find(joypadButton);
+    if (iter_joypad != retro_joypad_reverse.end())
+    {
+      autofireButtonId = (*iter_joypad).second;
+    } else {
+      autofireButtonId = 256;
+    }
+    if (autofireSpeed > 0) autofireFrameCycle = (unsigned int) autofireSpeed;
+  }
+
   // Override joypad users (received from core options) with config values, if they are left at default.
   int mappings[EP128EMU_MAX_USERS] =
   {
@@ -789,7 +805,7 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
     int btnIndex = buttonOrderInInfoMessage[j];
     for(int i=0; i<256; i++)
     {
-      if(inputJoyMap[i][0] == btnIndex )
+      if(inputJoyMap[i][0] == btnIndex && i != EPKEY_NONE)
       {
         infoMessage += buttonNames[inputJoyMap[i][0]];
         infoMessage += "=";
@@ -799,6 +815,8 @@ void LibretroCore::initialize_joystick_map(std::string zoomKey, std::string info
             infoMessage += it->first.substr(6,6);
             break;
           }
+        if (inputJoyMap[i][0] == (int)autofireButtonId)
+          infoMessage += "(autofire)";
         infoMessage += " ";
         break;
       }
@@ -897,13 +915,14 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
               {
                 message.msg = infoMessage.c_str();
               }
-              message.frames = 50 * 4;
+              message.frames = EP128EMU_MESSAGE_DISPLAY_FRAMES;
               environ_cb(RETRO_ENVIRONMENT_SET_MESSAGE, &message);
             }
             if(i == EPKEY_ZOOM)
             {
               w->scanBorders = true;
             }
+            // EPKEY_NONE does nothing.
           }
         }
         else if (inputStateMap[i][port] && !currInputState)
@@ -911,6 +930,19 @@ void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_enviro
           if(i<128)
             vmThread->setKeyboardState(i,false);
         }
+        // autofire - button is pressed already
+        else if (inputJoyMap[i][port] == (int)autofireButtonId && inputStateMap[i][port] && currInputState) {
+          bool shouldFire =    (w->frameCount >= autofireFrame + 2*autofireFrameCycle) ? true        : false;
+          bool shouldRelease = (w->frameCount >= autofireFrame +   autofireFrameCycle) ? !shouldFire : false;
+          if(shouldFire) {
+            autofireFrame = w->frameCount;
+            vmThread->setKeyboardState(i,true);
+          }
+          if(shouldRelease) {
+            vmThread->setKeyboardState(i,false);
+          }
+        }
+
         inputStateMap[i][port] = currInputState;
       }
     }

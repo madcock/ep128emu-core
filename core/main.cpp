@@ -3,7 +3,6 @@
 build for mac
 magyar nyelvű leírás is
 double free crash at new game load sometimes
-https://forums.libretro.com/t/what-do-i-need-to-create-a-new-retroarch-core/31615
 save state for speaker and mono states
   new snapshot version
 
@@ -12,7 +11,7 @@ crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenn
 sw fb + interlace = crash
 wait állítás után keyboard lefele beragad? -- kb reset
 info msg overlay
-long info msg with game instructions
+long info msg with game instructions // inkább a collection részeként
 virtual keyboard
 
 detailed type detection from content name
@@ -225,6 +224,21 @@ static void check_variables(void)
     Ep128Emu::stringToLowerCase(infoKey);
   }
 
+  std::string autofireKey;
+  var.key = "ep128emu_afbt";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    autofireKey = var.value;
+    Ep128Emu::stringToLowerCase(autofireKey);
+  }
+
+  int autofireSpeed = -1;
+  var.key = "ep128emu_afsp";
+  if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+  {
+    autofireSpeed = std::atoi(var.value);
+  }
+
   // If function is not supported, use all users (and don't interrogate again)
   if(maxUsersSupported && !environ_cb(RETRO_ENVIRONMENT_GET_INPUT_MAX_USERS,&maxUsers)) {
     maxUsers = EP128EMU_MAX_USERS;
@@ -233,7 +247,7 @@ static void check_variables(void)
   }
 
   if(core)
-    core->initialize_joystick_map(zoomKey,infoKey,
+    core->initialize_joystick_map(zoomKey,infoKey,autofireKey, autofireSpeed,
     Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"),
     Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT"));
 
@@ -356,7 +370,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v0.93";
+  info->library_version  = "v1.0.0";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
 }
@@ -406,6 +420,8 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_romv", "System ROM version (EP only); Original|Enhanced" },
     { "ep128emu_zoom", "User 1 Zoom button; R3|Start|Select|X|Y|A|B|L|R|L2|R2|L3" },
     { "ep128emu_info", "User 1 Info button; L3|R3|Start|Select|X|Y|A|B|L|R|L2|R2" },
+    { "ep128emu_afbt", "User 1 Autofire for button; None|X|Y|A|B|L|R|L2|R2|L3|R3|Start|Select" },
+    { "ep128emu_afsp", "User 1 Autofire repeat delay; 1|2|4|8|16" },
     { NULL, NULL },
   };
   cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
@@ -887,7 +903,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
     userMap[port] = mappedDev;
     if(core)
-      core->initialize_joystick_map(std::string(""),std::string(""),userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
+      core->initialize_joystick_map(std::string(""),std::string(""),std::string(""),-1,userMap[0],userMap[1],userMap[2],userMap[3],userMap[4],userMap[5]);
   }
 }
 

@@ -23,6 +23,7 @@
 
 #define EPKEY_INFO 0xff
 #define EPKEY_ZOOM 0xfe
+#define EPKEY_NONE 0xfd
 
 const std::map<std::string, unsigned char> epkey_reverse = {
 
@@ -143,6 +144,7 @@ const std::map<std::string, unsigned char> epkey_reverse = {
 // Codes above 0x80 are interpreted by the core itself, not the emulated machine.
 {"EPKEY_zoom"    , EPKEY_ZOOM},
 {"EPKEY_info"    , EPKEY_INFO},
+{"EPKEY_none"    , EPKEY_NONE},
 };
 
 // The last component is lowercase as it will be mapped directly from .ep128cfg file where it is used as lowercase

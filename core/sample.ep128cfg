@@ -45,7 +45,7 @@ joypad.user6 ""
 # esc, enter, space, tab, lshift, rshift, ctrl, alt
 # lock, stop, erase, del, ins
 # left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
-# zoom, info (special ep128emu-core functions)
+# zoom, info, none (special ep128emu-core functions, none for clearing default setting)
 # joy1l, joy1r, joy1u, joy1d, fire,  fire2,  fire3  (external 1 joystick)
 # joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
 # Fire 1 is used. Similar mapping exists for external joysticks 3..6 (EP only)

@@ -221,6 +221,9 @@ private:
   retro_log_printf_t log_cb;
   int libretro_to_ep128emu_kbmap[RETROK_LAST];
   unsigned int bootframes;
+  unsigned int autofireFrame;
+  unsigned int autofireButtonId;
+  unsigned int autofireFrameCycle;
 
 public:
   uint16_t audioBuffer[EP128EMU_SAMPLE_RATE*1000*2];
@@ -259,7 +262,7 @@ public:
 
   void initialize_keyboard_map(void);
   void update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers);
-  void initialize_joystick_map(std::string zoomKey, std::string infoKey, int user1, int user2, int user3, int user4, int user5, int user6);
+  void initialize_joystick_map(std::string zoomKey, std::string infoKey, std::string autofireKey, int autofireSpeed, int user1, int user2, int user3, int user4, int user5, int user6);
   void update_joystick_map(const unsigned char * joystickCodes, int port, int length);
   void reset_joystick_map(int port, unsigned value);
   void reset_joystick_map(int port);
