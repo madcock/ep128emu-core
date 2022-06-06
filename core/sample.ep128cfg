@@ -43,7 +43,7 @@ joypad.user6 ""
 # a-z 0-9 f1-f8
 # \-^;:[],/.@
 # esc, enter, space, tab, lshift, rshift, ctrl, alt
-# lock, stop, erase, del, ins
+# lock, stop, hold, erase, del, ins
 # left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
 # zoom, info, none (special ep128emu-core functions, none for clearing default setting)
 # joy1l, joy1r, joy1u, joy1d, fire,  fire2,  fire3  (external 1 joystick)
@@ -58,11 +58,11 @@ joypad.user6 ""
 joypad.a ""
 joypad.b ""
 joypad.x ""
-joypad.y ""
-joypad.l ""
-joypad.r ""
-joypad.l2 ""
-joypad.r2 ""
+joypad.y "none"
+joypad.l "none"
+joypad.r "none"
+joypad.l2 "none"
+joypad.r2 "none"
 joypad.l3 ""
 joypad.r3 ""
 joypad.start ""
