@@ -212,6 +212,19 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       config->memory.rom[0x41].file=romBasePath+"zt19hfnt.rom";
       config->memory.rom[0x41].offset=16384;
     }
+    else if(contentLocale == LOCALE_GER)
+    {
+      // Locale support: BRD ROM goes to segment 4 and then Basic goes to segment 5
+      config->memory.rom[0x04].file=romBasePath+"brd.rom";
+      config->memory.rom[0x04].offset=0;
+      if (use_cartridge) {
+        if (is_EP64)
+          config->memory.rom[0x05].file=romBasePath+"basic20.rom";
+        else
+          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+        config->memory.rom[0x05].offset=0;
+      }
+    }
     else
     {
       if (use_cartridge) {
