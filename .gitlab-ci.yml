@@ -8,7 +8,7 @@
 .core-defs:
   variables:
     JNI_PATH: .
-    CORENAME: cap32
+    CORENAME: ep128emu-core
 
 # Inclusion templates, required for the build to work
 include:
