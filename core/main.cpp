@@ -14,6 +14,7 @@ info msg overlay
 long info msg with game instructions // inkább a collection részeként
 virtual keyboard
 
+core options v2
 detailed type detection from content name
 cheat support
 m3u support (cpc 3 guerra)
@@ -614,11 +615,18 @@ bool retro_load_game(const struct retro_game_info *info)
     std::FILE *imageFile;
     const size_t nBytes = 64;
     uint8_t tmpBuf[nBytes];
+    uint8_t tmpBufOffset128[nBytes];
     static const char zeroBytes[nBytes] = "\0";
 
     imageFile = Ep128Emu::fileOpen(info->path, "rb");
     std::fseek(imageFile, 0L, SEEK_SET);
     if(std::fread(&(tmpBuf[0]), sizeof(uint8_t), nBytes, imageFile) != nBytes)
+    {
+      throw Ep128Emu::Exception("error reading game content file");
+    };
+    // TODO: handle seek / read failures
+    std::fseek(imageFile, 128L, SEEK_SET);
+    if(std::fread(&(tmpBufOffset128[0]), sizeof(uint8_t), nBytes, imageFile) != nBytes)
     {
       throw Ep128Emu::Exception("error reading game content file");
     };
@@ -670,7 +678,7 @@ bool retro_load_game(const struct retro_game_info *info)
         startupSequence ="\r";
       }
     }
-    else if(header_match(epteFileMagic,tmpBuf,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) /*|| contentExt == tapeExtSnd*/)
+    else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) /*|| contentExt == tapeExtSnd*/)
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
