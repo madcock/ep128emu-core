@@ -76,21 +76,33 @@ else ifeq ($(platform), osx)
 	CFLAGS  += $(ARCHFLAGS)
 	CXXFLAGS  += $(ARCHFLAGS)
 	LDFLAGS += $(ARCHFLAGS)
-
-# cross Windows
-else ifeq ($(platform), wincross64)
+# Windows cross-compilation
+# If variables are set up externally by buildbot, do not override.
+else ifeq ($(platform), win64)
 	TARGET := $(TARGET_NAME)_libretro.dll
-	AR = x86_64-w64-mingw32-ar
-	CC = x86_64-w64-mingw32-gcc
-	CXX = x86_64-w64-mingw32-g++
+    ifeq ($(findstring mingw,$(AR)),)
+		AR = x86_64-w64-mingw32-ar
+	endif
+    ifeq ($(findstring mingw,$(CC)),)
+		CC = x86_64-w64-mingw32-gcc
+	endif
+    ifeq ($(findstring mingw,$(CXX)),)
+		CXX = x86_64-w64-mingw32-g++
+	endif
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++
 	LDFLAGS += -lwinmm -Wl,--export-all-symbols
-else ifeq ($(platform), wincross32)
+else ifeq ($(platform), win32)
 	TARGET := $(TARGET_NAME)_libretro.dll
-	AR = i686-w64-mingw32-ar
-	CC = i686-w64-mingw32-gcc
-	CXX = i686-w64-mingw32-g++
+    ifeq ($(findstring mingw,$(AR)),)
+		AR = i686-w64-mingw32-ar
+	endif
+    ifeq ($(findstring mingw,$(CC)),)
+		CC = i686-w64-mingw32-gcc
+	endif
+    ifeq ($(findstring mingw,$(CXX)),)
+		CXX = i686-w64-mingw32-g++
+	endif
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++ -L. -m32
 	LDFLAGS += -lwinmm -Wl,--export-all-symbols
