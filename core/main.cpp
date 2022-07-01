@@ -636,7 +636,7 @@ bool retro_load_game(const struct retro_game_info *info)
     std::fseek(imageFile, 128L, SEEK_SET);
     if(std::fread(&(tmpBufOffset128[0]), sizeof(uint8_t), nBytes, imageFile) != nBytes)
     {
-      throw Ep128Emu::Exception("error reading game content file");
+      log_cb(RETRO_LOG_DEBUG, "Game content file too short for full header analysis\n");
     };
     std::fclose(imageFile);
 
