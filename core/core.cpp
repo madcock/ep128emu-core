@@ -527,7 +527,8 @@ void LibretroCore::initialize_keyboard_map(void)
   }
 
   libretro_to_ep128emu_kbmap[RETROK_n]         = 0x00;
-  libretro_to_ep128emu_kbmap[RETROK_BACKSLASH] = 0x01; // ERASE
+  libretro_to_ep128emu_kbmap[RETROK_OEM_102]   = 0x01; // positional mapping for ISO keyboard: kb í -> EP \ backslash
+  libretro_to_ep128emu_kbmap[RETROK_HOME]      = 0x01; // aux mapping for non-ISO keyboard: kb home -> EP \ backslash
   libretro_to_ep128emu_kbmap[RETROK_b]         = 0x02;
   libretro_to_ep128emu_kbmap[RETROK_c]         = 0x03;
   libretro_to_ep128emu_kbmap[RETROK_v]         = 0x04;
@@ -560,6 +561,7 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_3]         = 0x1D;
   libretro_to_ep128emu_kbmap[RETROK_2]         = 0x1E;
   libretro_to_ep128emu_kbmap[RETROK_ESCAPE]    = 0x1F;
+  libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE] = 0x1F; // positional mapping for ISO keyboard, kb ` (backquote) -> EP esc
 
   libretro_to_ep128emu_kbmap[RETROK_F4]        = 0x20;
   libretro_to_ep128emu_kbmap[RETROK_F8]        = 0x21;
@@ -574,8 +576,8 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_9]         = 0x2A;
   libretro_to_ep128emu_kbmap[RETROK_MINUS]     = 0x2B;
   libretro_to_ep128emu_kbmap[RETROK_0]         = 0x2C;
-  libretro_to_ep128emu_kbmap[RETROK_CARET]     = 0x2D; // ? how is it mapped in the frontend?
-  libretro_to_ep128emu_kbmap[RETROK_EQUALS]    = 0x2D; // probably there is no "caret" key on the keyboard
+  libretro_to_ep128emu_kbmap[RETROK_CARET]     = 0x2D; // allowing any keyboard with specific caret key
+  libretro_to_ep128emu_kbmap[RETROK_EQUALS]    = 0x2D; // positional mapping for ISO keyboard: kb = -> EP ^ caret
   libretro_to_ep128emu_kbmap[RETROK_BACKSPACE] = 0x2E;
   //libretro_to_ep128emu_kbmap[???]            = 0x2F;
 
@@ -585,11 +587,11 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_SEMICOLON] = 0x33;
   libretro_to_ep128emu_kbmap[RETROK_l]         = 0x34;
   libretro_to_ep128emu_kbmap[RETROK_COLON]     = 0x35; // :
-  libretro_to_ep128emu_kbmap[RETROK_QUOTE]     = 0x35; // probably there is no : key on the keyboard
-  libretro_to_ep128emu_kbmap[RETROK_RIGHTBRACKET] = 0x36;
+  libretro_to_ep128emu_kbmap[RETROK_QUOTE]     = 0x35; // positional mapping for ISO keyboard, kb ' -> EP :
+  libretro_to_ep128emu_kbmap[RETROK_BACKSLASH] = 0x36; // positional mapping for ISO keyboard, kb \ -> EP ]
   //libretro_to_ep128emu_kbmap[???]            = 0x37;
   libretro_to_ep128emu_kbmap[RETROK_F10]       = 0x38; // STOP
-  libretro_to_ep128emu_kbmap[RETROK_SYSREQ]    = 0x38; // STOP
+  libretro_to_ep128emu_kbmap[RETROK_PAUSE]     = 0x38; // STOP
   libretro_to_ep128emu_kbmap[RETROK_DOWN]      = 0x39;
   libretro_to_ep128emu_kbmap[RETROK_RIGHT]     = 0x3A;
   libretro_to_ep128emu_kbmap[RETROK_UP]        = 0x3B;
@@ -612,9 +614,9 @@ void LibretroCore::initialize_keyboard_map(void)
   //libretro_to_ep128emu_kbmap[???]            = 0x49;
   libretro_to_ep128emu_kbmap[RETROK_o]         = 0x4A;
   libretro_to_ep128emu_kbmap[RETROK_AT]        = 0x4B; // @
-  libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE] = 0x4B; // probably there is no @ key on the keyboard
+  libretro_to_ep128emu_kbmap[RETROK_LEFTBRACKET] = 0x4B; // positional mapping for ISO keyboard, kb [ -> EP @
   libretro_to_ep128emu_kbmap[RETROK_p]         = 0x4C;
-  libretro_to_ep128emu_kbmap[RETROK_LEFTBRACKET] = 0x4D;
+  libretro_to_ep128emu_kbmap[RETROK_RIGHTBRACKET] = 0x4D; // positional mapping for ISO keyboard, kb ] -> EP [
   //libretro_to_ep128emu_kbmap[???]            = 0x4E;
   //libretro_to_ep128emu_kbmap[???]            = 0x4F;
 
@@ -629,7 +631,7 @@ void LibretroCore::initialize_keyboard_map(void)
   libretro_to_ep128emu_kbmap[RETROK_KP_PLUS]    = 0x76;
   if(machineType == MACHINE_TVC)
   {
-    /* tvc extra keys in original ep128emu (tvc key - EP key - default PC key):
+    /* tvc extra keys in original ep128emu (tvc key - EP key - default PC UK key):
     - ö - @ - `
     - í - Esc - Esc
     - @ - F1 - F1
@@ -643,9 +645,7 @@ void LibretroCore::initialize_keyboard_map(void)
     - Esc - Stop - End
     */
     libretro_to_ep128emu_kbmap[RETROK_ESCAPE]     = 0x38; // move Esc back to Esc
-    libretro_to_ep128emu_kbmap[RETROK_F9]         = 0x4B; // use F9 for 0
-    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x4B; // or the key left of 1
-    libretro_to_ep128emu_kbmap[RETROK_AT]         = -1;   // there can be only 2 mappings
+    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x2C; // use the key left of 1 for 0
     libretro_to_ep128emu_kbmap[RETROK_F10]        = 0x1F; // use F10 for í
     libretro_to_ep128emu_kbmap[RETROK_OEM_102]    = 0x1F; // or the extra 102. key
   }
@@ -883,11 +883,15 @@ void LibretroCore::reset_joystick_map(int port)
 
 void LibretroCore::update_keyboard(bool down, unsigned keycode, uint32_t character, uint16_t key_modifiers)
 {
-  uint32_t convertedKeycode = config->convertKeyCode(keycode);
+  // printf("%s %d %d \n",down ? "down" : "up  ", keycode, character);
+  int convertedKeycode = config->convertKeyCode(keycode);
   if (convertedKeycode >= 0)
   {
-    vmThread->setKeyboardState(convertedKeycode,down);
+    vmThread->setKeyboardState((uint8_t)convertedKeycode,down);
   }
+  // TODO: if conversion does not succeed, try to apply literal mapping instead of default positional
+  // it requires more work because upstrokes will not have character value so keypresses have to be stored separately
+  // to match with up events
 }
 
 void LibretroCore::update_input(retro_input_state_t input_state_cb, retro_environment_t environ_cb, unsigned maxUsers)

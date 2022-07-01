@@ -80,6 +80,10 @@ const std::multimap<std::string, std::string> rom_names_ep128emu_tosec = {
 {"exos21.rom"     , "Expandible OS v2.1 (1985)(Intelligent Software).bin"},
 {"exos23.rom"     , "Expandible OS v2.3 (1987)(Intelligent Software).bin"},
 {"exdos13.rom"    , "Disk Controller v1.3 (1985)(Intelligent Software).bin"}, // binary does not fully match
+{"exos20.rom"     , "EXOS20.ROM"}, // enterprise-world.net
+{"exos21.rom"     , "EXOS21.ROM"}, // enterprise-world.net
+{"exos23.rom"     , "EXOS23.ROM"}, // enterprise-world.net
+{"exdos13.rom"    , "EXDOS14.ROM"}, // enterprise-world.net, binary does not fully match
 {"zt19uk.rom"     , "ZozoTools v1.8 (19xx)(Zoltan Nemeth).bin"}, // version does not match
 {"zx48.rom"       , "ZX Spectrum 48K - 1 (1982)(Sinclair Research).rom"},
 {"zx48.rom"       , "48.rom"}, // github.com/Abdess/retroarch_system

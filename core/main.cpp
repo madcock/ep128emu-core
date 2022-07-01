@@ -6,15 +6,23 @@ double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
 
+  format, hw, trainer detection from tzx / cdt
+  http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
+  https://www.cpcwiki.eu/index.php?title=Format:CDT_tape_image_file_format&mobileaction=toggle_view_desktop
+  tapir format compatibility
+
+doublecheck cpc and zx keyboard maps
+
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
 sw fb + interlace = crash
-wait állítás után keyboard lefele beragad? -- kb reset
 info msg overlay
 long info msg with game instructions // inkább a collection részeként
+keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, should be reseted
 virtual keyboard
 
 core options v2
+check and include libretro common
 detailed type detection from content name
 cheat support
 m3u support (cpc 3 guerra)

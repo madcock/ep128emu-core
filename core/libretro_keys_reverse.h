@@ -316,7 +316,8 @@ const std::map<std::string, int> retrok_reverse = {
    {"RETROK_MENU"           , 319},
    {"RETROK_POWER"          , 320},
    {"RETROK_EURO"           , 321},
-   {"RETROK_UNDO"           , 322}
+   {"RETROK_UNDO"           , 322},
+   {"RETROK_OEM_102"        , 323}
 };
 
 
