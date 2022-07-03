@@ -645,19 +645,39 @@ void LibretroCore::initialize_keyboard_map(void)
     - Esc - Stop - End
     */
     libretro_to_ep128emu_kbmap[RETROK_ESCAPE]     = 0x38; // move Esc back to Esc
-    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x2C; // use the key left of 1 for 0
-    libretro_to_ep128emu_kbmap[RETROK_F10]        = 0x1F; // use F10 for í
-    libretro_to_ep128emu_kbmap[RETROK_OEM_102]    = 0x1F; // or the extra 102. key
+    libretro_to_ep128emu_kbmap[RETROK_BACKQUOTE]  = 0x4B; // use the key left of 1 for 0
+    libretro_to_ep128emu_kbmap[RETROK_AT]         = -1; // unmap @
+    libretro_to_ep128emu_kbmap[RETROK_F10]        = 0x1F; // use F10 for í which can not be mapped from TVC layout to ISO layout directly
+    libretro_to_ep128emu_kbmap[RETROK_OEM_102]    = 0x1F; // or the extra 102. key, which has no equivalent in TVC but is used for í anyway
+    libretro_to_ep128emu_kbmap[RETROK_LEFTBRACKET]  = 0x4D; // positional mapping for ISO keyboard, kb [ -> TVC ő
+    libretro_to_ep128emu_kbmap[RETROK_RIGHTBRACKET] = 0x36; // positional mapping for ISO keyboard, kb ] -> TVC ú
+    libretro_to_ep128emu_kbmap[RETROK_BACKSLASH]    = 0x01; // positional mapping for ISO keyboard, kb \ -> TVC ú
+    // other keys cannot be mapped to ISO keyboard logically so original ep128emu mapping is kept to function keys
+
   }
   else if (machineType == MACHINE_CPC)
   {
-    // rshift mapped to enter
-    // F0 is Pause
-    // F9 is Stop (red)
-    // Copy is Insert
-    // F Dot is Alt
-    // Clear is Delete
-    // Delete is Erase
+    /* rshift mapped to enter
+       F0 is Pause
+       F9 is Stop (red)
+       Copy is Insert
+       F Dot is Alt
+       Clear is Delete
+       Delete is Erase */
+
+    // f10-f9 swap back
+    libretro_to_ep128emu_kbmap[RETROK_F9]        = 0x38; // map F9 to Fn9
+    libretro_to_ep128emu_kbmap[RETROK_F10]       = 0x3C; // map F10 to Fn0
+    libretro_to_ep128emu_kbmap[RETROK_F11]       = 0x3F; // map F11 to Fn Dot.
+    // ; ˙ swap for positional mapping
+    libretro_to_ep128emu_kbmap[RETROK_SEMICOLON] = 0x35;
+    libretro_to_ep128emu_kbmap[RETROK_QUOTE]     = 0x33;
+
+    libretro_to_ep128emu_kbmap[RETROK_LALT]      = 0x47; // quasi-positional mapping: lAlt for copy button
+    libretro_to_ep128emu_kbmap[RETROK_KP_ENTER]  = 0x45; // map keypad enter to Fn Enter
+    // map rshift back to shift and add End for additional Fn-enter
+    libretro_to_ep128emu_kbmap[RETROK_END]       = 0x45; // map keypad enter to Fn Enter
+    libretro_to_ep128emu_kbmap[RETROK_RSHIFT]    = 0x07; // rshift to lshift
   }
 
   for(int i=0; i<RETROK_LAST; i++)
@@ -666,6 +686,10 @@ void LibretroCore::initialize_keyboard_map(void)
     {
       if(config->keyboard[libretro_to_ep128emu_kbmap[i]][0] > 0)
       {
+        if(config->keyboard[libretro_to_ep128emu_kbmap[i]][1] > 0) {
+         log_cb(RETRO_LOG_WARN, "Triple key mapping, EP scancode 0x%x was set to key %d/%d, replaced by key %d\n",
+           libretro_to_ep128emu_kbmap[i],config->keyboard[libretro_to_ep128emu_kbmap[i]][0],config->keyboard[libretro_to_ep128emu_kbmap[i]][1],i);
+        }
         config->keyboard[libretro_to_ep128emu_kbmap[i]][1] = i;
       }
       else
