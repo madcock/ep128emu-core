@@ -11,7 +11,8 @@ save state for speaker and mono states
   https://www.cpcwiki.eu/index.php?title=Format:CDT_tape_image_file_format&mobileaction=toggle_view_desktop
   tapir format compatibility
 
-doublecheck cpc and zx keyboard maps
+doublecheck zx keyboard map for 128
+option to disable keyboard input
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
@@ -19,12 +20,12 @@ sw fb + interlace = crash
 info msg overlay
 long info msg with game instructions // inkább a collection részeként
 keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, should be reseted
+zx keyboard doc
 virtual keyboard
 
 core options v2
 check and include libretro common
 detailed type detection from content name
-cheat support
 m3u support (cpc 3 guerra)
 cp/m support (EP, CPC)
 locale support ep, cpc
@@ -38,6 +39,9 @@ opengl display support
 demo record/play
 support for content in zip
 EP Mouse support
+cheat support
+achievement support
+led driver for tape loading
 
 */
 
@@ -379,7 +383,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.0.0";
+  info->library_version  = "v1.0.1";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
 }

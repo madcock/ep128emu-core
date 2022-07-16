@@ -43,7 +43,6 @@ ifneq (,$(findstring unix,$(platform)))
 	fpic := -fPIC
 	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
 	CC = gcc
-	CC_AS = gcc
 	CXX = g++
 	PLATFORM_DEFINES += -mtune=generic
 else ifneq (,$(findstring linux-portable,$(platform)))
@@ -56,9 +55,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,-version-script=link.T
-	CC = gcc
-	CC_AS = gcc
-	CXX = g++
+	LDFLAGS += -static-libgcc -static-libstdc++
 	ifneq (,$(findstring cortexa8,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a8
 	else ifneq (,$(findstring cortexa9,$(platform)))
@@ -116,7 +113,6 @@ ifeq ($(STATIC_LINKING), 1)
 endif
 
 LIBM		= -lpthread
-CC_AS ?= $(CC)
 
 LDFLAGS += -Wl,--as-needed
 LDFLAGS += $(LIBM)
