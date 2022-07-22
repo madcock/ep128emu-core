@@ -1,6 +1,5 @@
 TARGET_NAME := ep128emu_core
 STATIC_LINKING := 0
-AR             := ar
 DEBUG   = 0
 LIBS    :=
 
@@ -45,11 +44,13 @@ ifneq (,$(findstring unix,$(platform)))
 	CC = gcc
 	CXX = g++
 	PLATFORM_DEFINES += -mtune=generic
+  LDFLAGS += -Wl,--as-needed
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
 	LIBM :=
 	SHARED := -shared -Wl,-version-script=link.T
+  LDFLAGS += -Wl,--as-needed
 # ARM
 else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -63,6 +64,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	endif
 	PLATFORM_DEFINES += -marm
 	PLATFORM_DEFINES += -mtune=generic-armv7-a -mhard-float
+  LDFLAGS += -Wl,--as-needed
 
 # OS X
 else ifeq ($(platform), osx)
@@ -89,6 +91,7 @@ else ifeq ($(platform), win64)
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++
 	LDFLAGS += -lwinmm -Wl,--export-all-symbols
+  LDFLAGS += -Wl,--as-needed
 else ifeq ($(platform), win32)
 	TARGET := $(TARGET_NAME)_libretro.dll
     ifeq ($(findstring mingw,$(AR)),)
@@ -103,6 +106,7 @@ else ifeq ($(platform), win32)
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -static-libgcc -static-libstdc++ -L. -m32
 	LDFLAGS += -lwinmm -Wl,--export-all-symbols
+  LDFLAGS += -Wl,--as-needed
 	PLATFORM_DEFINES += -march=pentium2
 	CFLAGS += -m32
 	CXXFLAGS += -m32
@@ -114,7 +118,6 @@ endif
 
 LIBM		= -lpthread
 
-LDFLAGS += -Wl,--as-needed
 LDFLAGS += $(LIBM)
 
 ifeq ($(DEBUG), 1)
