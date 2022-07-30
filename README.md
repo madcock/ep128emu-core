@@ -5,6 +5,7 @@ Leverage the convenience of libretro/retroarch to emulate the Z80 based home
 computers that the original ep128emu supports - that is, Enterprise 64/128, 
 Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 
+Note: The actual documentation is best viewed in [Retroarch docs](https://docs.libretro.com/library/ep128emu/). Source for maintenance is in [libretro docs repo](https://github.com/libretro/docs/blob/master/docs/library/ep128emu.md).
 ## Features
 
 For the emulation features, see the [original README](README). Since GUI is replaced by retroarch, features that would require own window (debugger, keyboard layout setting, etc) are not available. Some extra features not required for original games are also excluded (SD card, SID, MIDI, Spectrum emulation card for EP, mouse).
@@ -64,12 +65,12 @@ For most content types, there is a startup sequence that will do the program loa
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
   * Borders can be cropped completely (default) or using a margin configurable among core options
 
-## Using the binaries
+## Using the core
 
 ### Requirements
 
 * A system with retroarch installed. Linux 64-bit, ARM 32-bit, and Windows 32 and 64 bit versions of the core are currently available.
-* ROM files for the systems to be emulated.
+* ROM (BIOS) files for the systems to be emulated.
   * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
     * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
     * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` (DTF support)
@@ -85,6 +86,7 @@ For most content types, there is a startup sequence that will do the program loa
 * Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
 
 ### Running the core
+On the supported platforms, the core appears in the online updater, can be downloaded and started as usual. Running it directly:
 ```shell
 # Linux
 retroarch -L ep128emu_core_libretro.so -v <content file>
@@ -94,7 +96,7 @@ retroarch -L ep128emu_core_libretro.dll -v <content file>
 
 ## Contributing
 
-Pull requests welcome. Especially for currently unsupported builds (like MacOS).
+Pull requests welcome. For updating emulation features, it may be better to push it to original ep128emu as well.
 
 ## Links
 
