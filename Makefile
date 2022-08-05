@@ -37,12 +37,12 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 endif
 
 # Unix
-ifneq (,$(findstring unix,$(platform)))
+ifeq ($(platform), unix)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
 	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
-	CC = gcc
-	CXX = g++
+	CC ?= gcc
+	CXX ?= g++
 	PLATFORM_DEFINES += -mtune=generic
   LDFLAGS += -Wl,--as-needed
 else ifneq (,$(findstring linux-portable,$(platform)))
