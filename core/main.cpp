@@ -1,6 +1,5 @@
 /* TODO
 
-build for mac
 magyar nyelvű leírás is
 double free crash at new game load sometimes
 save state for speaker and mono states
@@ -13,17 +12,18 @@ save state for speaker and mono states
 
 doublecheck zx keyboard map for 128
 option to disable keyboard input
+split sndfile and portaudio compilation switch
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
 sw fb + interlace = crash
 info msg overlay
 long info msg with game instructions // inkább a collection részeként
-keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, should be reseted
+keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, should be reseted -- no solution?
 zx keyboard doc
 virtual keyboard
 
-core options v2
+core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
 check and include libretro common
 detailed type detection from content name
 m3u support (cpc 3 guerra)
@@ -35,7 +35,7 @@ low prio:
 ep128cfg support player 2 mapping
 info msg for other players
 TAPir format support
-opengl display support
+opengl display support // no real use
 demo record/play
 support for content in zip
 EP Mouse support
@@ -628,6 +628,7 @@ bool retro_load_game(const struct retro_game_info *info)
     const size_t nBytes = 64;
     uint8_t tmpBuf[nBytes];
     uint8_t tmpBufOffset128[nBytes];
+    uint8_t tmpBufOffset512[nBytes];
     static const char zeroBytes[nBytes] = "\0";
 
     imageFile = Ep128Emu::fileOpen(info->path, "rb");
@@ -642,12 +643,19 @@ bool retro_load_game(const struct retro_game_info *info)
     {
       log_cb(RETRO_LOG_DEBUG, "Game content file too short for full header analysis\n");
     };
+    std::fseek(imageFile, 512L, SEEK_SET);
+    if(std::fread(&(tmpBufOffset512[0]), sizeof(uint8_t), nBytes, imageFile) != nBytes)
+    {
+      log_cb(RETRO_LOG_DEBUG, "Game content file too short for full header analysis\n");
+    };
     std::fclose(imageFile);
 
     static const char *cpcDskFileHeader = "MV - CPCEMU";
     static const char *cpcExtFileHeader = "EXTENDED CPC DSK File";
     static const char *ep128emuTapFileHeader = "\x02\x75\xcd\x72\x1c\x44\x51\x26";
     static const char *epteFileMagic = "ENTERPRISE 128K TAPE FILE       ";
+    static const char *TAPirFileMagic = "\x00\x6A\xFF";
+    static const char *waveFileMagic = "RIFF";
     static const char *tzxFileMagic = "ZXTape!\032\001";
     static const char *tvcDskFileHeader = "\xeb\xfe\x90";
     static const char *epDskFileHeader1 = "\xeb\x3c\x90";
@@ -690,7 +698,7 @@ bool retro_load_game(const struct retro_game_info *info)
         startupSequence ="\r";
       }
     }
-    else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) /*|| contentExt == tapeExtSnd*/)
+    else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) || header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3))
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
