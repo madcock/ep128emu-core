@@ -86,7 +86,7 @@ namespace Ep128Emu {
     //printf("Trying forwardAudioData: %d %d\n",readBufIndex,writeBufIndex);
 
     int currOutputIndex = -1;
-    int expectedLatencyFrames = 2000;
+    int expectedLatencyFrames = 800;
     size_t ringBufferSize = buffers.size();
     int partialFrames_pre = LIBRETRO_PERIOD_SIZE - readSubBufIndex;
 
