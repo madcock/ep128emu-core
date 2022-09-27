@@ -72,7 +72,9 @@ namespace Ep128Emu {
      * (in 16 bit signed PCM format) to the audio output device and file.
      */
     virtual void sendAudioData(const int16_t *buf, size_t nFrames);
+#ifdef EP128EMU_LIBRETRO_CORE
     virtual void forwardAudioData(int16_t *buf_out, size_t* nFrames, int expectedFrames)=0;
+#endif
     /*!
      * Close the audio device.
      */
