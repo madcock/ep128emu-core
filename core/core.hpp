@@ -49,6 +49,7 @@ const std::map<std::string, int> VM_config {
  { "EP64_TAPE_NOCART" , 114},
  { "TVC64_FILE"       , 200},
  { "TVC64_DISK"       , 201},
+ { "TVC64_TAPE"       , 202},
  { "CPC_TAPE"         , 300}, // Default is CPC6128
  { "CPC_DISK"         , 301},
  { "CPC_464_TAPE"     , 302},

@@ -55,7 +55,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   configBaseFile.append("/ep128emu/config/");
 #endif
 
-  if(machineDetailedType == VM_config.at("TVC64_DISK") || machineDetailedType == VM_config.at("TVC64_FILE"))
+  if(machineDetailedType == VM_config.at("TVC64_DISK") || machineDetailedType == VM_config.at("TVC64_FILE")
+     || machineDetailedType == VM_config.at("TVC64_TAPE"))
   {
     machineType = MACHINE_TVC;
     log_cb(RETRO_LOG_INFO, "Emulated machine: TVC\n");
@@ -87,6 +88,7 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
 
   audioOutput = new Ep128Emu::AudioOutput_libretro();
+  //audioOutput->setOutputFile("/tmp/core_sound.wav");
   w = new Ep128Emu::LibretroDisplay(32, 32, EP128EMU_LIBRETRO_SCREEN_WIDTH, EP128EMU_LIBRETRO_SCREEN_HEIGHT, "", useHalfFrame);
   if(machineType == MACHINE_TVC)
   {

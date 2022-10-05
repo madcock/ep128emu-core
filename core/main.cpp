@@ -1,18 +1,18 @@
 /* TODO
 
-magyar nyelvű leírás is
+crash at save state when memory is extended (Sword of Ianna)
 double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
 
-  format, hw, trainer detection from tzx / cdt
+hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
   https://www.cpcwiki.eu/index.php?title=Format:CDT_tape_image_file_format&mobileaction=toggle_view_desktop
-  tapir format compatibility
+  new .ept format?
 
 doublecheck zx keyboard map for 128
 option to disable keyboard input
-split sndfile and portaudio compilation switch
+split sndfile and portaudio compilation switch to allow loading of sound files as tape
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
@@ -34,8 +34,8 @@ rom config for clkoff+hfont
 low prio:
 ep128cfg support player 2 mapping
 info msg for other players
-TAPir format support
-opengl display support // no real use
+tzx format 0x18 compressed square wave, 0x19
+tzx trainer support: ~20 out of all zx tosec, and 1 from cpc tosec
 demo record/play
 support for content in zip
 EP Mouse support
@@ -383,9 +383,9 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.0.1";
+  info->library_version  = "v1.0.2";
   info->need_fullpath    = true;
-  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|.";
+  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|tvcwav|.";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -623,6 +623,7 @@ bool retro_load_game(const struct retro_game_info *info)
     //std::string tapeExtZx = "tzx";
     std::string fileExtZx = "tap";
     std::string tapeExtCpc = "cdt";
+    std::string tapeExtTvc = "tvcwav";
 
     std::FILE *imageFile;
     const size_t nBytes = 64;
@@ -697,6 +698,13 @@ bool retro_load_game(const struct retro_game_info *info)
         tapeContent = true;
         startupSequence ="\r";
       }
+    }
+    // tvcwav extension is made up, it is to avoid clash with normal wave file and also with retroarch's own wave player
+    else if(contentExt == tapeExtTvc && header_match(waveFileMagic,tmpBuf,4))
+    {
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("TVC64_TAPE");
+      tapeContent=true;
+      startupSequence =" \xffload\r";
     }
     else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) || header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3))
     {
