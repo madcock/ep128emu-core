@@ -18,8 +18,8 @@
 
 #include "core.hpp"
 #include "libretro_keys_reverse.h"
-namespace Ep128Emu
-{
+#include "roms/roms.hpp"
+namespace Ep128Emu {
 
 LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_, int contentLocale, bool canSkipFrames_, const char* romDirectory_, const char* saveDirectory_,
                            const char* startSequence_, const char* cfgFile, bool useHalfFrame_, bool enhancedRom)
@@ -398,7 +398,13 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
         if(!romFound)
         {
           log_cb(RETRO_LOG_ERROR, "ROM file or any alternative not found: %s \n",config->memory.rom[i].file.c_str());
-          throw Ep128Emu::Exception("ROM file not found!");
+          replacementFullName = "_default_" + romShortName;
+          config->memory.rom[i].file = replacementFullName;
+          std::map<std::string, const unsigned char*>::const_iterator  iter_builtin_rom;
+          iter_builtin_rom = Ep128Emu::builtin_rom.find(replacementFullName);
+          if (iter_builtin_rom == Ep128Emu::builtin_rom.end()) {
+            throw Ep128Emu::Exception("ROM file not found!");
+          }
         }
       }
     }

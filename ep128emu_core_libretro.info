@@ -49,15 +49,15 @@ firmware_count = 22
 
 firmware0_desc = "exos21.rom (Enterprise 128 Expandible OS 2.1)"
 firmware0_path = "ep128emu/roms/exos21.rom";
-firmware0_opt = "false"
+firmware0_opt = "true"
 
 firmware1_desc = "basic21.rom (Enterprise 128 BASIC Interpreter v2.1)"
 firmware1_path = "ep128emu/roms/basic21.rom";
-firmware1_opt = "false"
+firmware1_opt = "true"
 
 firmware2_desc = "exdos13.rom (Enterprise 128 Disk Controller v1.3)"
 firmware2_path = "ep128emu/roms/exdos13.rom";
-firmware2_opt = "false"
+firmware2_opt = "true"
 
 firmware3_desc = "exos20.rom (Enterprise 64 Expandible OS 2.0)"
 firmware3_path = "ep128emu/roms/exos20.rom";
