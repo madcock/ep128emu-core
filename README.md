@@ -12,11 +12,12 @@ For the emulation features, see the [original README](README). Since GUI is repl
 
 ### Content types supported:
 * Enterprise disk images: `img`, `dsk`
-* Enterprise tape images: `tap` (either ep128emu or epte format)
+* Enterprise tape images: `tap` (either ep128emu, tapir, or epte format)
 * Enterprise compressed files: `dtf` (via "ZozoTools" ROM)
 * Enterprise direct files: `com`, `trn`, `128`, `bas` or `.` (no extension)
 * TVC disk images: `img`, `dsk` (TVC type guess from disk layout)
 * TVC direct files: `cas`
+* TVC tape images: `tvcwav` (PCM WAV format, 1-bit versions also supported)
 * CPC disk images: `img`, `dsk` (CPCEMU and extended formats)
 * CPC tape images: `cdt`
 * Spectrum tape images: `tzx`
@@ -69,21 +70,8 @@ For most content types, there is a startup sequence that will do the program loa
 
 ### Requirements
 
-* A system with retroarch installed. Linux 64-bit, ARM 32-bit, and Windows 32 and 64 bit versions of the core are currently available.
-* ROM (BIOS) files for the systems to be emulated.
-  * Enterprise: `exos21.rom`, `basic21.rom`, `epfileio.rom`, `exdos13.rom`
-    * [epfileio.rom](roms/epfileio.rom) is a special image for ep128emu, needed only for direct file loading
-    * For extra functions: `exos24uk.rom` (fast memory test), `zt19uk.rom` (DTF support)
-    * For EP64: `exos20.rom`, `basic20.rom`
-    * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
-  * TVC: `tvc22_sys.rom`, `tvc22_ext.rom`, `tvcfileio.rom`, `tvc_dos12d.rom`
-    * [tvcfileio.rom](roms/tvcfileio.rom) is a special image for ep128emu, needed only for direct file loading
-    * ROMs from tvc.homeserver.hu can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
-  * CPC: `cpc6128.rom`, `cpc_amsdos.rom`
-    * TOSEC ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
-  * ZX: `zx128.rom`
-    * TOSEC ROMs or [retroarch-system](https://github.com/Abdess/retroarch_system/tree/libretro/Sinclair%20-%20ZX%20Spectrum) ROMs can also be used, exact file names can be checked at [core.hpp](core/core.hpp)
-* Put the files to `ep128emu/roms` inside retroarch system directory. Example: `~/.config/retroarch/system/ep128emu/roms/`
+* A system with retroarch installed. Linux 64-bit, ARM 32-bit, MacOS, and Windows 32 and 64 bit versions of the core are currently available.
+* From version 1.1.0, default ROM versions are built in, no need to download separately.
 
 ### Running the core
 On the supported platforms, the core appears in the online updater, can be downloaded and started as usual. Running it directly:
