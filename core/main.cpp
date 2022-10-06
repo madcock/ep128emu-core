@@ -12,7 +12,6 @@ hw and joystick support detection from tzx / cdt
 
 doublecheck zx keyboard map for 128
 option to disable keyboard input
-split sndfile and portaudio compilation switch to allow loading of sound files as tape
 
 gfx:
 crash amikor interlaced módban akarok menübe menni, mintha frame dupe-hoz lenne köze
@@ -42,6 +41,7 @@ EP Mouse support
 cheat support
 achievement support
 led driver for tape loading
+split sndfile and portaudio compilation switch to allow loading of more sound files as tape
 
 */
 
@@ -383,7 +383,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.0.2";
+  info->library_version  = "v1.1.0";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|tvcwav|.";
 }
@@ -780,6 +780,9 @@ bool retro_load_game(const struct retro_game_info *info)
       {
         config->tape.imageFile = info->path;
         config->tapeFileChanged = true;
+        // Todo: add tzx based advanced detection here
+        /*    tape = openTapeFile(fileName.c_str(), 0,
+                        defaultTapeSampleRate, bitsPerSample);*/
       }
       if (fileContent)
       {
