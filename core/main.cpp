@@ -34,6 +34,7 @@ ep128cfg support player 2 mapping
 info msg for other players
 tzx format 0x18 compressed square wave (1 x cpc tosec, 3x zx tosec), 0x19 (~40 x zx tosec)
 tzx trainer support: ~20 out of all zx tosec, and 1 from cpc tosec
+EP IDE support
 demo record/play
 support for content in zip
 EP Mouse support
@@ -489,11 +490,12 @@ static void audio_callback(void)
 static void audio_callback_batch(void)
 {
   size_t nFrames=0;
-  int exp = curr_frame_time*EP128EMU_SAMPLE_RATE/1000000;
-  //printf("expected : %d curr_frame_time: %d\n",exp,curr_frame_time);
+  int exp = int(float(curr_frame_time*EP128EMU_SAMPLE_RATE)/1000000.0f+0.5f);
 
   core->audioOutput->forwardAudioData((int16_t*)audioBuffer,&nFrames,exp);
-  //printf("sending frames: %d frame_time: %d\n",nFrames,curr_frame_time);
+  //printf("sending frames: %d exp %d frame_time: %d\n",nFrames,exp, curr_frame_time);
+  //if (nFrames != exp)
+  // printf("sending diff frames: %d exp %d frame_time: %d\n",nFrames,exp, curr_frame_time);
   audio_batch_cb((int16_t*)audioBuffer, nFrames);
 }
 
