@@ -130,9 +130,11 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   }
   if (cfgFile[0])
   {
-    log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",configBaseFile.c_str());
+    log_cb(RETRO_LOG_INFO, "Loading content specific configuration file: %s\n",cfgFile);
     config->loadState(cfgFile,false);
   }
+
+  startSequence = startSequence_;
 
   // Check if the forced configuration matches the main VM type.
   if (config->machineDetailedType != "")
@@ -154,11 +156,13 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   {
     bool is_EP64 = (machineDetailedType  == VM_config.at("EP64_DISK")  || machineDetailedType == VM_config.at("EP64_FILE") ||
                     machineDetailedType  == VM_config.at("EP64_TAPE")  || machineDetailedType == VM_config.at("EP64_FILE_DTF") ||
-                    machineDetailedType  == VM_config.at("EP64_TAPE_NOCART")) ? true : false;
+                    machineDetailedType  == VM_config.at("EP64_TAPE_NOCART") || machineDetailedType  == VM_config.at("EP64_DISK_ISDOS")) ? true : false;
     bool use_file = (machineDetailedType == VM_config.at("EP128_FILE") || machineDetailedType == VM_config.at("EP64_FILE")) ? true : false;
-    bool use_disk = (machineDetailedType == VM_config.at("EP128_DISK") || machineDetailedType == VM_config.at("EP64_DISK")) ? true : false;
+    bool use_disk = (machineDetailedType == VM_config.at("EP128_DISK") || machineDetailedType == VM_config.at("EP64_DISK") ||
+                     machineDetailedType == VM_config.at("EP128_DISK_ISDOS") || machineDetailedType == VM_config.at("EP64_DISK_ISDOS")) ? true : false;
     bool use_dtf = (machineDetailedType  == VM_config.at("EP128_FILE_DTF") || machineDetailedType == VM_config.at("EP64_FILE_DTF")) ? true : false;
     bool use_cartridge = (machineDetailedType  == VM_config.at("EP128_TAPE_NOCART") || machineDetailedType  == VM_config.at("EP64_TAPE_NOCART")) ? false : true;
+    bool use_isdos = (machineDetailedType == VM_config.at("EP128_DISK_ISDOS") || machineDetailedType  == VM_config.at("EP64_DISK_ISDOS")) ? true : false;
 
     if (is_EP64)
       config->memory.ram.size=64;
@@ -250,7 +254,15 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
         config->memory.rom[0x41].offset=16384;
       }
     }
-    if(use_file || use_disk)
+    if(use_isdos)
+    {
+      config->memory.rom[0x20].file=romBasePath+"exdos14isdos10uk.rom";
+      config->memory.rom[0x20].offset=0;
+      config->memory.rom[0x21].file=romBasePath+"exdos14isdos10uk.rom";
+      config->memory.rom[0x21].offset=16384;
+      startSequence += " \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff""\x27""isdos\r""\xff\xff\xff\xff\xff\xff\xff""dir\r";
+    }
+    else if(use_file || use_disk)
     {
       config->memory.rom[0x20].file=romBasePath+"exdos13.rom";
       config->memory.rom[0x20].offset=0;
@@ -391,13 +403,13 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
             }
             else
             {
-              log_cb(RETRO_LOG_DEBUG, "ROM file alternative not found: %s => %s\n",romShortName.c_str(),replacementFullName.c_str());
+              //log_cb(RETRO_LOG_DEBUG, "ROM file alternative not found: %s => %s\n",romShortName.c_str(),replacementFullName.c_str());
             }
           }
         }
         if(!romFound)
         {
-          log_cb(RETRO_LOG_ERROR, "ROM file or any alternative not found: %s \n",config->memory.rom[i].file.c_str());
+          log_cb(RETRO_LOG_DEBUG, "ROM file or any alternative not found: %s \n",config->memory.rom[i].file.c_str());
           replacementFullName = "_default_" + romShortName;
           config->memory.rom[i].file = replacementFullName;
           std::map<std::string, const unsigned char*>::const_iterator  iter_builtin_rom;
@@ -405,7 +417,12 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
           if (iter_builtin_rom == Ep128Emu::builtin_rom.end()) {
             throw Ep128Emu::Exception("ROM file not found!");
           }
+          log_cb(RETRO_LOG_DEBUG, "Using default ROM for: %s \n",config->memory.rom[i].file.c_str());
         }
+      }
+      else
+      {
+        log_cb(RETRO_LOG_DEBUG, "Loading ROM from system directory: %s \n",config->memory.rom[i].file.c_str());
       }
     }
   }
@@ -472,7 +489,6 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   initialize_joystick_map(std::string(""),std::string(""),std::string(""),-1,
                           joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),
                           joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"));
-  startSequence = startSequence_;
   if (config->contentFileName != "")
   {
     bool injectedBeforeStart = false;

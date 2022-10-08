@@ -26,14 +26,13 @@ core options v2 https://github.com/libretro/libretro-common/tree/master/samples/
 check and include libretro common
 detailed type detection from content name
 m3u support (cpc 3 guerra)
-cp/m support (EP, CPC)
 locale support ep, cpc
 rom config for clkoff+hfont
 
 low prio:
 ep128cfg support player 2 mapping
 info msg for other players
-tzx format 0x18 compressed square wave, 0x19
+tzx format 0x18 compressed square wave (1 x cpc tosec, 3x zx tosec), 0x19 (~40 x zx tosec)
 tzx trainer support: ~20 out of all zx tosec, and 1 from cpc tosec
 demo record/play
 support for content in zip
