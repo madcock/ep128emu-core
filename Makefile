@@ -120,7 +120,7 @@ endif
 
 LIBM		= -lpthread
 ifeq ($(EXCLUDE_SOUND_LIBS), 0)
-  LIBM += -lsndfile -lportaudio
+  LIBM += -lsndfile
 endif
 
 

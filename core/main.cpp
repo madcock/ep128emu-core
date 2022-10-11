@@ -4,13 +4,21 @@ crash at save state when memory is extended (Sword of Ianna)
 double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
+memory descriptors for cheat support
+emscripten and other builds
+database
+led driver for tape / disk loading
+add media player switch off to docs
+mp3 support with sndfile 1.1
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
   https://www.cpcwiki.eu/index.php?title=Format:CDT_tape_image_file_format&mobileaction=toggle_view_desktop
   new .ept format?
 
-doublecheck zx keyboard map for 128
+detect zx tap better
+  https://sinclair.wiki.zxnet.co.uk/wiki/TAP_format
+
 option to disable keyboard input
 
 gfx:
@@ -19,7 +27,7 @@ sw fb + interlace = crash
 info msg overlay
 long info msg with game instructions // inkább a collection részeként
 keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, should be reseted -- no solution?
-zx keyboard doc
+doublecheck zx keyboard map for 128, zx keyboard doc
 virtual keyboard
 
 core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
@@ -40,8 +48,6 @@ support for content in zip
 EP Mouse support
 cheat support
 achievement support
-led driver for tape loading
-split sndfile and portaudio compilation switch to allow loading of more sound files as tape
 
 */
 
@@ -383,9 +389,9 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.1.1";
+  info->library_version  = "v1.1.2";
   info->need_fullpath    = true;
-  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|tvcwav|.";
+  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -707,7 +713,8 @@ bool retro_load_game(const struct retro_game_info *info)
       tapeContent=true;
       startupSequence =" \xffload\r";
     }
-    else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) || header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3))
+    else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) ||
+            header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3))
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
