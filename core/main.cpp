@@ -9,15 +9,12 @@ emscripten and other builds
 database
 led driver for tape / disk loading
 add media player switch off to docs
-mp3 support with sndfile 1.1
+test mp3 support with sndfile 1.1
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
   https://www.cpcwiki.eu/index.php?title=Format:CDT_tape_image_file_format&mobileaction=toggle_view_desktop
   new .ept format?
-
-detect zx tap better
-  https://sinclair.wiki.zxnet.co.uk/wiki/TAP_format
 
 option to disable keyboard input
 
@@ -33,7 +30,7 @@ virtual keyboard
 core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
 check and include libretro common
 detailed type detection from content name
-m3u support (cpc 3 guerra)
+m3u (or, rather, name-based autodetect) multi-disk, multi-tape interface support (cpc 3 guerra)
 locale support ep, cpc
 rom config for clkoff+hfont
 
@@ -547,6 +544,16 @@ bool header_match(const char* buf1, const unsigned char* buf2, size_t length)
   return true;
 }
 
+bool zx_header_match(const unsigned char* buf2)
+{
+  // as per original spec, "13 00 00 00" would fit, but it doesn't always match
+  // https://sinclair.wiki.zxnet.co.uk/wiki/TAP_format
+  // empirical boundaries are from scanning the tosec collection
+  if (buf2[0]>0xe && buf2[0]<0x22 && buf2[1] == 0x0 && (buf2[2] == 0x0 || buf2[2] == 0xff))
+    return true;
+  return false;
+}
+
 bool retro_load_game(const struct retro_game_info *info)
 {
 
@@ -671,7 +678,6 @@ bool retro_load_game(const struct retro_game_info *info)
     static const char *epComFileHeader = "\x00\x05";
     static const char *epComFileHeader2 = "\x00\x06";
     static const char *epBasFileHeader = "\x00\x04";
-    // static const char *zxTapFileHeader = "\x13\x00\x00\x00";
     // Startup sequence may contain:
     // - chars on the keyboard (a-z, 0-9, few symbols like :
     // - 0xff as wait character
@@ -713,8 +719,16 @@ bool retro_load_game(const struct retro_game_info *info)
       tapeContent=true;
       startupSequence =" \xffload\r";
     }
+    else if (contentExt == fileExtZx && zx_header_match(tmpBuf))
+    {
+      detectedMachineDetailedType = Ep128Emu::VM_config.at("ZX128_FILE");
+      fileContent=true;
+      startupSequence ="\r";
+    }
+    // All .tap files will fall back to be interpreted as EP128_TAPE
     else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) ||
-            header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3))
+            header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3) ||
+            contentExt == tapeExt )
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
       tapeContent=true;
@@ -745,12 +759,6 @@ bool retro_load_game(const struct retro_game_info *info)
         log_cb(RETRO_LOG_ERROR, "Content format not recognized!\n");
         return false;
       }
-    }
-    else if (contentExt == fileExtZx /*&& header_match(zxTapFileHeader,tmpBuf,4)*/)
-    {
-      detectedMachineDetailedType = Ep128Emu::VM_config.at("ZX128_FILE");
-      fileContent=true;
-      startupSequence ="\r";
     }
     else if (contentExt == fileExtDtf) {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_FILE_DTF");
