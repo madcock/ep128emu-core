@@ -53,6 +53,7 @@ For most content types, there is a startup sequence that will do the program loa
 
 ### Other features
 * Save/load state, rewind
+* Memory maps exposed for cheat support
 * Content autostart except for disk images
 * Customizable configuration (per-content or system-wide)
   * See [sample.ep128cfg](core/sample.ep128cfg) for details
