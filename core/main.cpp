@@ -4,12 +4,8 @@ crash at save state when memory is extended (Sword of Ianna)
 double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
-memory descriptors for cheat support
 emscripten and other builds
 database
-led driver for tape / disk loading
-add media player switch off to docs
-test mp3 support with sndfile 1.1
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
@@ -43,8 +39,9 @@ EP IDE support
 demo record/play
 support for content in zip
 EP Mouse support
-cheat support
 achievement support
+test mp3 support with sndfile 1.1 - cmake won't find lame / mpeg123 when compiling libsndfile
+led driver for tape / disk loading - see comments inside
 
 */
 
@@ -125,6 +122,7 @@ static retro_audio_sample_t audio_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
+//static retro_set_led_state_t led_state_cb;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -161,7 +159,32 @@ void set_frame_time_cb(retro_usec_t usec)
 
 }
 
+/* LED interface */
+/* Removed for the time being. Keyboard LEDs do not seem to work under x11 and will have side-effects.
+   The rpi driver needs extra hardware via gpio, it does not control the baseboard LEDs.
+   TODO: update the retroarch led driver to use /sys/class/led... but it may need more work and limited to Linux. */
+/*
+static unsigned int retro_led_state[2] = {0};
 
+static void update_led_interface(void)
+{
+
+   unsigned int led_state[2] = {0};
+   unsigned int l            = 0;
+
+   led_state[0] = 1;
+   led_state[1] = 1;
+
+   for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
+   {
+      if (retro_led_state[l] != led_state[l])
+      {
+         retro_led_state[l] = led_state[l];
+         led_state_cb(l, led_state[l]);
+      }
+   }
+}
+*/
 static void update_keyboard_cb(bool down, unsigned keycode,
                                uint32_t character, uint16_t key_modifiers)
 {
@@ -287,6 +310,18 @@ void retro_init(void)
   else
     enableDiskControl = false;
 
+/*  struct retro_led_interface led_interface;
+  if(environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
+   if (led_interface.set_led_state && !led_state_cb) {
+      led_state_cb = led_interface.set_led_state;
+      log_cb(RETRO_LOG_INFO, "LED interface supported\n");
+    } else {
+      log_cb(RETRO_LOG_INFO, "LED interface not supported\n");
+    }
+  } else {
+    log_cb(RETRO_LOG_INFO, "LED interface not present\n");
+  }
+*/
   const char *system_dir = NULL;
   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
   {
@@ -386,7 +421,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.1.2";
+  info->library_version  = "v1.2.0";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
@@ -417,14 +452,12 @@ void retro_set_environment(retro_environment_t cb)
   environ_cb = cb;
 
   bool no_content = true;
-  cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
+  environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_NO_GAME, &no_content);
 
-  if (cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
+  if (environ_cb(RETRO_ENVIRONMENT_GET_LOG_INTERFACE, &logging))
     log_cb = logging.log;
   else
     log_cb = fallback_log;
-
-  environ_cb = cb;
 
   static const struct retro_variable vars[] =
   {
@@ -440,7 +473,7 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_afsp", "User 1 Autofire repeat delay; 1|2|4|8|16" },
     { NULL, NULL },
   };
-  cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+  environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
@@ -530,6 +563,9 @@ void retro_run(void)
   audio_callback_batch();
   core->sync_display();
   render();
+   /* LED interface */
+/*   if (led_state_cb)
+      update_led_interface();*/
 }
 
 bool header_match(const char* buf1, const unsigned char* buf2, size_t length)
@@ -832,6 +868,30 @@ bool retro_load_game(const struct retro_game_info *info)
       log_cb(RETRO_LOG_ERROR, "Exception in load_game\n");
       throw;
     }
+
+    // ep128emu allocates memory per 16 kB segments
+    // actual place in the address map differs between ep/tvc/cpc/zx
+    // so all slots are scanned, but only 576 kB is offered as map
+    // to cover some new games that require RAM extension
+    struct retro_memory_descriptor desc[36];
+    memset(desc, 0, sizeof(desc));
+    int dindex=0;
+    for(uint8_t segment=0; dindex<32 ; segment++) {
+       if(core->vm->getSegmentPtr(segment)) {
+         desc[dindex].start=segment << 14;
+         desc[dindex].select=0xFF << 14;
+         desc[dindex].len= 0x4000;
+         desc[dindex].ptr=core->vm->getSegmentPtr(segment);
+         desc[dindex].flags=RETRO_MEMDESC_SYSTEM_RAM;
+         dindex++;
+       }
+       if(segment==0xFF) break;
+    }
+    struct retro_memory_map retromap = {
+        desc,
+        sizeof(desc)/sizeof(desc[0])
+    };
+    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &retromap);
 
     config->setErrorCallback(&cfgErrorFunc, (void *) 0);
     vmThread = core->vmThread;
