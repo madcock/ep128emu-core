@@ -55,6 +55,7 @@ For most content types, there is a startup sequence that will do the program loa
 * Save/load state, rewind
 * Memory maps exposed for cheat support
 * Content autostart except for disk images
+* Disk change support for multi-disk (or multi-tape) games
 * Customizable configuration (per-content or system-wide)
   * See [sample.ep128cfg](core/sample.ep128cfg) for details
   * User 1 button map can be finetuned
