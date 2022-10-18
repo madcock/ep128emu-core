@@ -26,7 +26,6 @@ virtual keyboard
 core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
 check and include libretro common
 detailed type detection from content name
-m3u (or, rather, name-based autodetect) multi-disk, multi-tape interface support (cpc 3 guerra)
 locale support ep, cpc
 rom config for clkoff+hfont
 
@@ -42,6 +41,7 @@ EP Mouse support
 achievement support
 test mp3 support with sndfile 1.1 - cmake won't find lame / mpeg123 when compiling libsndfile
 led driver for tape / disk loading - see comments inside
+name-based autodetect for multi-disk, multi-tape interface support (cpc 3 guerra)
 
 */
 
@@ -104,14 +104,24 @@ retro_usec_t prev_frame_time = 0;
 float waitPeriod = 0.001;
 bool useSwFb = false;
 bool useHalfFrame = false;
-bool enableDiskControl = false;
-bool needsDiskControl = false;
 int borderSize = 0;
 bool soundHq = true;
-unsigned maxUsers;
-bool maxUsersSupported = true;
 bool canSkipFrames = false;
 bool enhancedRom = false;
+
+unsigned maxUsers;
+bool maxUsersSupported = true;
+
+unsigned diskIndex = 0;
+unsigned diskCount = 1;
+#define MAX_DISK_COUNT 6
+std::string diskPaths[MAX_DISK_COUNT];
+std::string diskNames[MAX_DISK_COUNT];
+bool diskEjected = false;
+
+bool tapeContent = false;
+bool diskContent = false;
+bool fileContent = false;
 
 Ep128Emu::VMThread              *vmThread    = (Ep128Emu::VMThread *) 0;
 Ep128Emu::EmulatorConfiguration *config      = (Ep128Emu::EmulatorConfiguration *) 0;
@@ -293,6 +303,117 @@ static void check_variables(void)
   if(vmThread) vmThread->resetKeyboard();
 }
 
+/* If ejected is true, "ejects" the virtual disk tray.
+ */
+static bool set_eject_state_cb(bool ejected) {
+  log_cb(RETRO_LOG_DEBUG, "Disk control: eject (%d)\n",ejected?1:0);
+  diskEjected = ejected;
+  return true;
+}
+
+/* Gets current eject state. The initial state is 'not ejected'. */
+static bool get_eject_state_cb(void) {
+//  log_cb(RETRO_LOG_DEBUG, "Disk control: get eject status (%d)\n",diskEjected?1:0);
+  return diskEjected;
+}
+
+/* Gets current disk index. First disk is index 0.
+ * If return value is >= get_num_images(), no disk is currently inserted.
+ */
+static unsigned get_image_index_cb(void) {
+//  log_cb(RETRO_LOG_DEBUG, "Disk control: get image index (%d)\n",diskIndex);
+  if (diskEjected) return diskCount + 1;
+  return diskIndex;
+}
+
+/* Sets image index. Can only be called when disk is ejected.
+ */
+static bool set_image_index_cb(unsigned index) {
+  log_cb(RETRO_LOG_DEBUG, "Disk control: change image to (%d)\n",index);
+  if (index>=diskCount) {
+    diskIndex = diskCount + 1;
+  } else {
+    diskIndex = index;
+    if (core) {
+      config = core->config;
+      if(diskContent) {
+        config->floppy.a.imageFile = diskPaths[index];
+        config->floppyAChanged = true;
+        log_cb(RETRO_LOG_DEBUG, "Disk control: new disk is %s\n",diskPaths[index].c_str());
+      } else if(tapeContent) {
+        config->tape.imageFile = diskPaths[index];
+        config->tapeFileChanged = true;
+        log_cb(RETRO_LOG_DEBUG, "Disk control: new tape is %s\n",diskPaths[index].c_str());
+      }
+      config->applySettings();
+    }
+  }
+  return true;
+}
+
+/* Gets total number of images which are available to use. */
+static unsigned get_num_images_cb(void) {return diskCount;}
+
+/* Replaces the disk image associated with index.
+ * Arguments to pass in info have same requirements as retro_load_game().
+ */
+static bool replace_image_index_cb(unsigned index,
+      const struct retro_game_info *info) {
+
+  log_cb(RETRO_LOG_DEBUG, "Disk control: replace image index (%d) to %s\n",index,info->path);
+  if (index >= diskCount) return false;
+  diskPaths[index] = info->path;
+  std::string contentPath;
+  Ep128Emu::splitPath(diskPaths[index],contentPath,diskNames[index]);
+  return true;
+}
+
+/* Adds a new valid index (get_num_images()) to the internal disk list.
+ * This will increment subsequent return values from get_num_images() by 1.
+ * This image index cannot be used until a disk image has been set
+ * with replace_image_index. */
+static bool add_image_index_cb(void) {
+  log_cb(RETRO_LOG_DEBUG, "Disk control: add image index (current %d)\n",diskCount);
+  if (diskCount >= MAX_DISK_COUNT) return false;
+  diskCount++;
+  return true;
+}
+
+/* Sets initial image to insert in drive when calling
+ * core_load_game().
+ * Returns 'false' if index or 'path' are invalid, or core
+ * does not support this functionality
+ */
+static bool set_initial_image_cb(unsigned index, const char *path) {return false;}
+
+/* Fetches the path of the specified disk image file.
+ * Returns 'false' if index is invalid (index >= get_num_images())
+ * or path is otherwise unavailable.
+ */
+static bool get_image_path_cb(unsigned index, char *path, size_t len) {
+  if (index >= diskCount) return false;
+  if(diskPaths[index].length() > 0)
+  path=(char*)diskPaths[index].c_str();
+  len=diskPaths[index].length();
+  log_cb(RETRO_LOG_DEBUG, "Disk control: get image path (%d) %s\n",index,path);
+  return true;
+}
+
+/* Fetches a core-provided 'label' for the specified disk
+ * image file. In the simplest case this may be a file name
+ * Returns 'false' if index is invalid (index >= get_num_images())
+ * or label is otherwise unavailable.
+ */
+static bool get_image_label_cb(unsigned index, char *label, size_t len) {
+  if(index >= diskCount) return false;
+  if(diskNames[index].length() > 0)
+  label=(char*)diskNames[index].c_str();
+  len=diskNames[index].length();
+  //log_cb(RETRO_LOG_DEBUG, "Disk control: get image label (%d) %s\n",index,label);
+  return true;
+}
+
+
 void retro_init(void)
 {
   struct retro_log_callback log;
@@ -303,12 +424,42 @@ void retro_init(void)
   else
     log_cb = fallback_log;
 
-  // actually it is the advanced disk control...
+  struct retro_disk_control_callback dccb =
+  {
+   set_eject_state_cb,
+   get_eject_state_cb,
+
+   get_image_index_cb,
+   set_image_index_cb,
+   get_num_images_cb,
+
+   replace_image_index_cb,
+   add_image_index_cb
+  };
+
+  struct retro_disk_control_ext_callback dccb_ext =
+  {
+   set_eject_state_cb,
+   get_eject_state_cb,
+
+   get_image_index_cb,
+   set_image_index_cb,
+   get_num_images_cb,
+
+   replace_image_index_cb,
+   add_image_index_cb,
+   set_initial_image_cb,
+
+   get_image_path_cb,
+   get_image_label_cb
+  };
+
   unsigned dci;
-  if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci))
-    enableDiskControl = true;
-  else
-    enableDiskControl = false;
+  if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci)) {
+    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dccb_ext);
+  } else {
+    environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &dccb);
+  }
 
 /*  struct retro_led_interface led_interface;
   if(environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
@@ -366,7 +517,7 @@ void retro_init(void)
     sizeof(retro_system_save_directory) - 1
   );
 
-  log_cb(RETRO_LOG_INFO, "Retro ROM DIRECTORY %s\n", retro_system_bios_directory);
+  log_cb(RETRO_LOG_DEBUG, "Retro ROM DIRECTORY %s\n", retro_system_bios_directory);
   log_cb(RETRO_LOG_DEBUG, "Retro SAVE_DIRECTORY %s\n", retro_system_save_directory);
   log_cb(RETRO_LOG_DEBUG, "Retro CONTENT_DIRECTORY %s\n", retro_content_directory);
 
@@ -421,7 +572,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.0";
+  info->library_version  = "v1.2.1";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
@@ -642,6 +793,8 @@ bool retro_load_game(const struct retro_game_info *info)
     log_cb(RETRO_LOG_DEBUG, "Content extension: %s \n",contentExt.c_str());
     Ep128Emu::splitPath(filename,contentPath,contentFile);
     contentBasename = contentFile;
+    diskPaths[0] = filename;
+    diskNames[0] = contentBasename;
     Ep128Emu::stringToLowerCase(contentBasename);
 
     int contentLocale = Ep128Emu::LOCALE_UK;
@@ -720,9 +873,9 @@ bool retro_load_game(const struct retro_game_info *info)
     // - 0xfe as "
     // - 0xfd as F1 (START)
     const char* startupSequence = "";
-    bool tapeContent = false;
-    bool diskContent = false;
-    bool fileContent = false;
+    tapeContent = false;
+    diskContent = false;
+    fileContent = false;
     int detectedMachineDetailedType = Ep128Emu::VM_config.at("VM_CONFIG_UNKNOWN");
 
     // start with longer magic strings - less chance of mis-detection
