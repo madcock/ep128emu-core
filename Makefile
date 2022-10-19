@@ -115,6 +115,7 @@ else ifeq ($(platform), win32)
 # emscripten
 else ifeq ($(platform), emscripten)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).bc
+	SHARED := -shared -s TOTAL_MEMORY=184842208
 	STATIC_LINKING=1
 endif
 
