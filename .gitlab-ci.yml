@@ -88,6 +88,9 @@ include:
   #  file: '/dingux-arm32.yml'
 
   #################################### MISC ##################################
+  # Emscripten
+  - project: 'libretro-infrastructure/ci-templates'
+    file: '/emscripten-static.yml'
 
 # Stages for building
 stages:
@@ -227,3 +230,10 @@ libretro-build-osx-arm64:
 #  extends:
 #    - .libretro-miyoo-arm32-make-default
 #    - .core-defs
+
+#################################### MISC ##################################
+# Emscripten
+libretro-build-emscripten:
+  extends:
+    - .libretro-emscripten-static-retroarch-master
+    - .core-defs

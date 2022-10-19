@@ -112,6 +112,10 @@ else ifeq ($(platform), win32)
 	PLATFORM_DEFINES += -march=pentium2
 	CFLAGS += -m32
 	CXXFLAGS += -m32
+# emscripten
+else ifeq ($(platform), emscripten)
+	TARGET := $(TARGET_NAME)_libretro_$(platform).bc
+	STATIC_LINKING=1
 endif
 
 ifeq ($(STATIC_LINKING), 1)
