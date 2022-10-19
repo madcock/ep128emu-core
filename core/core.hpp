@@ -217,9 +217,11 @@ enum LibretroCore_locale
   LOCALE_UNKNOWN = INT_MAX
 };
 
-// unused for now
+// HUN locale is required for "req zrom" games in Tosec collection
+// BRD locale is required for "req brd-rom" games in Tosec collection
+// Others are unused for now.
 const std::string locale_identifiers[LOCALE_AMOUNT] = {
-  "(uk)", "[req zrom]", "(ger)", "(es)", "(fr)"
+  "(uk)", "[req zrom]", "[req brd-rom]", "(es)", "(fr)"
 };
 
 class LibretroCore

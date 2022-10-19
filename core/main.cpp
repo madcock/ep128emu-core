@@ -6,6 +6,7 @@ save state for speaker and mono states
   new snapshot version
 emscripten and other builds
 database
+add missing roms to roms.h
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
@@ -26,7 +27,8 @@ virtual keyboard
 core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
 check and include libretro common
 detailed type detection from content name
-locale support ep, cpc
+locale support from menu
+locale support for cpc
 
 low prio:
 ep128cfg support player 2 mapping
