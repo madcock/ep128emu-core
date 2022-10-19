@@ -27,7 +27,6 @@ core options v2 https://github.com/libretro/libretro-common/tree/master/samples/
 check and include libretro common
 detailed type detection from content name
 locale support ep, cpc
-rom config for clkoff+hfont
 
 low prio:
 ep128cfg support player 2 mapping

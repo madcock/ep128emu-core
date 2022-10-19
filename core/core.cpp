@@ -208,15 +208,11 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
           config->memory.rom[0x05].file=romBasePath+"basic21.rom";
         config->memory.rom[0x05].offset=0;
       }
-      // HFONT is used from epdos rom
-      config->memory.rom[0x06].file=romBasePath+"epd19hft.rom";
+      // HFONT is used from epdos rom (and CLKOFF, as it is not present after this 1.6f version)
+      config->memory.rom[0x06].file=romBasePath+"epdos16f.rom";
       config->memory.rom[0x06].offset=0;
-      config->memory.rom[0x07].file=romBasePath+"epd19hft.rom";
+      config->memory.rom[0x07].file=romBasePath+"epdos16f.rom";
       config->memory.rom[0x07].offset=16384;
-      config->memory.rom[0x40].file=romBasePath+"zt19hfnt.rom";
-      config->memory.rom[0x40].offset=0;
-      config->memory.rom[0x41].file=romBasePath+"zt19hfnt.rom";
-      config->memory.rom[0x41].offset=16384;
     }
     else if(contentLocale == LOCALE_GER)
     {

@@ -219,7 +219,7 @@ enum LibretroCore_locale
 
 // unused for now
 const std::string locale_identifiers[LOCALE_AMOUNT] = {
-  "(uk)", "(hu___)", "(ger)", "(es)", "(fr)"
+  "(uk)", "[req zrom]", "(ger)", "(es)", "(fr)"
 };
 
 class LibretroCore
