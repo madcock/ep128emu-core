@@ -345,8 +345,15 @@ static bool set_image_index_cb(unsigned index) {
         config->tape.imageFile = diskPaths[index];
         config->tapeFileChanged = true;
         log_cb(RETRO_LOG_DEBUG, "Disk control: new tape is %s\n",diskPaths[index].c_str());
-      }
-      config->applySettings();
+      } else if (fileContent) {
+        std::string contentPath;
+        Ep128Emu::splitPath(diskPaths[index],contentPath,diskNames[index]);
+        config->fileio.workingDirectory = contentPath;
+        contentFileName=diskPaths[index];
+        config->fileioSettingsChanged = true;
+        log_cb(RETRO_LOG_DEBUG, "Disk control: new file is %s\n",diskPaths[index].c_str());
+     }
+     config->applySettings();
     }
   }
   return true;
