@@ -932,6 +932,8 @@ void LibretroCore::update_keyboard(bool down, unsigned keycode, uint32_t charact
   if (convertedKeycode >= 0)
   {
     vmThread->setKeyboardState((uint8_t)convertedKeycode,down);
+  } else if (down && keycode == RETROK_F12) {
+    w->scanBorders = true;
   }
   // TODO: if conversion does not succeed, try to apply literal mapping instead of default positional
   // it requires more work because upstrokes will not have character value so keypresses have to be stored separately
