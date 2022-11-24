@@ -4,9 +4,9 @@ crash at save state when memory is extended (Sword of Ianna)
 double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
-emscripten and other builds
+emscripten - initial memory problem
+other builds
 database
-add missing roms to roms.h
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
@@ -158,7 +158,7 @@ static void fileNameCallback(void *userData, std::string& fileName)
 
 void set_frame_time_cb(retro_usec_t usec)
 {
-  if (usec == 0 || usec > 1000000/50)
+  if (usec == 0 || usec > 2*1000000/50)
   {
     curr_frame_time = 1000000/50;
   }
@@ -580,7 +580,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.1";
+  info->library_version  = "v1.2.2";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
@@ -827,6 +827,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
     std::string diskExt = "img";
     std::string tapeExt = "tap";
+    std::string tapeExtEp = "ept";
     std::string fileExtDtf = "dtf";
     std::string fileExtTvc = "cas";
     std::string diskExtTvc = "dsk";
@@ -901,6 +902,13 @@ bool retro_load_game(const struct retro_game_info *info)
         detectedMachineDetailedType = Ep128Emu::VM_config.at("CPC_TAPE");
         tapeContent = true;
         startupSequence ="run\xfe\r\r";
+      }
+      // TODO: replace with something else?
+      else if (contentExt == tapeExtEp)
+      {
+        detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
+        tapeContent=true;
+        startupSequence =" \xff\xff\xfd";
       }
       else
       {
