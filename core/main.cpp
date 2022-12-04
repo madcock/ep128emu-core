@@ -24,7 +24,6 @@ keyboard is stuck after entering menu (like ctrl+f1), upstroke not detected, sho
 doublecheck zx keyboard map for 128, zx keyboard doc
 virtual keyboard
 
-core options v2 https://github.com/libretro/libretro-common/tree/master/samples/core_options
 check and include libretro common
 detailed type detection from content name
 locale support from menu
@@ -81,6 +80,7 @@ name-based autodetect for multi-disk, multi-tape interface support (cpc 3 guerra
 #include "libretro-funcs.hpp"
 #include "libretrodisp.hpp"
 #include "core.hpp"
+#include "libretro_core_options.h"
 #ifdef WIN32
 #include <windows.h>
 #endif // WIN32
@@ -580,7 +580,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.2";
+  info->library_version  = "v1.2.3";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
@@ -618,7 +618,7 @@ void retro_set_environment(retro_environment_t cb)
   else
     log_cb = fallback_log;
 
-  static const struct retro_variable vars[] =
+/*  static const struct retro_variable vars[] =
   {
     { "ep128emu_wait", "Main thread wait (ms); 0|1|5|10" },
     { "ep128emu_sdhq", "High sound quality; 1|0" },
@@ -632,7 +632,9 @@ void retro_set_environment(retro_environment_t cb)
     { "ep128emu_afsp", "User 1 Autofire repeat delay; 1|2|4|8|16" },
     { NULL, NULL },
   };
-  environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);
+  environ_cb(RETRO_ENVIRONMENT_SET_VARIABLES, (void*)vars);*/
+  bool categories_supported;
+  libretro_set_core_options(environ_cb,&categories_supported);
 }
 
 void retro_set_audio_sample(retro_audio_sample_t cb)
