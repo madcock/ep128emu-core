@@ -5,7 +5,8 @@ Leverage the convenience of libretro/retroarch to emulate the Z80 based home
 computers that the original ep128emu supports - that is, Enterprise 64/128, 
 Videoton TVC, Amstrad CPC and ZX Spectrum. Focus is on Enterprise and TVC.
 
-Note: The actual documentation is best viewed in [Retroarch docs](https://docs.libretro.com/library/ep128emu/). Source for maintenance is in [libretro docs repo](https://github.com/libretro/docs/blob/master/docs/library/ep128emu.md).
+Note: The actual documentation is best viewed in [Retroarch docs](https://docs.libretro.com/library/ep128emu/). Source for maintenance is in [libretro docs repo](https://github.com/libretro/docs/blob/master/docs/library/ep128emu.md). Standalone version also has a few fixes, see [standalone README](https://github.com/libretro/ep128emu-core/blob/standalone/README).
+
 ## Features
 
 For the emulation features, see the [original README](README). Since GUI is replaced by retroarch, features that would require own window (debugger, keyboard layout setting, etc) are not available. Some extra features not required for original games are also excluded (SD card, SID, MIDI, Spectrum emulation card for EP, mouse).
