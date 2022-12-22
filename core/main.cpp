@@ -323,7 +323,6 @@ static bool get_eject_state_cb(void) {
  */
 static unsigned get_image_index_cb(void) {
 //  log_cb(RETRO_LOG_DEBUG, "Disk control: get image index (%d)\n",diskIndex);
-  if (diskEjected) return diskCount + 1;
   return diskIndex;
 }
 
@@ -401,8 +400,7 @@ static bool set_initial_image_cb(unsigned index, const char *path) {return false
 static bool get_image_path_cb(unsigned index, char *path, size_t len) {
   if (index >= diskCount) return false;
   if(diskPaths[index].length() > 0)
-  path=(char*)diskPaths[index].c_str();
-  len=diskPaths[index].length();
+  strncpy(path, diskPaths[index].c_str(), len);
   log_cb(RETRO_LOG_DEBUG, "Disk control: get image path (%d) %s\n",index,path);
   return true;
 }
@@ -415,8 +413,7 @@ static bool get_image_path_cb(unsigned index, char *path, size_t len) {
 static bool get_image_label_cb(unsigned index, char *label, size_t len) {
   if(index >= diskCount) return false;
   if(diskNames[index].length() > 0)
-  label=(char*)diskNames[index].c_str();
-  len=diskNames[index].length();
+  strncpy(label, diskNames[index].c_str(), len);
   //log_cb(RETRO_LOG_DEBUG, "Disk control: get image label (%d) %s\n",index,label);
   return true;
 }
@@ -465,8 +462,10 @@ void retro_init(void)
   unsigned dci;
   if (environ_cb(RETRO_ENVIRONMENT_GET_DISK_CONTROL_INTERFACE_VERSION, &dci)) {
     environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_EXT_INTERFACE, &dccb_ext);
+    log_cb(RETRO_LOG_DEBUG, "Using extended disk control interface\n");
   } else {
     environ_cb(RETRO_ENVIRONMENT_SET_DISK_CONTROL_INTERFACE, &dccb);
+    log_cb(RETRO_LOG_DEBUG, "Using basic disk control interface\n");
   }
 
 /*  struct retro_led_interface led_interface;
@@ -580,7 +579,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.3";
+  info->library_version  = "v1.2.4";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
