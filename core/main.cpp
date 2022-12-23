@@ -41,7 +41,6 @@ EP Mouse support
 achievement support
 test mp3 support with sndfile 1.1 - cmake won't find lame / mpeg123 when compiling libsndfile
 led driver for tape / disk loading - see comments inside
-name-based autodetect for multi-disk, multi-tape interface support (cpc 3 guerra)
 
 */
 
@@ -115,7 +114,7 @@ bool maxUsersSupported = true;
 
 unsigned diskIndex = 0;
 unsigned diskCount = 1;
-#define MAX_DISK_COUNT 6
+#define MAX_DISK_COUNT 10
 std::string diskPaths[MAX_DISK_COUNT];
 std::string diskNames[MAX_DISK_COUNT];
 bool diskEjected = false;
@@ -418,6 +417,48 @@ static bool get_image_label_cb(unsigned index, char *label, size_t len) {
   return true;
 }
 
+static bool add_new_image_auto(const char *path) {
+
+  unsigned index = diskCount;
+  if (diskCount >= MAX_DISK_COUNT) return false;
+  diskCount++;
+  log_cb(RETRO_LOG_DEBUG, "Disk control: add new image (%d) as %s\n",diskCount,path);
+
+  diskPaths[index] = path;
+  std::string contentPath;
+  Ep128Emu::splitPath(diskPaths[index],contentPath,diskNames[index]);
+  return true;
+}
+
+static void scan_multidisk_files(const char *path) {
+
+  std::string filename(path);
+  std::string filePrefix;
+  std::string filePostfix;
+  std::string additionalFile;
+  std::map< std::string, std::string >::const_iterator  iter_multidisk;
+
+  for (iter_multidisk = Ep128Emu::multidisk_replacements.begin(); iter_multidisk != Ep128Emu::multidisk_replacements.end(); ++iter_multidisk)
+  {
+    size_t idx = filename.rfind((*iter_multidisk).first);
+    if(idx != std::string::npos) {
+      filePrefix = filename.substr(0,idx);
+      filePostfix = filename.substr(idx+(*iter_multidisk).first.length());
+      additionalFile = filePrefix + (*iter_multidisk).second.c_str() + filePostfix;
+
+      if(Ep128Emu::does_file_exist(additionalFile.c_str()))
+      {
+        log_cb(RETRO_LOG_INFO, "Multidisk additional file found: %s => %s\n",filename.c_str(), additionalFile.c_str());
+        if (!add_new_image_auto(additionalFile.c_str())) {
+          log_cb(RETRO_LOG_WARN, "Multidisk additional image add unsuccessful: %s\n",additionalFile.c_str());
+          break;
+        }
+      }
+    }
+  }
+}
+
+
 
 void retro_init(void)
 {
@@ -579,7 +620,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.4";
+  info->library_version  = "v1.2.5";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
@@ -1005,6 +1046,9 @@ bool retro_load_game(const struct retro_game_info *info)
         // Todo: add tzx based advanced detection here
         /*    tape = openTapeFile(fileName.c_str(), 0,
                         defaultTapeSampleRate, bitsPerSample);*/
+      }
+      if (diskContent || tapeContent) {
+        scan_multidisk_files(info->path);
       }
       if (fileContent)
       {

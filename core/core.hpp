@@ -224,6 +224,45 @@ const std::string locale_identifiers[LOCALE_AMOUNT] = {
   "(uk)", "[req zrom]", "[req brd-rom]", "(es)", "(fr)"
 };
 
+const std::multimap<std::string, std::string> multidisk_replacements = {
+{"Tape 1 of 2 Side A" , "Tape 2 of 2 Side B"},
+{"Tape 1 of 4 Side A" , "Tape 2 of 4 Side B"},
+{"Tape 1 of 4 Side A" , "Tape 3 of 4 Side A"},
+{"Tape 1 of 4 Side A" , "Tape 4 of 4 Side B"},
+{"Tape 1 of"      , "Tape 2 of"},
+{"Tape 1 of"      , "Tape 3 of"},
+{"Tape 1 of"      , "Tape 4 of"},
+{"Tape 1 of"      , "Tape 5 of"},
+{"Tape 1 of"      , "Tape 6 of"},
+{"Tape 1 of"      , "Tape 7 of"},
+{"Tape 1 of"      , "Tape 8 of"},
+{"Tape 1 of"      , "Tape 9 of"},
+{"Tape 1 of"      , "Tape 10 of"},
+{"Disk 1 Side A"  , "Disk 1 Side B"},
+{"Disk 1 Side A"  , "Disk 2 Side A"},
+{"Disk 1 Side A"  , "Disk 2 Side B"},
+{"Disk 1 Side A"  , "Disk 3 Side A"},
+{"Disk 1 Side A"  , "Disk 3 Side B"},
+{"Disk 1A"        , "Disk 1B"},
+{"Disk 1A"        , "Disk 2A"},
+{"Disk 1A"        , "Disk 2B"},
+{"Disk 1A"        , "Disk 3A"},
+{"Disk 1A"        , "Disk 3B"},
+{"Disk 1 of"      , "Disk 2 of"},
+{"Disk 1 of"      , "Disk 3 of"},
+{"Disk 1 of"      , "Disk 4 of"},
+{"Disk 1 of"      , "Disk 5 of"},
+{"Disk 1 of"      , "Disk 6 of"},
+{"Side 1A"        , "Side 1B"},
+{"Side 1A"        , "Side 2A"},
+{"Side 1A"        , "Side 2B"},
+{"Side 1A"        , "Side 3A"},
+{"Side 1A"        , "Side 3B"},
+{"Side 1A"        , "Side 4A"},
+{"Side 1A"        , "Side 4B"},
+{"Side A"         , "Side B"},
+};
+
 class LibretroCore
 {
 private:
