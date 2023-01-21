@@ -73,6 +73,21 @@ else ifeq ($(platform), osx)
 	TARGET := $(TARGET_NAME)_libretro.dylib
 	fpic := -fPIC
 	SHARED := -dynamiclib
+        MINVERSION :=
+	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
+	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
+	ifeq ($(OSX_LT_MAVERICKS),"YES")
+		MINVERSION = -mmacosx-version-min=10.5
+	endif
+	fpic += $(MINVERSION)
+
+   ifeq ($(CROSS_COMPILE),1)
+		TARGET_RULE   = -target $(LIBRETRO_APPLE_PLATFORM) -isysroot $(LIBRETRO_APPLE_ISYSROOT)
+		CFLAGS   += $(TARGET_RULE)
+		CPPFLAGS += $(TARGET_RULE)
+		CXXFLAGS += $(TARGET_RULE)
+		LDFLAGS  += $(TARGET_RULE)
+   endif
 
 	CFLAGS  += $(ARCHFLAGS)
 	CXXFLAGS  += $(ARCHFLAGS)
