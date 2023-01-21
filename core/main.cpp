@@ -132,7 +132,7 @@ static retro_audio_sample_t audio_cb;
 static retro_audio_sample_batch_t audio_batch_cb;
 static retro_input_poll_t input_poll_cb;
 static retro_input_state_t input_state_cb;
-//static retro_set_led_state_t led_state_cb;
+static retro_set_led_state_t led_state_cb;
 
 static void fallback_log(enum retro_log_level level, const char *fmt, ...)
 {
@@ -170,10 +170,7 @@ void set_frame_time_cb(retro_usec_t usec)
 }
 
 /* LED interface */
-/* Removed for the time being. Keyboard LEDs do not seem to work under x11 and will have side-effects.
-   The rpi driver needs extra hardware via gpio, it does not control the baseboard LEDs.
-   TODO: update the retroarch led driver to use /sys/class/led... but it may need more work and limited to Linux. */
-/*
+
 static unsigned int retro_led_state[2] = {0};
 
 static void update_led_interface(void)
@@ -183,18 +180,23 @@ static void update_led_interface(void)
    unsigned int l            = 0;
 
    led_state[0] = 1;
-   led_state[1] = 1;
+   if (core)
+      led_state[1] = core->vm->getFloppyDriveLEDState() ? 1 : 0;
+   else
+      led_state[1] = 0;
 
    for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
    {
       if (retro_led_state[l] != led_state[l])
       {
+         //log_cb(RETRO_LOG_DEBUG, "LED control: state (%u)\n",core->vm->getFloppyDriveLEDState());
+         log_cb(RETRO_LOG_DEBUG, "LED control: change LED nr. %d (%d)->(%d)\n",l,retro_led_state[l],led_state[l]);
          retro_led_state[l] = led_state[l];
          led_state_cb(l, led_state[l]);
       }
    }
 }
-*/
+
 static void update_keyboard_cb(bool down, unsigned keycode,
                                uint32_t character, uint16_t key_modifiers)
 {
@@ -509,7 +511,7 @@ void retro_init(void)
     log_cb(RETRO_LOG_DEBUG, "Using basic disk control interface\n");
   }
 
-/*  struct retro_led_interface led_interface;
+  struct retro_led_interface led_interface;
   if(environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
    if (led_interface.set_led_state && !led_state_cb) {
       led_state_cb = led_interface.set_led_state;
@@ -520,7 +522,7 @@ void retro_init(void)
   } else {
     log_cb(RETRO_LOG_INFO, "LED interface not present\n");
   }
-*/
+
   const char *system_dir = NULL;
   if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
   {
@@ -765,8 +767,8 @@ void retro_run(void)
   core->sync_display();
   render();
    /* LED interface */
-/*   if (led_state_cb)
-      update_led_interface();*/
+   if (led_state_cb)
+      update_led_interface();
 }
 
 bool header_match(const char* buf1, const unsigned char* buf2, size_t length)
