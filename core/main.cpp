@@ -622,7 +622,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.5";
+  info->library_version  = "v1.2.6";
   info->need_fullpath    = true;
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
 }
