@@ -45,7 +45,6 @@ ifeq ($(platform), unix)
 	SHARED := -shared -Wl,-version-script=link.T -Wl,-no-undefined
 	CC ?= gcc
 	CXX ?= g++
-	PLATFORM_DEFINES += -mtune=generic
   LDFLAGS += -Wl,--as-needed
 else ifneq (,$(findstring linux-portable,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so

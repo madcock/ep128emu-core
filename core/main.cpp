@@ -170,15 +170,14 @@ void set_frame_time_cb(retro_usec_t usec)
 }
 
 /* LED interface */
-
 static unsigned int retro_led_state[2] = {0};
-
 static void update_led_interface(void)
 {
 
    unsigned int led_state[2] = {0};
    unsigned int l            = 0;
 
+   // TODO: power LED should go off during reset (even though original machine had no such thing)
    led_state[0] = 1;
    if (core)
       led_state[1] = core->vm->getFloppyDriveLEDState() ? 1 : 0;
@@ -189,7 +188,6 @@ static void update_led_interface(void)
    {
       if (retro_led_state[l] != led_state[l])
       {
-         //log_cb(RETRO_LOG_DEBUG, "LED control: state (%u)\n",core->vm->getFloppyDriveLEDState());
          log_cb(RETRO_LOG_DEBUG, "LED control: change LED nr. %d (%d)->(%d)\n",l,retro_led_state[l],led_state[l]);
          retro_led_state[l] = led_state[l];
          led_state_cb(l, led_state[l]);
