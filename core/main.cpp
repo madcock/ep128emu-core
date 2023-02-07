@@ -620,9 +620,13 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.6";
+  info->library_version  = "v1.2.7";
   info->need_fullpath    = true;
+#ifndef EXCLUDE_SOUND_LIBS
+  info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|mp3|.";
+#else
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|.";
+#endif // EXCLUDE_SOUND_LIBS
 }
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
@@ -918,6 +922,8 @@ bool retro_load_game(const struct retro_game_info *info)
     static const char *epComFileHeader = "\x00\x05";
     static const char *epComFileHeader2 = "\x00\x06";
     static const char *epBasFileHeader = "\x00\x04";
+    static const char *mp3FileHeader1 = "\x49\x44\x33";
+    static const char *mp3FileHeader2 = "\xff\xfb";
     // Startup sequence may contain:
     // - chars on the keyboard (a-z, 0-9, few symbols like :
     // - 0xff as wait character
@@ -975,6 +981,7 @@ bool retro_load_game(const struct retro_game_info *info)
     // All .tap files will fall back to be interpreted as EP128_TAPE
     else if(header_match(epteFileMagic,tmpBufOffset128,32) || header_match(ep128emuTapFileHeader,tmpBuf,8) ||
             header_match(waveFileMagic,tmpBuf,4) || header_match(TAPirFileMagic,tmpBufOffset512,3) ||
+            header_match(mp3FileHeader1,tmpBuf,3) || header_match(mp3FileHeader2,tmpBufOffset512,2) ||
             contentExt == tapeExt )
     {
       detectedMachineDetailedType = Ep128Emu::VM_config.at("EP128_TAPE");
