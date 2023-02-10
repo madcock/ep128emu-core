@@ -68,6 +68,13 @@ For most content types, there is a startup sequence that will do the program loa
 * Fit to content
   * Pressing **R3** will zoom in to the actual content, cropping black/single-colored borders
   * Borders can be cropped completely (default) or using a margin configurable among core options
+* LED driver support, add following to `retroarch.cfg` to use Scroll Lock led for floppy activity:
+```shell
+led_driver="keyboard"
+led1_map = "-1"
+led2_map = "-1"
+led3_map = "2" 
+```  
 
 ## Using the core
 
