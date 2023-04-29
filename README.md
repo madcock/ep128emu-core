@@ -72,15 +72,14 @@ For most content types, there is a startup sequence that will do the program loa
 ```shell
 led_driver="keyboard"
 led1_map = "-1"
-led2_map = "-1"
-led3_map = "2" 
+led2_map = "2"
 ```  
 
 ## Using the core
 
 ### Requirements
 
-* A system with retroarch installed. Linux 64-bit, ARM 32-bit, MacOS, and Windows 32 and 64 bit versions of the core are currently available.
+* A system with retroarch installed. Linux 32/64-bit, ARM 32-bit, MacOS, and Windows 32 and 64 bit versions of the core are currently available.
 * From version 1.1.0, default ROM versions are built in, no need to download separately.
 
 ### Running the core
