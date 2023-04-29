@@ -178,17 +178,22 @@ static void update_led_interface(void)
    unsigned int l            = 0;
 
    // TODO: power LED should go off during reset (even though original machine had no such thing)
-   led_state[0] = 1;
-   if (core)
-      led_state[1] = core->vm->getFloppyDriveLEDState() ? 1 : 0;
-   else
+   // TODO: LED 0/1 could be used for red/green replication of load indicators. LED0 does not work yet.
+   if (core) {
+      led_state[1] = core->vm->getFloppyDriveLEDState() & 0xFFFFFFBF ? 1 : 0;
+      led_state[0] = core->vm->getFloppyDriveLEDState() & 0x00000040 ? 1 : 0;
+   }
+   else {
       led_state[1] = 0;
+      led_state[0] = 1;
+   }
+   
 
    for (l = 0; l < sizeof(led_state)/sizeof(led_state[0]); l++)
    {
       if (retro_led_state[l] != led_state[l])
       {
-         log_cb(RETRO_LOG_DEBUG, "LED control: change LED nr. %d (%d)->(%d)\n",l,retro_led_state[l],led_state[l]);
+         /*log_cb(RETRO_LOG_DEBUG, "LED control: change LED nr. %d (%d)->(%d)\n",l,retro_led_state[l],led_state[l]);*/
          retro_led_state[l] = led_state[l];
          led_state_cb(l, led_state[l]);
       }
@@ -620,7 +625,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.7";
+  info->library_version  = "v1.2.8";
   info->need_fullpath    = true;
 #ifndef EXCLUDE_SOUND_LIBS
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|mp3|.";

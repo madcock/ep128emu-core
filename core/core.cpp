@@ -171,59 +171,59 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     if (enhancedRom)
     {
       bootframes = 20*10;
-      config->memory.rom[0x00].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x00].file="exos24uk.rom";
       config->memory.rom[0x00].offset=0;
-      config->memory.rom[0x01].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x01].file="exos24uk.rom";
       config->memory.rom[0x01].offset=16384;
-      config->memory.rom[0x02].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x02].file="exos24uk.rom";
       config->memory.rom[0x02].offset=32768;
-      config->memory.rom[0x03].file=romBasePath+"exos24uk.rom";
+      config->memory.rom[0x03].file="exos24uk.rom";
       config->memory.rom[0x03].offset=49152;
     }
     else if (is_EP64)
     {
       bootframes = 30*10;
-      config->memory.rom[0x00].file=romBasePath+"exos20.rom";
+      config->memory.rom[0x00].file="exos20.rom";
       config->memory.rom[0x00].offset=0;
-      config->memory.rom[0x01].file=romBasePath+"exos20.rom";
+      config->memory.rom[0x01].file="exos20.rom";
       config->memory.rom[0x01].offset=16384;
     }
     else
     {
       bootframes = 40*10;
-      config->memory.rom[0x00].file=romBasePath+"exos21.rom";
+      config->memory.rom[0x00].file="exos21.rom";
       config->memory.rom[0x00].offset=0;
-      config->memory.rom[0x01].file=romBasePath+"exos21.rom";
+      config->memory.rom[0x01].file="exos21.rom";
       config->memory.rom[0x01].offset=16384;
     }
     if(contentLocale == LOCALE_HUN)
     {
       // Locale support: HUN ROM goes to segment 4 and then Basic goes to segment 5
-      config->memory.rom[0x04].file=romBasePath+"hun.rom";
+      config->memory.rom[0x04].file="hun.rom";
       config->memory.rom[0x04].offset=0;
       if (use_cartridge) {
         if (is_EP64)
-          config->memory.rom[0x05].file=romBasePath+"basic20.rom";
+          config->memory.rom[0x05].file="basic20.rom";
         else
-          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+          config->memory.rom[0x05].file="basic21.rom";
         config->memory.rom[0x05].offset=0;
       }
       // HFONT is used from epdos rom (and CLKOFF, as it is not present after this 1.6f version)
-      config->memory.rom[0x06].file=romBasePath+"epdos16f.rom";
+      config->memory.rom[0x06].file="epdos16f.rom";
       config->memory.rom[0x06].offset=0;
-      config->memory.rom[0x07].file=romBasePath+"epdos16f.rom";
+      config->memory.rom[0x07].file="epdos16f.rom";
       config->memory.rom[0x07].offset=16384;
     }
     else if(contentLocale == LOCALE_GER)
     {
       // Locale support: BRD ROM goes to segment 4 and then Basic goes to segment 5
-      config->memory.rom[0x04].file=romBasePath+"brd.rom";
+      config->memory.rom[0x04].file="brd.rom";
       config->memory.rom[0x04].offset=0;
       if (use_cartridge) {
         if (is_EP64)
-          config->memory.rom[0x05].file=romBasePath+"basic20.rom";
+          config->memory.rom[0x05].file="basic20.rom";
         else
-          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+          config->memory.rom[0x05].file="basic21.rom";
         config->memory.rom[0x05].offset=0;
       }
     }
@@ -231,38 +231,38 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     {
       if (use_cartridge) {
         if (is_EP64)
-          config->memory.rom[0x04].file=romBasePath+"basic20.rom";
+          config->memory.rom[0x04].file="basic20.rom";
         else
-          config->memory.rom[0x05].file=romBasePath+"basic21.rom";
+          config->memory.rom[0x05].file="basic21.rom";
         config->memory.rom[0x04].offset=0;
       }
     }
 
     if(use_file || use_dtf)
     {
-      config->memory.rom[0x10].file=romBasePath+"epfileio.rom";
+      config->memory.rom[0x10].file="epfileio.rom";
       config->memory.rom[0x10].offset=0;
       if(use_dtf)
       {
-        config->memory.rom[0x40].file=romBasePath+"zt19uk.rom";
+        config->memory.rom[0x40].file="zt19uk.rom";
         config->memory.rom[0x40].offset=0;
-        config->memory.rom[0x41].file=romBasePath+"zt19uk.rom";
+        config->memory.rom[0x41].file="zt19uk.rom";
         config->memory.rom[0x41].offset=16384;
       }
     }
     if(use_isdos)
     {
-      config->memory.rom[0x20].file=romBasePath+"exdos14isdos10uk.rom";
+      config->memory.rom[0x20].file="exdos14isdos10uk.rom";
       config->memory.rom[0x20].offset=0;
-      config->memory.rom[0x21].file=romBasePath+"exdos14isdos10uk.rom";
+      config->memory.rom[0x21].file="exdos14isdos10uk.rom";
       config->memory.rom[0x21].offset=16384;
       startSequence += " \xff\xff\xff\xff\xff\xff\xff\xff\xff\xff""\x27""isdos\r""\xff\xff\xff\xff\xff\xff\xff""dir\r";
     }
     else if(use_file || use_disk)
     {
-      config->memory.rom[0x20].file=romBasePath+"exdos13.rom";
+      config->memory.rom[0x20].file="exdos13.rom";
       config->memory.rom[0x20].offset=0;
-      config->memory.rom[0x21].file=romBasePath+"exdos13.rom";
+      config->memory.rom[0x21].file="exdos13.rom";
       config->memory.rom[0x21].offset=16384;
     }
   }
@@ -270,18 +270,18 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
   {
     bootframes = 50*10;
     config->memory.ram.size=128;
-    config->memory.rom[0x00].file=romBasePath+"tvc22_sys.rom";
+    config->memory.rom[0x00].file="tvc22_sys.rom";
     config->memory.rom[0x00].offset=0;
-    config->memory.rom[0x02].file=romBasePath+"tvc22_ext.rom";
+    config->memory.rom[0x02].file="tvc22_ext.rom";
     config->memory.rom[0x02].offset=0;
     if(machineDetailedType == VM_config.at("TVC64_FILE"))
     {
-      config->memory.rom[0x04].file=romBasePath+"tvcfileio.rom";
+      config->memory.rom[0x04].file="tvcfileio.rom";
       config->memory.rom[0x04].offset=0;
     }
     if(machineDetailedType == VM_config.at("TVC64_DISK"))
     {
-      config->memory.rom[0x03].file=romBasePath+"tvc_dos12d.rom";
+      config->memory.rom[0x03].file="tvc_dos12d.rom";
       config->memory.rom[0x03].offset=0;
     }
   }
@@ -292,31 +292,31 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
     if(machineDetailedType == VM_config.at("CPC_464_TAPE"))
     {
       config->memory.ram.size=64;
-      config->memory.rom[0x10].file=romBasePath+"cpc464.rom";
+      config->memory.rom[0x10].file="cpc464.rom";
       config->memory.rom[0x10].offset=0;
-      config->memory.rom[0x00].file=romBasePath+"cpc464.rom";
+      config->memory.rom[0x00].file="cpc464.rom";
       config->memory.rom[0x00].offset=16384;
     }
     else if(machineDetailedType == VM_config.at("CPC_664_DISK"))
     {
       config->memory.ram.size=64;
-      config->memory.rom[0x10].file=romBasePath+"cpc664.rom";
+      config->memory.rom[0x10].file="cpc664.rom";
       config->memory.rom[0x10].offset=0;
-      config->memory.rom[0x00].file=romBasePath+"cpc664.rom";
+      config->memory.rom[0x00].file="cpc664.rom";
       config->memory.rom[0x00].offset=16384;
     }
     else
     {
       // 6128 as default
       config->memory.ram.size=128;
-      config->memory.rom[0x10].file=romBasePath+"cpc6128.rom";
+      config->memory.rom[0x10].file="cpc6128.rom";
       config->memory.rom[0x10].offset=0;
-      config->memory.rom[0x00].file=romBasePath+"cpc6128.rom";
+      config->memory.rom[0x00].file="cpc6128.rom";
       config->memory.rom[0x00].offset=16384;
     }
     if(machineDetailedType == VM_config.at("CPC_DISK") || machineDetailedType == VM_config.at("CPC_664_DISK"))
     {
-      config->memory.rom[0x07].file=romBasePath+"cpc_amsdos.rom";
+      config->memory.rom[0x07].file="cpc_amsdos.rom";
       config->memory.rom[0x07].offset=0;
     }
 
@@ -339,23 +339,92 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
 
     if(machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE"))
     {
-      config->memory.rom[0x00].file=romBasePath+"zx128.rom";
+      config->memory.rom[0x00].file="zx128.rom";
       config->memory.rom[0x00].offset=0;
-      config->memory.rom[0x01].file=romBasePath+"zx128.rom";
+      config->memory.rom[0x01].file="zx128.rom";
       config->memory.rom[0x01].offset=16384;
     }
     else
     {
-      config->memory.rom[0x00].file=romBasePath+"zx48.rom";
+      config->memory.rom[0x00].file="zx48.rom";
       config->memory.rom[0x00].offset=0;
     }
   }
+
+  if(machineType == MACHINE_EP)
+  {
+    config->vm.cpuClockFrequency=4000000;
+    config->vm.enableMemoryTimingEmulation=true;
+    config->vm.soundClockFrequency=500000;
+    config->vm.videoClockFrequency=889846;
+  }
+  else if(machineType == MACHINE_TVC)
+  {
+    config->vm.cpuClockFrequency=3125000;
+    config->vm.enableMemoryTimingEmulation=true;
+    config->vm.soundClockFrequency=390625;
+    config->vm.videoClockFrequency=1562500;
+  }
+  else if(machineType == MACHINE_CPC)
+  {
+    config->vm.cpuClockFrequency=4000000;
+    config->vm.enableMemoryTimingEmulation=true;
+    config->vm.soundClockFrequency=125000;
+    config->vm.videoClockFrequency=1000000;
+  }
+  else if(machineType == MACHINE_ZX)
+  {
+    if(machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE"))
+    {
+      config->vm.cpuClockFrequency=3546896;
+      config->vm.soundClockFrequency=221681;
+      config->vm.videoClockFrequency=886724;
+    }
+    else
+    {
+      config->vm.cpuClockFrequency=3500000;
+      config->vm.soundClockFrequency=218750;
+      config->vm.videoClockFrequency=875000;
+    }
+    config->vm.enableMemoryTimingEmulation=true;
+  }
+  config->vmConfigurationChanged = true;
+
+  config->sound.sampleRate = EP128EMU_SAMPLE_RATE_FLOAT;
+  config->sound.hwPeriods = 16;
+  //config->sound.swPeriods = 16;
+  //config->sound.enabled = false;
+  config->sound.highQuality = true;
+  config->soundSettingsChanged = true;
+
+  // Reload config files to enforce priority of settings.
+  if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
+  {
+    config->loadState(configBaseFile.c_str(),false);
+  }
+  // highest: content-specific file
+  if (cfgFile[0])
+  {
+    config->loadState(cfgFile,false);
+  }
+
   // ROM validity check: scan ROM definitions and check if files can be be found.
   // If not, try to use replacement file
   for(int i=0; i<68; i++)
   {
     if(config->memory.rom[i].file.length()>0)
     {
+      // Prepend romBasePath if the rom name is not a path already (useful for rom settings read from .ep128cfg)
+#ifdef WIN32
+      size_t idx = config->memory.rom[i].file.rfind('\\');
+#else
+      size_t idx = config->memory.rom[i].file.rfind('/');
+#endif
+      if(idx == std::string::npos)
+      {
+        config->memory.rom[i].file=romBasePath+config->memory.rom[i].file;
+      }
+      
       if(!Ep128Emu::does_file_exist(config->memory.rom[i].file.c_str()))
       {
         std::map< std::string, std::string >::const_iterator  iter_altrom;
@@ -422,65 +491,8 @@ LibretroCore::LibretroCore(retro_log_printf_t log_cb_, int machineDetailedType_,
       }
     }
   }
-  config->memoryConfigurationChanged = true;
-
-  if(machineType == MACHINE_EP)
-  {
-    config->vm.cpuClockFrequency=4000000;
-    config->vm.enableMemoryTimingEmulation=true;
-    config->vm.soundClockFrequency=500000;
-    config->vm.videoClockFrequency=889846;
-  }
-  else if(machineType == MACHINE_TVC)
-  {
-    config->vm.cpuClockFrequency=3125000;
-    config->vm.enableMemoryTimingEmulation=true;
-    config->vm.soundClockFrequency=390625;
-    config->vm.videoClockFrequency=1562500;
-  }
-  else if(machineType == MACHINE_CPC)
-  {
-    config->vm.cpuClockFrequency=4000000;
-    config->vm.enableMemoryTimingEmulation=true;
-    config->vm.soundClockFrequency=125000;
-    config->vm.videoClockFrequency=1000000;
-  }
-  else if(machineType == MACHINE_ZX)
-  {
-    if(machineDetailedType == VM_config.at("ZX128_TAPE") || machineDetailedType == VM_config.at("ZX128_FILE"))
-    {
-      config->vm.cpuClockFrequency=3546896;
-      config->vm.soundClockFrequency=221681;
-      config->vm.videoClockFrequency=886724;
-    }
-    else
-    {
-      config->vm.cpuClockFrequency=3500000;
-      config->vm.soundClockFrequency=218750;
-      config->vm.videoClockFrequency=875000;
-    }
-    config->vm.enableMemoryTimingEmulation=true;
-  }
-  config->vmConfigurationChanged = true;
-
-  config->sound.sampleRate = EP128EMU_SAMPLE_RATE_FLOAT;
-  config->sound.hwPeriods = 16;
-  //config->sound.swPeriods = 16;
-  //config->sound.enabled = false;
-  config->sound.highQuality = true;
-  config->soundSettingsChanged = true;
-
-  // Reload config files to enforce priority of settings.
-  if(Ep128Emu::does_file_exist(configBaseFile.c_str()))
-  {
-    config->loadState(configBaseFile.c_str(),false);
-  }
-  // highest: content-specific file
-  if (cfgFile[0])
-  {
-    config->loadState(cfgFile,false);
-  }
-
+  config->memoryConfigurationChanged = true;  
+  
   initialize_keyboard_map();
   initialize_joystick_map(std::string(""),std::string(""),std::string(""),-1,
                           joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"), joystick_type.at("DEFAULT"),

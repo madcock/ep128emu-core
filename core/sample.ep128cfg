@@ -38,8 +38,8 @@ joypad.user6 ""
 
 # Joypad detailed configuration for user 1. Example:
 # joypad.x "1"
-# This maps retropad button X to key 1 on emulated keyboard.
-# Following values can be used (all lowercase):
+# This maps retropad button X to pressing key 1 on emulated keyboard.
+# Following keypress values can be used (all lowercase):
 # a-z 0-9 f1-f8
 # \-^;:[],/.@
 # esc, enter, space, tab, lshift, rshift, ctrl, alt
@@ -100,3 +100,10 @@ machineDetailedType ""
 # sound.mono Yes
 
 # Other ep128emu options are also recognized, but not tested extensively.
+# memory.ram.size 576
+# memory.rom.40.file "spemu128.rom"
+# memory.rom.40.offset 0
+# memory.rom.41.file "spemu128.rom"
+# memory.rom.41.offset 16384
+# memory.rom.42.file "spemu128.rom"
+# memory.rom.42.offset 32768
