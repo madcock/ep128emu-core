@@ -1172,7 +1172,10 @@ bool retro_load_game_special(unsigned type, const struct retro_game_info *info, 
 
 size_t retro_serialize_size(void)
 {
-  return EP128EMU_SNAPSHOT_SIZE;
+  if(core && core->config) {
+    return (size_t)EP128EMU_SNAPSHOT_SIZE + (size_t)(core->config->memory.ram.size > 128 ? (core->config->memory.ram.size-128)*1024 : 0);
+  } else
+    return EP128EMU_SNAPSHOT_SIZE;
 }
 
 bool retro_serialize(void *data_, size_t size)
