@@ -357,6 +357,8 @@ static bool set_image_index_cb(unsigned index) {
         log_cb(RETRO_LOG_DEBUG, "Disk control: new file is %s\n",diskPaths[index].c_str());
      }
      config->applySettings();
+     if(tapeContent)
+        core->vm->tapePlay();
     }
   }
   return true;
@@ -604,6 +606,21 @@ void retro_init(void)
   config = core->config;
   config->setErrorCallback(&cfgErrorFunc, (void *) 0);
   vmThread = core->vmThread;
+
+
+  if (core->machineDetailedType == Ep128Emu::VM_config.at("EP128_TAPE")) {
+    tapeContent = true;
+    log_cb(RETRO_LOG_DEBUG, "Tape content override\n");
+  } 
+  else if (core->machineDetailedType == Ep128Emu::VM_config.at("EP128_FILE")) {
+    fileContent = true;
+    log_cb(RETRO_LOG_DEBUG, "File content override\n");
+  } 
+  else {
+    diskContent = true;
+    log_cb(RETRO_LOG_DEBUG, "Disk content assumed\n");
+  }
+
   check_variables();
   log_cb(RETRO_LOG_DEBUG, "Starting core...\n");
   core->start();
