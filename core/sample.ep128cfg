@@ -3,7 +3,7 @@
 # Examples:
 #   Sorcery.tap -> Sorcery.ep128cfg
 #   Catacomb (1985)(Enterprise Computers).com -> Catacomb (1985)(Enterprise Computers).ep128cfg
-# A configuration file can also be put to retroarch system directory/ep128emu/config,
+# A configuration file can also be put to <retroarch system directory>/ep128emu/config,
 # for each emulated system. using these names:
 #   enterprise.ep128cfg
 #   tvc.ep128cfg
@@ -16,16 +16,16 @@
 #   core options set in RetroArch GUI (if not set to default)
 
 # Joypad direction and fire mapping. Can be empty, which means machine-dependent default:
-# EP: user1 internal, user2..user6 ext1..ext5
+# EP:  user1 internal, user2..user6 ext1..ext5
 # CPC: user1 ext1, user2 ext2
 # TVC: user1 internal, user2..3 ext1..2
-# ZX: user1 ext1 (Kempston), user2 Sinclair1, user3 Sinclair2, user4 Protek
+# ZX:  user1 ext1 (Kempston), user2 Sinclair1, user3 Sinclair2, user4 Protek
 
 # Or one of:
-# INTERNAL (internal joystick of EP and TVC)
-# EXT1, EXT2 (external joysticks for EP, TVC, CPC, EXT1 is Kempston for ZX)
-# SINCLAIR1, SINCLAIR2, PROTEK (adapters for ZX Spectrum)
-# EXT3, EXT4, EXT5, EXT6 (additional external joysticks for EP, very rarely used)
+#   INTERNAL (internal joystick of EP and TVC)
+#   EXT1, EXT2 (external joysticks for EP, TVC, CPC, EXT1 is Kempston for ZX)
+#   SINCLAIR1, SINCLAIR2, PROTEK (adapters for ZX Spectrum)
+#   EXT3, EXT4, EXT5, EXT6 (additional external joysticks for EP, very rarely used)
 # Use the quotes, i.e.
 # joypad.user1 "EXT1"
 
@@ -40,20 +40,25 @@ joypad.user6 ""
 # joypad.x "1"
 # This maps retropad button X to pressing key 1 on emulated keyboard.
 # Following keypress values can be used (all lowercase):
-# a-z 0-9 f1-f8
-# \-^;:[],/.@
-# esc, enter, space, tab, lshift, rshift, ctrl, alt
-# lock, stop, hold, erase, del, ins
-# left, right, up, down (internal joystick on EP & TVC / cursor keys on CPC)
-# zoom, info, none (special ep128emu-core functions, none for clearing default setting)
-# joy1l, joy1r, joy1u, joy1d, fire,  fire2,  fire3  (external 1 joystick)
-# joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
-# Fire 1 is used. Similar mapping exists for external joysticks 3..6 (EP only)
-# CPC extra key mapping: F0 is pause, F9 is stop, Copy is ins, F Dot is alt,
+#   a-z 0-9 f1-f8
+#   \-^;:[],/.@
+#   esc, enter, space, tab, lshift, rshift, ctrl, alt
+#   lock, stop, hold, erase, del, ins
+# Internal joystick (EP/TVC), cursor keys (CPC):
+#   left, right, up, down
+# External joysticks:
+#   joy1l, joy1r, joy1u, joy1d, fire,  fire2,  fire3  (external 1 joystick)
+#   joy2l, joy2r, joy2u, joy2d, joy2f, joy2f2, joy2f3 (external 2 joystick)
+#   Fire 1 is used. Fire 2 is used only by some CPC games.
+#   Similar mapping exists for external joysticks 3..6 (EP only)
+# CPC extra key mapping: 
+#   F0 is pause, F9 is stop, Copy is ins, F Dot is alt,
 #   Clear is del, Delete is erase, Enter is rshift
 # TVC extra key mapping:
-# o: is @ , i' is esc, @ is f1, ; is f2, <> is f3, \ is f4,
-# * is f5, ^ is f6, [ is f7, ] is f8, esc is stop
+#   o: is @ , i' is esc, @ is f1, ; is f2, <> is f3, \ is f4,
+#   * is f5, ^ is f6, [ is f7, ] is f8, esc is stop
+# Special ep128emu-core functions:
+#   zoom, info, none ("none" removes the core default setting)
 
 joypad.a ""
 joypad.b ""
@@ -81,14 +86,14 @@ contentfilename ""
 
 # Emulated machine type. Normally autodetected from content. Can be one of the following:
 # Enterprise:
-# EP128_DISK, EP128_TAPE, EP128_TAPE_NOCART, EP128_FILE, EP128_FILE_DTF, EP128_DISK_ISDOS
-# EP64_DISK, EP64_TAPE, EP64_TAPE_NOCART, EP64_FILE, EP64_FILE_DTF, EP64_DISK_ISDOS
+#   EP128_DISK, EP128_TAPE, EP128_TAPE_NOCART, EP128_FILE, EP128_FILE_DTF, EP128_DISK_ISDOS
+#   EP64_DISK, EP64_TAPE, EP64_TAPE_NOCART, EP64_FILE, EP64_FILE_DTF, EP64_DISK_ISDOS
 # TVC:
-# TVC64_FILE, TVC64_DISK, TVC64_TAPE
+#   TVC64_FILE, TVC64_DISK, TVC64_TAPE
 # CPC (6128 unless noted):
-# CPC_TAPE, CPC_DISK, CPC_464_TAPE, CPC_664_DISK
+#   CPC_TAPE, CPC_DISK, CPC_464_TAPE, CPC_664_DISK
 # ZX:
-# ZX16_TAPE, ZX16_FILE, ZX48_TAPE, ZX48_FILE, ZX128_TAPE, ZX128_FILE
+#   ZX16_TAPE, ZX16_FILE, ZX48_TAPE, ZX48_FILE, ZX128_TAPE, ZX128_FILE
 # Variants with _DISK are for disk images, _TAPE for tape images
 # _FILE can be used for direct file reading (.cas for TVC, .tap for ZX, ,com/.bas/other extensions for EP)
 # _FILE_DTF is for DTF compressed files, _NOCART removes Basic cartridge
@@ -100,6 +105,9 @@ machineDetailedType ""
 # sound.mono Yes
 
 # Other ep128emu options are also recognized, but not tested extensively.
+# ROMs can be given with full path or with file name only, in the latter case they are expected
+# in <retroarch system directory>/ep128emu/roms
+# tape.forceMotorOn
 # memory.ram.size 576
 # memory.rom.40.file "spemu128.rom"
 # memory.rom.40.offset 0

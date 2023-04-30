@@ -1,6 +1,5 @@
 /* TODO
 
-crash at save state when memory is extended (Sword of Ianna)
 double free crash at new game load sometimes
 save state for speaker and mono states
   new snapshot version
@@ -40,8 +39,7 @@ support for content in zip
 EP Mouse support
 achievement support
 test mp3 support with sndfile 1.1 - cmake won't find lame / mpeg123 when compiling libsndfile
-led driver for tape / disk loading - see comments inside
-
+led driver for tape loading - see comments inside
 */
 
 
@@ -642,7 +640,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.8";
+  info->library_version  = "v1.2.9";
   info->need_fullpath    = true;
 #ifndef EXCLUDE_SOUND_LIBS
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|mp3|.";
