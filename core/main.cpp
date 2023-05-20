@@ -518,12 +518,12 @@ void retro_init(void)
   if(environ_cb(RETRO_ENVIRONMENT_GET_LED_INTERFACE, &led_interface)) {
    if (led_interface.set_led_state && !led_state_cb) {
       led_state_cb = led_interface.set_led_state;
-      log_cb(RETRO_LOG_INFO, "LED interface supported\n");
+      log_cb(RETRO_LOG_DEBUG, "LED interface supported\n");
     } else {
-      log_cb(RETRO_LOG_INFO, "LED interface not supported\n");
+      log_cb(RETRO_LOG_DEBUG, "LED interface not supported\n");
     }
   } else {
-    log_cb(RETRO_LOG_INFO, "LED interface not present\n");
+    log_cb(RETRO_LOG_DEBUG, "LED interface not present\n");
   }
 
   const char *system_dir = NULL;
@@ -1258,7 +1258,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
       Ep128Emu::joystick_type.at("DEFAULT"), Ep128Emu::joystick_type.at("DEFAULT")};
 
     unsigned mappedDev = Ep128Emu::joystick_type.at((*iter_joytype).second);
-    log_cb(RETRO_LOG_INFO, "Mapped device %s for user %u \n", (*iter_joytype).second.c_str(), port);
+    log_cb(RETRO_LOG_DEBUG, "Mapped device %s for user %u \n", (*iter_joytype).second.c_str(), port);
 
     userMap[port] = mappedDev;
     if(core)
