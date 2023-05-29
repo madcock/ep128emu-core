@@ -163,6 +163,7 @@ endif
 CFLAGS += $(DEFINES)
 CXXFLAGS += $(DEFINES) -std=c++0x
 
+CORE_DIR  := .
 include Makefile.common
 
 INCLUDES := $(INCFLAGS)

@@ -1,5 +1,3 @@
-CORE_DIR = .
-
 INCFLAGS := \
 	-I$(CORE_DIR) \
 	-I$(CORE_DIR)/core \
