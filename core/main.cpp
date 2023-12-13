@@ -572,7 +572,11 @@ void retro_init(void)
 
   log_cb(RETRO_LOG_DEBUG, "Retro ROM DIRECTORY %s\n", retro_system_bios_directory);
   log_cb(RETRO_LOG_DEBUG, "Retro SAVE_DIRECTORY %s\n", retro_system_save_directory);
+#if !defined(SF2000)
   log_cb(RETRO_LOG_DEBUG, "Retro CONTENT_DIRECTORY %s\n", retro_content_directory);
+#else
+    // retro_content_directory is NULL!
+#endif
 
    static const struct retro_controller_info ports[EP128EMU_MAX_USERS+1] = {
       { Ep128Emu::controller_description, 11  }, // port 1
