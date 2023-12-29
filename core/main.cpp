@@ -613,6 +613,11 @@ void retro_init(void)
   else if (core->machineDetailedType == Ep128Emu::VM_config.at("EP128_FILE")) {
     fileContent = true;
     log_cb(RETRO_LOG_DEBUG, "File content override\n");
+    core->vm->setFileNameCallback(&fileNameCallback, NULL);
+    config->fileioSettingsChanged = true;
+    config->vm.enableFileIO=true;
+    config->vmConfigurationChanged = true;
+    config->applySettings();
   } 
   else {
     diskContent = true;
