@@ -34,6 +34,15 @@
 #  define WIN32 1
 #endif
 
+/* Define _W64 macros to mark types changing their size, like intptr_t. */
+#ifndef _W64
+#  if !defined(__midl) && (defined(_X86_) || defined(_M_IX86)) && _MSC_VER >= 1300
+#     define _W64 __w64
+#  else
+#     define _W64
+#  endif
+#endif
+
 #if defined(HAVE_STDINT_H) || defined(__GNUC__)
 #  include <stdint.h>
 #else
@@ -54,8 +63,12 @@ typedef unsigned long long  uint64_t;
 typedef __int64             intptr_t;
 typedef unsigned __int64    uintptr_t;
 #  else
+typedef _W64 signed int     intptr_t;
+typedef _W64 unsigned int   uintptr_t;
+/*
 typedef long                intptr_t;
 typedef unsigned long       uintptr_t;
+*/
 #  endif
 #endif
 
