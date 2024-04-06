@@ -1,11 +1,13 @@
 /* TODO
 
-double free crash at new game load sometimes
+double free crash at new game load / exit sometimes
 save state for speaker and mono states
   new snapshot version
 emscripten - initial memory problem
+input descriptors
 other builds
 database
+cpc defender of the crown disk image load
 
 hw and joystick support detection from tzx / cdt
   http://k1.spdns.de/Develop/Projects/zasm/Info/TZX%20format.html
@@ -111,6 +113,7 @@ unsigned maxUsers;
 bool maxUsersSupported = true;
 
 unsigned diskIndex = 0;
+unsigned diskIndexInitial = 0;
 unsigned diskCount = 1;
 #define MAX_DISK_COUNT 10
 std::string diskPaths[MAX_DISK_COUNT];
@@ -395,7 +398,11 @@ static bool add_image_index_cb(void) {
  * Returns 'false' if index or 'path' are invalid, or core
  * does not support this functionality
  */
-static bool set_initial_image_cb(unsigned index, const char *path) {return false;}
+static bool set_initial_image_cb(unsigned index, const char *path) {
+  log_cb(RETRO_LOG_DEBUG, "Disk control: set initial image index to %d\n",diskCount);
+  diskIndexInitial = index;
+  return true;
+}
 
 /* Fetches the path of the specified disk image file.
  * Returns 'false' if index is invalid (index >= get_num_images())
@@ -649,7 +656,7 @@ void retro_get_system_info(struct retro_system_info *info)
 {
   memset(info, 0, sizeof(*info));
   info->library_name     = "ep128emu";
-  info->library_version  = "v1.2.9";
+  info->library_version  = "v1.2.10";
   info->need_fullpath    = true;
 #ifndef EXCLUDE_SOUND_LIBS
   info->valid_extensions = "img|dsk|tap|dtf|com|trn|128|bas|cas|cdt|tzx|wav|tvcwav|mp3|.";
@@ -1085,6 +1092,8 @@ bool retro_load_game(const struct retro_game_info *info)
       }
       if (diskContent || tapeContent) {
         scan_multidisk_files(info->path);
+        if (diskIndexInitial > 0)
+          set_image_index_cb(diskIndexInitial);
       }
       if (fileContent)
       {
